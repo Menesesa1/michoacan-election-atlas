@@ -195,7 +195,7 @@ export function MapaInteractivo({ eleccion }: MapaInteractivoProps) {
         circle.addTo(layerRef.current!);
       });
     }
-  }, [eleccion, geoData, loading, useFallback]);
+  }, [eleccion, geoData, loading, useFallback, distritos]);
 
   return (
     <div className="glass-panel p-4 animate-slide-up">
