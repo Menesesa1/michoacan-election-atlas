@@ -1,14 +1,16 @@
-import { distritosFederales, getCompetitividadDistrito, PARTIDOS_CONFIG, type Partido } from "@/data/electoral-data";
+import { getCompetitividadDistrito, PARTIDOS_CONFIG, type Partido } from "@/data/electoral-data";
+import { useElectoralData } from "@/context/DataContext";
 
-// Simplified district map visualization using positioned cards
 export function MapaDistritos({ eleccion }: { eleccion: string }) {
+  const { distritos } = useElectoralData();
+
   return (
     <div className="glass-panel p-4 animate-slide-up">
-      <h3 className="text-xs font-semibold text-foreground mb-1">Mapa de Distritos Federales</h3>
-      <p className="text-[10px] text-muted-foreground mb-4 font-mono">Michoacán · 11 distritos electorales</p>
+      <h3 className="text-xs font-semibold text-foreground mb-1">Vista de Distritos Federales</h3>
+      <p className="text-[10px] text-muted-foreground mb-4 font-mono">Michoacán · {distritos.length} distritos electorales</p>
 
       <div className="grid grid-cols-4 gap-2">
-        {distritosFederales.map((d) => {
+        {distritos.map((d) => {
           const r = d.resultados[eleccion];
           if (!r) return null;
           const comp = getCompetitividadDistrito(d, eleccion);
@@ -38,10 +40,6 @@ export function MapaDistritos({ eleccion }: { eleccion: string }) {
             </div>
           );
         })}
-      </div>
-
-      <div className="mt-3 p-2 rounded bg-secondary/30 text-[10px] text-muted-foreground">
-        💡 Para mapa interactivo con cartografía seccional, se integrará el GeoJSON del INE vía <span className="font-mono text-primary">mexicoendatos.com/ine/geometrias</span>
       </div>
     </div>
   );

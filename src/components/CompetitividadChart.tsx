@@ -1,8 +1,11 @@
-import { distritosFederales, getCompetitividadDistrito } from "@/data/electoral-data";
+import { getCompetitividadDistrito } from "@/data/electoral-data";
+import { useElectoralData } from "@/context/DataContext";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
 
 export function CompetitividadChart({ eleccion }: { eleccion: string }) {
-  const data = distritosFederales
+  const { distritos } = useElectoralData();
+
+  const data = distritos
     .map((d) => {
       const comp = getCompetitividadDistrito(d, eleccion);
       return {
@@ -12,6 +15,7 @@ export function CompetitividadChart({ eleccion }: { eleccion: string }) {
         nivel: comp.nivel,
       };
     })
+    .filter((d) => d.margen > 0)
     .sort((a, b) => a.margen - b.margen);
 
   const getColor = (margen: number) => {
