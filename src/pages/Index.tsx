@@ -41,6 +41,7 @@ const Index = () => {
         {activeTab === "distritos" && (
           <>
             <KPICards eleccion={eleccion} />
+            <MapaInteractivo eleccion={eleccion} />
             <MapaDistritos eleccion={eleccion} />
             <TablaDistritos eleccion={eleccion} />
           </>
