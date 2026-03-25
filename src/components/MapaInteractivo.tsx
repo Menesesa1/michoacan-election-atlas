@@ -30,6 +30,7 @@ interface MapaInteractivoProps {
 }
 
 export function MapaInteractivo({ eleccion }: MapaInteractivoProps) {
+  const { distritos } = useElectoralData();
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const layerRef = useRef<L.LayerGroup | null>(null);
