@@ -111,7 +111,7 @@ export function MapaInteractivo({ eleccion }: MapaInteractivoProps) {
         },
         onEachFeature: (feature, layer) => {
           const distNum = parseInt(feature?.properties?.distrito || feature?.properties?.DISTRITO || feature?.properties?.district || "0");
-          const distrito = distritosFederales.find((d) => d.id === distNum);
+          const distrito = distritos.find((d) => d.id === distNum);
           if (!distrito) return;
 
           const r = distrito.resultados[eleccion];
