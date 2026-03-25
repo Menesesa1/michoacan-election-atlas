@@ -8,6 +8,7 @@ import { CompetitividadChart } from "@/components/CompetitividadChart";
 import { SimuladorEscenarios } from "@/components/SimuladorEscenarios";
 import { FuentesDatos } from "@/components/FuentesDatos";
 import { MapaDistritos } from "@/components/MapaDistritos";
+import { MapaInteractivo } from "@/components/MapaInteractivo";
 import { EleccionSelector } from "@/components/EleccionSelector";
 
 const Index = () => {
