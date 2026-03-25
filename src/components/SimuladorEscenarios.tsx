@@ -1,20 +1,29 @@
 import { useState } from "react";
 import { Slider } from "@/components/ui/slider";
-import { distritosFederales, PARTIDOS_CONFIG, type Partido } from "@/data/electoral-data";
+import { PARTIDOS_CONFIG, type Partido } from "@/data/electoral-data";
+import { useElectoralData } from "@/context/DataContext";
 
 const partidos: Partido[] = ["MORENA", "PAN", "PRI", "MC", "PVEM"];
 
 export function SimuladorEscenarios() {
+  const { distritos } = useElectoralData();
   const [participacion, setParticipacion] = useState(58);
   const [swings, setSwings] = useState<Record<string, number>>({
     MORENA: 0, PAN: 0, PRI: 0, MC: 0, PVEM: 0,
   });
 
-  const base = distritosFederales.map((d) => {
-    const r = d.resultados["fed2024"];
-    if (!r) return null;
-    return { ...d, resultado: r };
-  }).filter(Boolean) as Array<typeof distritosFederales[0] & { resultado: NonNullable<typeof distritosFederales[0]["resultados"]["fed2024"]> }>;
+  // Use the latest election available
+  const latestKey = distritos[0]?.resultados
+    ? Object.keys(distritos[0].resultados).sort().pop() || "fed2024"
+    : "fed2024";
+
+  const base = distritos
+    .map((d) => {
+      const r = d.resultados[latestKey];
+      if (!r) return null;
+      return { ...d, resultado: r };
+    })
+    .filter(Boolean) as Array<typeof distritos[0] & { resultado: NonNullable<typeof distritos[0]["resultados"]["fed2024"]> }>;
 
   const resultados = base.map((d) => {
     const ajustado: Partial<Record<Partido, number>> = {};
@@ -23,7 +32,7 @@ export function SimuladorEscenarios() {
     partidos.forEach((p) => {
       const baseVotos = d.resultado.votos[p] || 0;
       const factor = 1 + swings[p] / 100;
-      const partFactor = participacion / d.resultado.participacion;
+      const partFactor = d.resultado.participacion > 0 ? participacion / d.resultado.participacion : 1;
       ajustado[p] = Math.round(baseVotos * factor * partFactor);
       total += ajustado[p]!;
     });
@@ -40,7 +49,7 @@ export function SimuladorEscenarios() {
   return (
     <div className="glass-panel p-4 animate-slide-up">
       <h3 className="text-xs font-semibold text-foreground mb-1">Simulador de Escenarios</h3>
-      <p className="text-[10px] text-muted-foreground mb-4 font-mono">Proyección basada en resultados 2024</p>
+      <p className="text-[10px] text-muted-foreground mb-4 font-mono">Proyección basada en {latestKey}</p>
 
       <div className="space-y-4 mb-6">
         <div>

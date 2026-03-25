@@ -1,8 +1,10 @@
 import { getResumenEstatal, PARTIDOS_CONFIG, type Partido } from "@/data/electoral-data";
+import { useElectoralData } from "@/context/DataContext";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
 
 export function ResultadosPorPartido({ eleccion }: { eleccion: string }) {
-  const resumen = getResumenEstatal(eleccion);
+  const { distritos } = useElectoralData();
+  const resumen = getResumenEstatal(eleccion, distritos);
 
   const data = (Object.entries(resumen.totales) as [Partido, number][])
     .filter(([, v]) => v > 0)

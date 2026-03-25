@@ -132,12 +132,13 @@ export const distritosFederales: DistritoFederal[] = [
 ];
 
 // Summary stats
-export function getResumenEstatal(año: string) {
+export function getResumenEstatal(año: string, distritosInput?: DistritoFederal[]) {
+  const datos = distritosInput || distritosFederales;
   const totales: Partial<Record<Partido, number>> = {};
   let totalVotos = 0;
   let totalListaNominal = 0;
 
-  distritosFederales.forEach(d => {
+  datos.forEach(d => {
     const r = d.resultados[año];
     if (r) {
       Object.entries(r.votos).forEach(([partido, votos]) => {
@@ -148,7 +149,7 @@ export function getResumenEstatal(año: string) {
     totalListaNominal += d.listaNominal2024;
   });
 
-  return { totales, totalVotos, totalListaNominal, participacion: (totalVotos / totalListaNominal) * 100 };
+  return { totales, totalVotos, totalListaNominal, participacion: totalListaNominal > 0 ? (totalVotos / totalListaNominal) * 100 : 0 };
 }
 
 export function getCompetitividadDistrito(distrito: DistritoFederal, eleccion: string) {

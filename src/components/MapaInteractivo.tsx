@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { distritosFederales, PARTIDOS_CONFIG, getCompetitividadDistrito, type Partido } from "@/data/electoral-data";
+import { PARTIDOS_CONFIG, getCompetitividadDistrito, type Partido } from "@/data/electoral-data";
+import { useElectoralData } from "@/context/DataContext";
 
 const MICHOACAN_CENTER: [number, number] = [19.25, -101.9];
 const MICHOACAN_ZOOM = 7;
@@ -29,6 +30,7 @@ interface MapaInteractivoProps {
 }
 
 export function MapaInteractivo({ eleccion }: MapaInteractivoProps) {
+  const { distritos } = useElectoralData();
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const layerRef = useRef<L.LayerGroup | null>(null);
@@ -94,7 +96,7 @@ export function MapaInteractivo({ eleccion }: MapaInteractivoProps) {
       const geoLayer = L.geoJSON(geoData, {
         style: (feature) => {
           const distNum = parseInt(feature?.properties?.distrito || feature?.properties?.DISTRITO || feature?.properties?.district || "0");
-          const distrito = distritosFederales.find((d) => d.id === distNum);
+          const distrito = distritos.find((d) => d.id === distNum);
           const resultado = distrito?.resultados[eleccion];
           const ganador = resultado?.ganador as Partido | undefined;
           const color = ganador ? PARTIDOS_CONFIG[ganador]?.color : "#444";
@@ -109,7 +111,7 @@ export function MapaInteractivo({ eleccion }: MapaInteractivoProps) {
         },
         onEachFeature: (feature, layer) => {
           const distNum = parseInt(feature?.properties?.distrito || feature?.properties?.DISTRITO || feature?.properties?.district || "0");
-          const distrito = distritosFederales.find((d) => d.id === distNum);
+          const distrito = distritos.find((d) => d.id === distNum);
           if (!distrito) return;
 
           const r = distrito.resultados[eleccion];
@@ -144,7 +146,7 @@ export function MapaInteractivo({ eleccion }: MapaInteractivoProps) {
       geoLayer.addTo(layerRef.current!);
     } else {
       // Fallback: circle markers at centroids
-      distritosFederales.forEach((d) => {
+      distritos.forEach((d) => {
         const coords = DISTRITO_CENTROIDS[d.id];
         if (!coords) return;
 
@@ -193,7 +195,7 @@ export function MapaInteractivo({ eleccion }: MapaInteractivoProps) {
         circle.addTo(layerRef.current!);
       });
     }
-  }, [eleccion, geoData, loading, useFallback]);
+  }, [eleccion, geoData, loading, useFallback, distritos]);
 
   return (
     <div className="glass-panel p-4 animate-slide-up">

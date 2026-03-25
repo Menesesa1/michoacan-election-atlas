@@ -1,5 +1,6 @@
 import { Users, Vote, TrendingUp, MapPin } from "lucide-react";
-import { distritosFederales, getResumenEstatal } from "@/data/electoral-data";
+import { getResumenEstatal } from "@/data/electoral-data";
+import { useElectoralData } from "@/context/DataContext";
 
 interface KPICardProps {
   icon: React.ElementType;
@@ -23,8 +24,12 @@ function KPICard({ icon: Icon, label, value, sub, accent }: KPICardProps) {
 }
 
 export function KPICards({ eleccion }: { eleccion: string }) {
-  const resumen = getResumenEstatal(eleccion);
-  const totalLN = distritosFederales.reduce((s, d) => s + d.listaNominal2024, 0);
+  const { distritos } = useElectoralData();
+  const resumen = getResumenEstatal(eleccion, distritos);
+  const totalLN = distritos.reduce((s, d) => s + d.listaNominal2024, 0);
+
+  const dominante = (Object.entries(resumen.totales) as [string, number][])
+    .sort((a, b) => b[1] - a[1])[0];
 
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -32,7 +37,7 @@ export function KPICards({ eleccion }: { eleccion: string }) {
         icon={Users}
         label="Lista Nominal"
         value={(totalLN / 1e6).toFixed(2) + "M"}
-        sub="11 distritos federales"
+        sub={`${distritos.length} distritos federales`}
         accent
       />
       <KPICard
@@ -44,14 +49,14 @@ export function KPICards({ eleccion }: { eleccion: string }) {
       <KPICard
         icon={TrendingUp}
         label="Partido Dominante"
-        value="MORENA"
-        sub={`${(((resumen.totales.MORENA || 0) / resumen.totalVotos) * 100).toFixed(1)}% del voto total`}
+        value={dominante?.[0] || "N/A"}
+        sub={dominante ? `${((dominante[1] / resumen.totalVotos) * 100).toFixed(1)}% del voto total` : ""}
       />
       <KPICard
         icon={MapPin}
-        label="Distritos Federales"
-        value="11"
-        sub="24 distritos locales"
+        label="Distritos"
+        value={String(distritos.length)}
+        sub="Distritos electorales"
       />
     </div>
   );

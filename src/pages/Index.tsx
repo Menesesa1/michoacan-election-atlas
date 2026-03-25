@@ -10,10 +10,13 @@ import { FuentesDatos } from "@/components/FuentesDatos";
 import { MapaDistritos } from "@/components/MapaDistritos";
 import { MapaInteractivo } from "@/components/MapaInteractivo";
 import { EleccionSelector } from "@/components/EleccionSelector";
+import { ImportadorCSV } from "@/components/ImportadorCSV";
+import { useElectoralData } from "@/context/DataContext";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("resumen");
   const [eleccion, setEleccion] = useState("fed2024");
+  const { isUsingMock, importedKeys } = useElectoralData();
 
   return (
     <div className="min-h-screen bg-background">
@@ -21,9 +24,11 @@ const Index = () => {
 
       <main className="container py-4 px-4 space-y-4">
         {activeTab !== "fuentes" && activeTab !== "tendencias" && (
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-2">
             <EleccionSelector value={eleccion} onChange={setEleccion} />
-            <span className="text-[10px] text-muted-foreground font-mono animate-pulse-glow">● DATOS REPRESENTATIVOS</span>
+            <span className={`text-[10px] font-mono ${isUsingMock ? "text-muted-foreground animate-pulse-glow" : "text-primary"}`}>
+              ● {isUsingMock ? "DATOS REPRESENTATIVOS" : `${importedKeys.length} DATASET(S) IMPORTADOS`}
+            </span>
           </div>
         )}
 
@@ -54,7 +59,12 @@ const Index = () => {
           </div>
         )}
 
-        {activeTab === "fuentes" && <FuentesDatos />}
+        {activeTab === "fuentes" && (
+          <div className="space-y-4">
+            <ImportadorCSV />
+            <FuentesDatos />
+          </div>
+        )}
 
         <footer className="text-center py-4 text-[10px] text-muted-foreground font-mono">
           Analista Electoral Michoacán · Datos basados en estructura INE · Cómputos Distritales 2018-2024

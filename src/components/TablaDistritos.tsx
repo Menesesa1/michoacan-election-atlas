@@ -1,11 +1,14 @@
-import { distritosFederales, getCompetitividadDistrito, PARTIDOS_CONFIG, type Partido } from "@/data/electoral-data";
+import { getCompetitividadDistrito, PARTIDOS_CONFIG, type Partido } from "@/data/electoral-data";
+import { useElectoralData } from "@/context/DataContext";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 export function TablaDistritos({ eleccion }: { eleccion: string }) {
+  const { distritos } = useElectoralData();
+
   return (
     <div className="glass-panel p-4 animate-slide-up overflow-auto">
       <h3 className="text-xs font-semibold text-foreground mb-1">Resultados por Distrito Federal</h3>
-      <p className="text-[10px] text-muted-foreground mb-4 font-mono">11 distritos · Michoacán</p>
+      <p className="text-[10px] text-muted-foreground mb-4 font-mono">{distritos.length} distritos · Michoacán</p>
 
       <Table>
         <TableHeader>
@@ -20,7 +23,7 @@ export function TablaDistritos({ eleccion }: { eleccion: string }) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {distritosFederales.map((d) => {
+          {distritos.map((d) => {
             const r = d.resultados[eleccion];
             const comp = getCompetitividadDistrito(d, eleccion);
             if (!r) return null;
