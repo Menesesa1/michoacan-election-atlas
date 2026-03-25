@@ -146,7 +146,7 @@ export function MapaInteractivo({ eleccion }: MapaInteractivoProps) {
       geoLayer.addTo(layerRef.current!);
     } else {
       // Fallback: circle markers at centroids
-      distritosFederales.forEach((d) => {
+      distritos.forEach((d) => {
         const coords = DISTRITO_CENTROIDS[d.id];
         if (!coords) return;
 
