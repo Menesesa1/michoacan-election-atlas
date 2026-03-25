@@ -96,7 +96,7 @@ export function MapaInteractivo({ eleccion }: MapaInteractivoProps) {
       const geoLayer = L.geoJSON(geoData, {
         style: (feature) => {
           const distNum = parseInt(feature?.properties?.distrito || feature?.properties?.DISTRITO || feature?.properties?.district || "0");
-          const distrito = distritosFederales.find((d) => d.id === distNum);
+          const distrito = distritos.find((d) => d.id === distNum);
           const resultado = distrito?.resultados[eleccion];
           const ganador = resultado?.ganador as Partido | undefined;
           const color = ganador ? PARTIDOS_CONFIG[ganador]?.color : "#444";
