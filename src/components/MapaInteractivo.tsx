@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { distritosFederales, PARTIDOS_CONFIG, getCompetitividadDistrito, type Partido } from "@/data/electoral-data";
+import { PARTIDOS_CONFIG, getCompetitividadDistrito, type Partido } from "@/data/electoral-data";
+import { useElectoralData } from "@/context/DataContext";
 
 const MICHOACAN_CENTER: [number, number] = [19.25, -101.9];
 const MICHOACAN_ZOOM = 7;

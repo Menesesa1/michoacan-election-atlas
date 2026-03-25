@@ -1,4 +1,4 @@
-import { ELECCIONES } from "@/data/electoral-data";
+import { useElectoralData } from "@/context/DataContext";
 
 interface EleccionSelectorProps {
   value: string;
@@ -6,9 +6,11 @@ interface EleccionSelectorProps {
 }
 
 export function EleccionSelector({ value, onChange }: EleccionSelectorProps) {
+  const { elecciones } = useElectoralData();
+
   return (
-    <div className="flex items-center gap-1 p-1 bg-secondary/50 rounded-lg">
-      {ELECCIONES.map((e) => (
+    <div className="flex items-center gap-1 p-1 bg-secondary/50 rounded-lg flex-wrap">
+      {elecciones.map((e) => (
         <button
           key={e.key}
           onClick={() => onChange(e.key)}
