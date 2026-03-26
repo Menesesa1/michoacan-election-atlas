@@ -1,11 +1,15 @@
 import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
 import {
   type DistritoFederal,
+  type DistritoLocal,
   type ResultadoEleccion,
   type Partido,
-  distritosFederales as mockDistritos,
+  distritosFederales as mockDistritosFed,
   ELECCIONES,
 } from "@/data/electoral-data";
+import { distritosLocales as mockDistritosLoc } from "@/data/distritos-locales";
+
+type NivelDistrito = "federal" | "local";
 
 interface EleccionImportada {
   key: string;
@@ -16,6 +20,11 @@ interface EleccionImportada {
 
 interface DataStore {
   distritos: DistritoFederal[];
+  distritosLocales: DistritoLocal[];
+  nivel: NivelDistrito;
+  setNivel: (n: NivelDistrito) => void;
+  /** Returns the active district set based on current nivel */
+  distritosActivos: (DistritoFederal | DistritoLocal)[];
   elecciones: EleccionImportada[];
   importedKeys: string[];
   isUsingMock: boolean;
@@ -32,7 +41,9 @@ export function useElectoralData() {
 }
 
 export function DataProvider({ children }: { children: ReactNode }) {
-  const [distritos, setDistritos] = useState<DistritoFederal[]>(mockDistritos);
+  const [distritos, setDistritos] = useState<DistritoFederal[]>(mockDistritosFed);
+  const [distritosLocales, setDistritosLocales] = useState<DistritoLocal[]>(mockDistritosLoc);
+  const [nivel, setNivel] = useState<NivelDistrito>("federal");
   const [customElecciones, setCustomElecciones] = useState<EleccionImportada[]>([]);
   const [importedKeys, setImportedKeys] = useState<string[]>([]);
 
@@ -41,16 +52,16 @@ export function DataProvider({ children }: { children: ReactNode }) {
     ...customElecciones,
   ];
 
+  const distritosActivos = nivel === "federal" ? distritos : distritosLocales;
+
   const importData = useCallback(
     (key: string, label: string, año: number, newDistritos: DistritoFederal[]) => {
       setDistritos((prev) => {
-        // Merge: update existing distritos or add new ones
         const merged = [...prev];
         newDistritos.forEach((nd) => {
           const existing = merged.find((d) => d.id === nd.id);
           if (existing) {
             existing.resultados = { ...existing.resultados, ...nd.resultados };
-            // Update lista nominal if the imported data has it
             if (nd.listaNominal2024 > 0) existing.listaNominal2024 = nd.listaNominal2024;
             if (nd.participacion2024 > 0) existing.participacion2024 = nd.participacion2024;
             if (nd.cabecera && nd.cabecera !== `Distrito ${nd.id}`) existing.cabecera = nd.cabecera;
@@ -74,7 +85,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
   );
 
   const resetToMock = useCallback(() => {
-    setDistritos(mockDistritos);
+    setDistritos(mockDistritosFed);
+    setDistritosLocales(mockDistritosLoc);
     setCustomElecciones([]);
     setImportedKeys([]);
   }, []);
@@ -83,6 +95,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
     <DataContext.Provider
       value={{
         distritos,
+        distritosLocales,
+        nivel,
+        setNivel,
+        distritosActivos,
         elecciones: allElecciones,
         importedKeys,
         isUsingMock: importedKeys.length === 0,
