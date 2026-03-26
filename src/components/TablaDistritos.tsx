@@ -3,12 +3,13 @@ import { useElectoralData } from "@/context/DataContext";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 export function TablaDistritos({ eleccion }: { eleccion: string }) {
-  const { distritos } = useElectoralData();
+  const { distritosActivos, nivel } = useElectoralData();
+  const tipoLabel = nivel === "federal" ? "Federal" : "Local";
 
   return (
     <div className="glass-panel p-4 animate-slide-up overflow-auto">
-      <h3 className="text-xs font-semibold text-foreground mb-1">Resultados por Distrito Federal</h3>
-      <p className="text-[10px] text-muted-foreground mb-4 font-mono">{distritos.length} distritos · Michoacán</p>
+      <h3 className="text-xs font-semibold text-foreground mb-1">Resultados por Distrito {tipoLabel}</h3>
+      <p className="text-[10px] text-muted-foreground mb-4 font-mono">{distritosActivos.length} distritos · Michoacán</p>
 
       <Table>
         <TableHeader>
@@ -23,7 +24,7 @@ export function TablaDistritos({ eleccion }: { eleccion: string }) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {distritos.map((d) => {
+          {distritosActivos.map((d) => {
             const r = d.resultados[eleccion];
             const comp = getCompetitividadDistrito(d, eleccion);
             if (!r) return null;

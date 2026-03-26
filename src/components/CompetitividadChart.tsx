@@ -3,13 +3,13 @@ import { useElectoralData } from "@/context/DataContext";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
 
 export function CompetitividadChart({ eleccion }: { eleccion: string }) {
-  const { distritos } = useElectoralData();
+  const { distritosActivos, nivel } = useElectoralData();
 
-  const data = distritos
+  const data = distritosActivos
     .map((d) => {
       const comp = getCompetitividadDistrito(d, eleccion);
       return {
-        distrito: `D${d.id}`,
+        distrito: `${nivel === "local" ? "L" : "D"}${d.id}`,
         cabecera: d.cabecera,
         margen: +comp.margen.toFixed(1),
         nivel: comp.nivel,
@@ -28,39 +28,19 @@ export function CompetitividadChart({ eleccion }: { eleccion: string }) {
   return (
     <div className="glass-panel p-4 animate-slide-up">
       <h3 className="text-xs font-semibold text-foreground mb-1">Índice de Competitividad</h3>
-      <p className="text-[10px] text-muted-foreground mb-4 font-mono">Margen de victoria por distrito</p>
+      <p className="text-[10px] text-muted-foreground mb-4 font-mono">Margen de victoria · {distritosActivos.length} distritos {nivel === "local" ? "locales" : "federales"}</p>
 
       <div className="h-[280px]">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} margin={{ left: 10, right: 10 }}>
-            <XAxis
-              dataKey="distrito"
-              tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
-              axisLine={false}
-              tickLine={false}
-            />
-            <YAxis
-              tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
-              axisLine={false}
-              tickLine={false}
-              tickFormatter={(v) => v + "%"}
-              width={35}
-            />
+            <XAxis dataKey="distrito" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
+            <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} tickFormatter={(v) => v + "%"} width={35} />
             <Tooltip
-              contentStyle={{
-                background: "hsl(var(--card))",
-                border: "1px solid hsl(var(--border))",
-                borderRadius: "8px",
-                fontSize: 11,
-                color: "hsl(var(--foreground))",
-              }}
+              contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: 11, color: "hsl(var(--foreground))" }}
               formatter={(value: number) => [value + "% margen", ""]}
-              labelFormatter={(label) => {
-                const d = data.find((x) => x.distrito === label);
-                return d ? `${label} · ${d.cabecera}` : label;
-              }}
+              labelFormatter={(label) => { const d = data.find((x) => x.distrito === label); return d ? `${label} · ${d.cabecera}` : label; }}
             />
-            <Bar dataKey="margen" radius={[4, 4, 0, 0]} barSize={24}>
+            <Bar dataKey="margen" radius={[4, 4, 0, 0]} barSize={nivel === "local" ? 14 : 24}>
               {data.map((entry, i) => (
                 <Cell key={i} fill={getColor(entry.margen)} />
               ))}

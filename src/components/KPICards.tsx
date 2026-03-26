@@ -24,9 +24,10 @@ function KPICard({ icon: Icon, label, value, sub, accent }: KPICardProps) {
 }
 
 export function KPICards({ eleccion }: { eleccion: string }) {
-  const { distritos } = useElectoralData();
-  const resumen = getResumenEstatal(eleccion, distritos);
-  const totalLN = distritos.reduce((s, d) => s + d.listaNominal2024, 0);
+  const { distritosActivos, nivel } = useElectoralData();
+  const resumen = getResumenEstatal(eleccion, distritosActivos);
+  const totalLN = distritosActivos.reduce((s, d) => s + d.listaNominal2024, 0);
+  const tipoLabel = nivel === "federal" ? "federales" : "locales";
 
   const dominante = (Object.entries(resumen.totales) as [string, number][])
     .sort((a, b) => b[1] - a[1])[0];
@@ -37,7 +38,7 @@ export function KPICards({ eleccion }: { eleccion: string }) {
         icon={Users}
         label="Lista Nominal"
         value={(totalLN / 1e6).toFixed(2) + "M"}
-        sub={`${distritos.length} distritos federales`}
+        sub={`${distritosActivos.length} distritos ${tipoLabel}`}
         accent
       />
       <KPICard
@@ -55,8 +56,8 @@ export function KPICards({ eleccion }: { eleccion: string }) {
       <KPICard
         icon={MapPin}
         label="Distritos"
-        value={String(distritos.length)}
-        sub="Distritos electorales"
+        value={String(distritosActivos.length)}
+        sub={`Distritos ${tipoLabel}`}
       />
     </div>
   );
