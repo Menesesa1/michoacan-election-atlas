@@ -6,11 +6,20 @@ interface EleccionSelectorProps {
 }
 
 export function EleccionSelector({ value, onChange }: EleccionSelectorProps) {
-  const { elecciones } = useElectoralData();
+  const { elecciones, nivel } = useElectoralData();
+
+  const filtered = elecciones.filter((e) => e.tipo === nivel);
+
+  // Auto-select first matching election if current doesn't match nivel
+  const currentMatch = filtered.find((e) => e.key === value);
+  if (!currentMatch && filtered.length > 0 && value) {
+    // Will trigger on next render
+    setTimeout(() => onChange(filtered[0].key), 0);
+  }
 
   return (
     <div className="flex items-center gap-1 p-1 bg-secondary/50 rounded-lg flex-wrap">
-      {elecciones.map((e) => (
+      {filtered.map((e) => (
         <button
           key={e.key}
           onClick={() => onChange(e.key)}
