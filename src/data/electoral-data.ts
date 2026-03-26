@@ -164,10 +164,13 @@ export function getCompetitividadDistrito(distrito: DistritoFederal, eleccion: s
 }
 
 export const ELECCIONES = [
-  { key: "fed2024", label: "Federal 2024", tipo: "federal", año: 2024 },
-  { key: "fed2021", label: "Federal 2021", tipo: "federal", año: 2021 },
-  { key: "fed2018", label: "Federal 2018", tipo: "federal", año: 2018 },
-] as const;
+  { key: "fed2024", label: "Federal 2024", tipo: "federal" as const, año: 2024 },
+  { key: "fed2021", label: "Federal 2021", tipo: "federal" as const, año: 2021 },
+  { key: "fed2018", label: "Federal 2018", tipo: "federal" as const, año: 2018 },
+  { key: "loc2024", label: "Local 2024", tipo: "local" as const, año: 2024 },
+  { key: "loc2021", label: "Local 2021", tipo: "local" as const, año: 2021 },
+  { key: "loc2018", label: "Local 2018", tipo: "local" as const, año: 2018 },
+];
 
 export const FUENTES_DATOS = [
   { nombre: "Cómputos Distritales 2024", url: "https://computos2024.ine.mx/", estado: "disponible" },
