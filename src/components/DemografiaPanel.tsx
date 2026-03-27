@@ -101,12 +101,40 @@ export function DemografiaPanel() {
       {data && data.success && (
         <>
           {/* Summary KPIs */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <KPIBox label="Total Lista Nominal" value={distritos.reduce((s, d) => s + d.listaNominal, 0).toLocaleString()} />
-            <KPIBox label="Secciones" value={data.stats.seccionesFound.toLocaleString()} />
-            <KPIBox label="Hombres" value={distritos.reduce((s, d) => s + d.hombres, 0).toLocaleString()} color="text-blue-400" />
-            <KPIBox label="Mujeres" value={distritos.reduce((s, d) => s + d.mujeres, 0).toLocaleString()} color="text-pink-400" />
-          </div>
+          {(() => {
+            const totalLN = distritos.reduce((s, d) => s + d.listaNominal, 0);
+            const totalH = distritos.reduce((s, d) => s + d.hombres, 0);
+            const totalM = distritos.reduce((s, d) => s + d.mujeres, 0);
+            const pctH = totalLN > 0 ? ((totalH / totalLN) * 100).toFixed(1) : "0";
+            const pctM = totalLN > 0 ? ((totalM / totalLN) * 100).toFixed(1) : "0";
+            return (
+              <>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <KPIBox label="Total Lista Nominal" value={totalLN.toLocaleString()} />
+                  <KPIBox label="Secciones" value={data.stats.seccionesFound.toLocaleString()} />
+                  <KPIBox label={`Hombres (${pctH}%)`} value={totalH.toLocaleString()} color="text-blue-400" />
+                  <KPIBox label={`Mujeres (${pctM}%)`} value={totalM.toLocaleString()} color="text-pink-400" />
+                </div>
+                {/* Gender distribution bar */}
+                <div className="p-3 rounded-md bg-secondary/30 border border-border/30 space-y-1.5">
+                  <p className="text-[10px] text-muted-foreground font-mono">DISTRIBUCIÓN POR GÉNERO</p>
+                  <div className="flex h-5 rounded-full overflow-hidden">
+                    <div className="bg-blue-500 flex items-center justify-center" style={{ width: `${pctH}%` }}>
+                      <span className="text-[9px] font-bold text-white">H {pctH}%</span>
+                    </div>
+                    <div className="bg-pink-500 flex items-center justify-center" style={{ width: `${pctM}%` }}>
+                      <span className="text-[9px] font-bold text-white">M {pctM}%</span>
+                    </div>
+                  </div>
+                  <div className="flex justify-between text-[10px] text-muted-foreground">
+                    <span>👨 {totalH.toLocaleString()} hombres</span>
+                    <span>Ratio H/M: <span className="font-mono text-foreground">{totalM > 0 ? (totalH / totalM).toFixed(3) : "N/D"}</span></span>
+                    <span>👩 {totalM.toLocaleString()} mujeres</span>
+                  </div>
+                </div>
+              </>
+            );
+          })()}
 
           {/* District selector */}
           <div className="flex items-center gap-3">
