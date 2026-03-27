@@ -1,4 +1,4 @@
-import { BarChart3, Database, Map, TrendingUp } from "lucide-react";
+import { BarChart3, Database, Map, TrendingUp, Users } from "lucide-react";
 
 interface HeaderProps {
   activeTab: string;
@@ -8,6 +8,7 @@ interface HeaderProps {
 const tabs = [
   { id: "resumen", label: "Resumen", icon: BarChart3 },
   { id: "distritos", label: "Distritos", icon: Map },
+  { id: "demografia", label: "Demografía", icon: Users },
   { id: "tendencias", label: "Tendencias", icon: TrendingUp },
   { id: "fuentes", label: "Fuentes", icon: Database },
 ];

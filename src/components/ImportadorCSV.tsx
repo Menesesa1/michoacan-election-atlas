@@ -67,7 +67,7 @@ export function ImportadorCSV() {
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-xs font-semibold text-foreground">Importar Datos del INE</h3>
-          <p className="text-[10px] text-muted-foreground font-mono">CSV de cómputos distritales · PREP · Lista Nominal</p>
+          <p className="text-[10px] text-muted-foreground font-mono">CSV de cómputos distritales · PREP · Lista Nominal · Datos demográficos</p>
         </div>
         {!isUsingMock && (
           <Button
@@ -92,12 +92,13 @@ export function ImportadorCSV() {
               (<span className="font-mono text-foreground">PAN, PRI, PRD, PVEM, PT, MC, MORENA</span>).
               El sistema detecta automáticamente las columnas y agrega por distrito si los datos son a nivel casilla o sección.
             </p>
-            <p className="mt-1">
-              Descarga desde:{" "}
-              <a href="https://computos2024.ine.mx/" target="_blank" rel="noopener" className="text-primary hover:underline">Cómputos 2024</a>,{" "}
-              <a href="https://computos2018.ine.mx/" target="_blank" rel="noopener" className="text-primary hover:underline">2018</a>,{" "}
-              <a href="https://www.ine.mx/voto-y-elecciones/resultados-electorales/" target="_blank" rel="noopener" className="text-primary hover:underline">Resultados Históricos</a>
-            </p>
+             <p className="mt-1">
+               Descarga desde:{" "}
+               <a href="https://computos2024.ine.mx/" target="_blank" rel="noopener" className="text-primary hover:underline">Cómputos 2024</a>,{" "}
+               <a href="https://computos2018.ine.mx/" target="_blank" rel="noopener" className="text-primary hover:underline">2018</a>,{" "}
+               <a href="https://www.ine.mx/voto-y-elecciones/resultados-electorales/" target="_blank" rel="noopener" className="text-primary hover:underline">Resultados Históricos</a>,{" "}
+               <a href="https://www.ine.mx/transparencia/datos-abiertos/#/archivo/datos-por-rangos-de-edad-entidad-de-origen-y-sexo-del-padron-electoral-y-lista-nominal-2026" target="_blank" rel="noopener" className="text-primary hover:underline">Lista Nominal por Edad/Sexo</a>
+             </p>
           </div>
         </div>
       </div>

@@ -12,6 +12,7 @@ import { MapaInteractivo } from "@/components/MapaInteractivo";
 import { EleccionSelector } from "@/components/EleccionSelector";
 import { ImportadorCSV } from "@/components/ImportadorCSV";
 import { NivelSelector } from "@/components/NivelSelector";
+import { DemografiaPanel } from "@/components/DemografiaPanel";
 import { useElectoralData } from "@/context/DataContext";
 
 const Index = () => {
@@ -24,7 +25,7 @@ const Index = () => {
       <Header activeTab={activeTab} onTabChange={setActiveTab} />
 
       <main className="container py-4 px-4 space-y-4">
-        {activeTab !== "fuentes" && activeTab !== "tendencias" && (
+        {activeTab !== "fuentes" && activeTab !== "tendencias" && activeTab !== "demografia" && (
           <div className="flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center gap-2 flex-wrap">
               <NivelSelector />
@@ -53,6 +54,13 @@ const Index = () => {
             <MapaInteractivo eleccion={eleccion} />
             <MapaDistritos eleccion={eleccion} />
             <TablaDistritos eleccion={eleccion} />
+          </>
+        )}
+
+        {activeTab === "demografia" && (
+          <>
+            <NivelSelector />
+            <DemografiaPanel />
           </>
         )}
 

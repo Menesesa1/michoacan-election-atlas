@@ -1,0 +1,272 @@
+import { useState, useRef } from "react";
+import { Upload, Users, BarChart3, Info, CheckCircle2, AlertCircle } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
+import { parseDemographicCsv, type DemographicParseResult } from "@/lib/demographic-parser";
+import type { DemograficoDistrito } from "@/data/demographic-types";
+import { useElectoralData } from "@/context/DataContext";
+import { useToast } from "@/hooks/use-toast";
+
+export function DemografiaPanel() {
+  const { nivel } = useElectoralData();
+  const { toast } = useToast();
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [loading, setLoading] = useState(false);
+  const [data, setData] = useState<DemographicParseResult | null>(null);
+  const [selectedDist, setSelectedDist] = useState<number | null>(null);
+
+  const distritos = data ? (nivel === "federal" ? data.distritosFed : data.distritosLoc) : [];
+  const selected = selectedDist !== null ? distritos.find(d => d.distritoId === selectedDist) : distritos[0] || null;
+
+  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setLoading(true);
+    try {
+      const result = await parseDemographicCsv(file);
+      setData(result);
+      if (result.success) {
+        toast({ title: "✅ Datos demográficos importados", description: `${result.stats.seccionesFound} secciones procesadas` });
+        const dists = nivel === "federal" ? result.distritosFed : result.distritosLoc;
+        if (dists.length > 0) setSelectedDist(dists[0].distritoId);
+      } else {
+        toast({ title: "Error", description: result.errors[0] || "No se pudieron procesar", variant: "destructive" });
+      }
+    } catch {
+      toast({ title: "Error", description: "Error inesperado", variant: "destructive" });
+    } finally {
+      setLoading(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  };
+
+  // Pyramid chart data
+  const pyramidData = selected?.rangoEdad.map(r => ({
+    rango: r.rango,
+    hombres: -r.hombres,
+    mujeres: r.mujeres,
+    hombresAbs: r.hombres,
+    mujeresAbs: r.mujeres,
+    total: r.total,
+  })).reverse() || [];
+
+  const maxVal = pyramidData.reduce((m, d) => Math.max(m, Math.abs(d.hombres), d.mujeres), 0);
+
+  return (
+    <div className="glass-panel p-4 animate-slide-up space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-xs font-semibold text-foreground flex items-center gap-2">
+            <Users className="w-4 h-4 text-primary" />
+            Demografía Electoral — Lista Nominal
+          </h3>
+          <p className="text-[10px] text-muted-foreground font-mono">
+            Padrón por edad y sexo · Secciones electorales · INE DERFE
+          </p>
+        </div>
+      </div>
+
+      {!data && (
+        <>
+          <div className="p-3 rounded-md bg-primary/5 border border-primary/20 text-[11px]">
+            <div className="flex gap-2">
+              <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+              <div className="text-muted-foreground leading-relaxed">
+                <p className="font-medium text-primary mb-1">Datos del Padrón Electoral</p>
+                <p>
+                  Importa el CSV de <span className="font-mono text-foreground">Lista Nominal por rangos de edad y sexo</span> desde{" "}
+                  <a href="https://www.ine.mx/transparencia/datos-abiertos/#/archivo/datos-por-rangos-de-edad-entidad-de-origen-y-sexo-del-padron-electoral-y-lista-nominal-2026" target="_blank" rel="noopener" className="text-primary hover:underline">Datos Abiertos INE</a>.
+                </p>
+                <p className="mt-1">
+                  Columnas esperadas: <span className="font-mono text-foreground">SECCION, DISTRITO, SEXO, RANGO_EDAD, LISTA_NOMINAL</span>
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="relative">
+            <input ref={fileRef} type="file" accept=".csv" onChange={handleFile} className="absolute inset-0 opacity-0 cursor-pointer z-10" disabled={loading} />
+            <div className="flex items-center justify-center gap-3 p-6 rounded-lg border-2 border-dashed border-border/50 hover:border-primary/50 transition-colors bg-secondary/20">
+              {loading ? (
+                <span className="text-xs text-primary animate-pulse font-mono">Procesando datos demográficos...</span>
+              ) : (
+                <>
+                  <Upload className="w-5 h-5 text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground">Sube CSV de Lista Nominal con rangos de edad y sexo</span>
+                </>
+              )}
+            </div>
+          </div>
+        </>
+      )}
+
+      {data && data.success && (
+        <>
+          {/* Summary KPIs */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <KPIBox label="Total Lista Nominal" value={distritos.reduce((s, d) => s + d.listaNominal, 0).toLocaleString()} />
+            <KPIBox label="Secciones" value={data.stats.seccionesFound.toLocaleString()} />
+            <KPIBox label="Hombres" value={distritos.reduce((s, d) => s + d.hombres, 0).toLocaleString()} color="text-blue-400" />
+            <KPIBox label="Mujeres" value={distritos.reduce((s, d) => s + d.mujeres, 0).toLocaleString()} color="text-pink-400" />
+          </div>
+
+          {/* District selector */}
+          <div className="flex items-center gap-3">
+            <label className="text-[10px] text-muted-foreground font-mono">DISTRITO:</label>
+            <select
+              value={selectedDist ?? ""}
+              onChange={e => setSelectedDist(Number(e.target.value))}
+              className="h-8 rounded-md border border-border bg-secondary/50 px-2 text-xs text-foreground"
+            >
+              {distritos.map(d => (
+                <option key={d.distritoId} value={d.distritoId}>
+                  {nivel === "federal" ? "D" : "L"}{d.distritoId} · {d.secciones} secciones · LN: {d.listaNominal.toLocaleString()}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Selected district details */}
+          {selected && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {/* Population Pyramid */}
+              <div className="space-y-2">
+                <h4 className="text-[11px] font-semibold text-foreground flex items-center gap-1.5">
+                  <BarChart3 className="w-3.5 h-3.5 text-primary" />
+                  Pirámide Poblacional — {nivel === "federal" ? "D" : "L"}{selected.distritoId}
+                </h4>
+                <ResponsiveContainer width="100%" height={320}>
+                  <BarChart data={pyramidData} layout="vertical" margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
+                    <XAxis type="number" domain={[-maxVal * 1.1, maxVal * 1.1]} tickFormatter={v => Math.abs(v).toLocaleString()} tick={{ fontSize: 9, fill: "hsl(215, 12%, 50%)" }} />
+                    <YAxis type="category" dataKey="rango" tick={{ fontSize: 10, fill: "hsl(210, 20%, 80%)" }} width={40} />
+                    <Tooltip
+                      content={({ active, payload }) => {
+                        if (!active || !payload?.[0]) return null;
+                        const d = payload[0].payload;
+                        return (
+                          <div className="bg-popover border border-border rounded-md p-2 text-[11px] shadow-lg">
+                            <p className="font-semibold text-foreground mb-1">{d.rango} años</p>
+                            <p className="text-blue-400">Hombres: {d.hombresAbs.toLocaleString()}</p>
+                            <p className="text-pink-400">Mujeres: {d.mujeresAbs.toLocaleString()}</p>
+                            <p className="text-muted-foreground">Total: {d.total.toLocaleString()}</p>
+                          </div>
+                        );
+                      }}
+                    />
+                    <Bar dataKey="hombres" fill="hsl(210, 90%, 50%)" radius={[4, 0, 0, 4]} />
+                    <Bar dataKey="mujeres" fill="hsl(330, 70%, 55%)" radius={[0, 4, 4, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+                <div className="flex justify-center gap-6 text-[10px]">
+                  <span className="flex items-center gap-1"><span className="w-3 h-2 rounded bg-blue-500" /> Hombres</span>
+                  <span className="flex items-center gap-1"><span className="w-3 h-2 rounded bg-pink-500" /> Mujeres</span>
+                </div>
+              </div>
+
+              {/* Demographics Table */}
+              <div className="space-y-2">
+                <h4 className="text-[11px] font-semibold text-foreground">Desglose por Rango de Edad</h4>
+                <div className="overflow-auto max-h-[340px]">
+                  <table className="w-full text-[11px]">
+                    <thead className="sticky top-0 bg-card">
+                      <tr className="text-muted-foreground font-mono text-[10px]">
+                        <th className="text-left p-1.5">Rango</th>
+                        <th className="text-right p-1.5">Hombres</th>
+                        <th className="text-right p-1.5">Mujeres</th>
+                        <th className="text-right p-1.5">Total</th>
+                        <th className="text-right p-1.5">%</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {selected.rangoEdad.map(r => (
+                        <tr key={r.rango} className="border-t border-border/30 hover:bg-secondary/30">
+                          <td className="p-1.5 font-mono text-foreground">{r.rango}</td>
+                          <td className="p-1.5 text-right text-blue-400">{r.hombres.toLocaleString()}</td>
+                          <td className="p-1.5 text-right text-pink-400">{r.mujeres.toLocaleString()}</td>
+                          <td className="p-1.5 text-right text-foreground font-medium">{r.total.toLocaleString()}</td>
+                          <td className="p-1.5 text-right text-muted-foreground">
+                            {selected.listaNominal > 0 ? ((r.total / selected.listaNominal) * 100).toFixed(1) : "0"}%
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot>
+                      <tr className="border-t-2 border-primary/30 font-semibold">
+                        <td className="p-1.5 text-foreground">Total</td>
+                        <td className="p-1.5 text-right text-blue-400">{selected.hombres.toLocaleString()}</td>
+                        <td className="p-1.5 text-right text-pink-400">{selected.mujeres.toLocaleString()}</td>
+                        <td className="p-1.5 text-right text-foreground">{selected.listaNominal.toLocaleString()}</td>
+                        <td className="p-1.5 text-right text-muted-foreground">100%</td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+                <div className="p-2 rounded bg-primary/5 border border-primary/20 text-[10px] text-muted-foreground">
+                  <span className="text-primary font-medium">Población principal:</span>{" "}
+                  <span className="text-foreground font-mono">{selected.poblacionPrincipal}</span> años ·{" "}
+                  {selected.secciones} secciones ·{" "}
+                  Ratio H/M: <span className="font-mono text-foreground">{selected.mujeres > 0 ? (selected.hombres / selected.mujeres).toFixed(2) : "N/D"}</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* All districts overview */}
+          <div>
+            <h4 className="text-[11px] font-semibold text-foreground mb-2">Resumen por Distrito — Lista Nominal</h4>
+            <div className="overflow-auto max-h-[250px]">
+              <table className="w-full text-[11px]">
+                <thead className="sticky top-0 bg-card">
+                  <tr className="text-muted-foreground font-mono text-[10px]">
+                    <th className="text-left p-1.5">Dto.</th>
+                    <th className="text-right p-1.5">LN Total</th>
+                    <th className="text-right p-1.5">Hombres</th>
+                    <th className="text-right p-1.5">Mujeres</th>
+                    <th className="text-right p-1.5">Secciones</th>
+                    <th className="text-left p-1.5">Pob. Principal</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {distritos.map(d => (
+                    <tr
+                      key={d.distritoId}
+                      className={`border-t border-border/30 cursor-pointer hover:bg-secondary/40 ${selectedDist === d.distritoId ? "bg-primary/10" : ""}`}
+                      onClick={() => setSelectedDist(d.distritoId)}
+                    >
+                      <td className="p-1.5 font-mono font-semibold text-foreground">{nivel === "federal" ? "D" : "L"}{d.distritoId}</td>
+                      <td className="p-1.5 text-right text-foreground">{d.listaNominal.toLocaleString()}</td>
+                      <td className="p-1.5 text-right text-blue-400">{d.hombres.toLocaleString()}</td>
+                      <td className="p-1.5 text-right text-pink-400">{d.mujeres.toLocaleString()}</td>
+                      <td className="p-1.5 text-right text-muted-foreground">{d.secciones}</td>
+                      <td className="p-1.5 text-foreground font-mono">{d.poblacionPrincipal}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
+      )}
+
+      {data && !data.success && (
+        <div className="p-3 rounded-md border bg-accent/5 border-accent/20 text-[11px]">
+          <div className="flex items-center gap-2 mb-2">
+            <AlertCircle className="w-4 h-4 text-accent" />
+            <span className="font-semibold text-accent">Error en importación</span>
+          </div>
+          {data.errors.map((e, i) => <p key={i} className="text-accent">❌ {e}</p>)}
+          <div className="mt-2">
+            <button onClick={() => setData(null)} className="text-primary text-[11px] hover:underline">Intentar de nuevo</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function KPIBox({ label, value, color = "text-foreground" }: { label: string; value: string; color?: string }) {
+  return (
+    <div className="p-3 rounded-md bg-secondary/30 border border-border/30">
+      <p className="text-[10px] text-muted-foreground font-mono mb-0.5">{label}</p>
+      <p className={`text-sm font-bold ${color}`}>{value}</p>
+    </div>
+  );
+}
