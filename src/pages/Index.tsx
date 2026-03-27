@@ -12,6 +12,7 @@ import { MapaInteractivo } from "@/components/MapaInteractivo";
 import { EleccionSelector } from "@/components/EleccionSelector";
 import { ImportadorCSV } from "@/components/ImportadorCSV";
 import { NivelSelector } from "@/components/NivelSelector";
+import { DemografiaPanel } from "@/components/DemografiaPanel";
 import { useElectoralData } from "@/context/DataContext";
 
 const Index = () => {
