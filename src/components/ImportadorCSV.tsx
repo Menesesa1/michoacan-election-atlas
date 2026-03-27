@@ -92,11 +92,13 @@ export function ImportadorCSV() {
               (<span className="font-mono text-foreground">PAN, PRI, PRD, PVEM, PT, MC, MORENA</span>).
               El sistema detecta automáticamente las columnas y agrega por distrito si los datos son a nivel casilla o sección.
             </p>
-            <p className="mt-1">
-              Descarga desde:{" "}
-              <a href="https://computos2024.ine.mx/" target="_blank" rel="noopener" className="text-primary hover:underline">Cómputos 2024</a>,{" "}
-              <a href="https://computos2018.ine.mx/" target="_blank" rel="noopener" className="text-primary hover:underline">2018</a>,{" "}
-              <a href="https://www.ine.mx/voto-y-elecciones/resultados-electorales/" target="_blank" rel="noopener" className="text-primary hover:underline">Resultados Históricos</a>
+             <p className="mt-1">
+               Descarga desde:{" "}
+               <a href="https://computos2024.ine.mx/" target="_blank" rel="noopener" className="text-primary hover:underline">Cómputos 2024</a>,{" "}
+               <a href="https://computos2018.ine.mx/" target="_blank" rel="noopener" className="text-primary hover:underline">2018</a>,{" "}
+               <a href="https://www.ine.mx/voto-y-elecciones/resultados-electorales/" target="_blank" rel="noopener" className="text-primary hover:underline">Resultados Históricos</a>,{" "}
+               <a href="https://www.ine.mx/transparencia/datos-abiertos/#/archivo/datos-por-rangos-de-edad-entidad-de-origen-y-sexo-del-padron-electoral-y-lista-nominal-2026" target="_blank" rel="noopener" className="text-primary hover:underline">Lista Nominal por Edad/Sexo</a>
+             </p>
             </p>
           </div>
         </div>
