@@ -99,7 +99,6 @@ export function ImportadorCSV() {
                <a href="https://www.ine.mx/voto-y-elecciones/resultados-electorales/" target="_blank" rel="noopener" className="text-primary hover:underline">Resultados Históricos</a>,{" "}
                <a href="https://www.ine.mx/transparencia/datos-abiertos/#/archivo/datos-por-rangos-de-edad-entidad-de-origen-y-sexo-del-padron-electoral-y-lista-nominal-2026" target="_blank" rel="noopener" className="text-primary hover:underline">Lista Nominal por Edad/Sexo</a>
              </p>
-            </p>
           </div>
         </div>
       </div>
