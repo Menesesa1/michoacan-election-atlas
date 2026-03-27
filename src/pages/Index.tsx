@@ -25,7 +25,7 @@ const Index = () => {
       <Header activeTab={activeTab} onTabChange={setActiveTab} />
 
       <main className="container py-4 px-4 space-y-4">
-        {activeTab !== "fuentes" && activeTab !== "tendencias" && (
+        {activeTab !== "fuentes" && activeTab !== "tendencias" && activeTab !== "demografia" && (
           <div className="flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center gap-2 flex-wrap">
               <NivelSelector />
