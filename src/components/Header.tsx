@@ -1,4 +1,4 @@
-import { BarChart3, Database, Map, TrendingUp } from "lucide-react";
+import { BarChart3, Database, Map, TrendingUp, Users } from "lucide-react";
 
 interface HeaderProps {
   activeTab: string;
