@@ -67,7 +67,7 @@ export function ImportadorCSV() {
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-xs font-semibold text-foreground">Importar Datos del INE</h3>
-          <p className="text-[10px] text-muted-foreground font-mono">CSV de cómputos distritales · PREP · Lista Nominal</p>
+          <p className="text-[10px] text-muted-foreground font-mono">CSV de cómputos distritales · PREP · Lista Nominal · Datos demográficos</p>
         </div>
         {!isUsingMock && (
           <Button
