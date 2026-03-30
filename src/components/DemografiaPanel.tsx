@@ -79,38 +79,23 @@ export function DemografiaPanel() {
         </div>
       </div>
 
-      {!data && (
-        <>
-          <div className="p-3 rounded-md bg-primary/5 border border-primary/20 text-[11px]">
-            <div className="flex gap-2">
-              <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-              <div className="text-muted-foreground leading-relaxed">
-                <p className="font-medium text-primary mb-1">Datos del Padrón Electoral</p>
-                <p>
-                  Importa el CSV de <span className="font-mono text-foreground">Lista Nominal por rangos de edad y sexo</span> desde{" "}
-                  <a href="https://www.ine.mx/transparencia/datos-abiertos/#/archivo/datos-por-rangos-de-edad-entidad-de-origen-y-sexo-del-padron-electoral-y-lista-nominal-2026" target="_blank" rel="noopener" className="text-primary hover:underline">Datos Abiertos INE</a>.
-                </p>
-                <p className="mt-1">
-                  Columnas esperadas: <span className="font-mono text-foreground">SECCION, DISTRITO, SEXO, RANGO_EDAD, LISTA_NOMINAL</span>
-                </p>
-              </div>
+      {/* CSV upload option */}
+      <div className="p-3 rounded-md bg-primary/5 border border-primary/20 text-[11px]">
+        <div className="flex gap-2 items-center">
+          <Info className="w-4 h-4 text-primary shrink-0" />
+          <span className="text-muted-foreground">
+            {data ? "✅ Datos importados del INE" : "Usando datos estimados. Importa CSV del INE para datos reales:"}
+          </span>
+          {!data && (
+            <div className="relative ml-auto">
+              <input ref={fileRef} type="file" accept=".csv" onChange={handleFile} className="absolute inset-0 opacity-0 cursor-pointer z-10 w-24" disabled={loading} />
+              <span className="px-3 py-1 rounded bg-primary/20 text-primary text-[10px] font-mono cursor-pointer hover:bg-primary/30 transition-colors">
+                {loading ? "Procesando..." : "Subir CSV"}
+              </span>
             </div>
-          </div>
-          <div className="relative">
-            <input ref={fileRef} type="file" accept=".csv" onChange={handleFile} className="absolute inset-0 opacity-0 cursor-pointer z-10" disabled={loading} />
-            <div className="flex items-center justify-center gap-3 p-6 rounded-lg border-2 border-dashed border-border/50 hover:border-primary/50 transition-colors bg-secondary/20">
-              {loading ? (
-                <span className="text-xs text-primary animate-pulse font-mono">Procesando datos demográficos...</span>
-              ) : (
-                <>
-                  <Upload className="w-5 h-5 text-muted-foreground" />
-                  <span className="text-xs text-muted-foreground">Sube CSV de Lista Nominal con rangos de edad y sexo</span>
-                </>
-              )}
-            </div>
-          </div>
-        </>
-      )}
+          )}
+        </div>
+      </div>
 
       {data && data.success && (
         <>
