@@ -146,9 +146,9 @@ export function parseDemographicCsv(
           const sec = secMap.get(key)!;
           sec.listaNominal += ln;
 
-          if (sexo === "H" || sexo === "HOMBRE" || sexo === "HOMBRES" || sexo === "M" || sexo === "MASCULINO") {
+          if (sexo === "H" || sexo === "HOMBRE" || sexo === "HOMBRES" || sexo === "MASCULINO") {
             sec.hombres += ln;
-          } else if (sexo === "F" || sexo === "MUJER" || sexo === "MUJERES" || sexo === "FEMENINO") {
+          } else if (sexo === "M" || sexo === "F" || sexo === "MUJER" || sexo === "MUJERES" || sexo === "FEMENINO") {
             sec.mujeres += ln;
           }
 
