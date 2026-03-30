@@ -1,8 +1,9 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Upload, Users, BarChart3, Info, CheckCircle2, AlertCircle } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import { parseDemographicCsv, type DemographicParseResult } from "@/lib/demographic-parser";
 import type { DemograficoDistrito } from "@/data/demographic-types";
+import { demograficosFederalesMock, demograficosLocalesMock } from "@/data/demographic-mock";
 import { useElectoralData } from "@/context/DataContext";
 import { useToast } from "@/hooks/use-toast";
 
@@ -12,10 +13,23 @@ export function DemografiaPanel() {
   const fileRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<DemographicParseResult | null>(null);
-  const [selectedDist, setSelectedDist] = useState<number | null>(null);
+  const [selectedDist, setSelectedDist] = useState<number>(1);
 
-  const distritos = data ? (nivel === "federal" ? data.distritosFed : data.distritosLoc) : [];
-  const selected = selectedDist !== null ? distritos.find(d => d.distritoId === selectedDist) : distritos[0] || null;
+  // Use imported data if available, otherwise use mock
+  const distritos = data
+    ? (nivel === "federal" ? data.distritosFed : data.distritosLoc)
+    : (nivel === "federal" ? demograficosFederalesMock : demograficosLocalesMock);
+  const selected = distritos.find(d => d.distritoId === selectedDist) || distritos[0] || null;
+
+  // Reset selection when nivel changes
+  useEffect(() => {
+    const dists = data
+      ? (nivel === "federal" ? data.distritosFed : data.distritosLoc)
+      : (nivel === "federal" ? demograficosFederalesMock : demograficosLocalesMock);
+    if (dists.length > 0 && !dists.find(d => d.distritoId === selectedDist)) {
+      setSelectedDist(dists[0].distritoId);
+    }
+  }, [nivel, data, selectedDist]);
 
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
