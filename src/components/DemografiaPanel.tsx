@@ -110,7 +110,7 @@ export function DemografiaPanel() {
               <>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   <KPIBox label="Total Lista Nominal" value={totalLN.toLocaleString()} />
-                  <KPIBox label="Secciones" value={data.stats.seccionesFound.toLocaleString()} />
+                  <KPIBox label="Secciones" value={distritos.reduce((s, d) => s + d.secciones, 0).toLocaleString()} />
                   <KPIBox label={`Hombres (${pctH}%)`} value={totalH.toLocaleString()} color="text-blue-400" />
                   <KPIBox label={`Mujeres (${pctM}%)`} value={totalM.toLocaleString()} color="text-pink-400" />
                 </div>
