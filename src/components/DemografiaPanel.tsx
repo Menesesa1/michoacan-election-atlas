@@ -236,6 +236,106 @@ export function DemografiaPanel() {
             </div>
           )}
 
+          {/* Comparative gender chart across districts */}
+          <div className="space-y-2">
+            <h4 className="text-[11px] font-semibold text-foreground flex items-center gap-1.5">
+              <BarChart3 className="w-3.5 h-3.5 text-primary" />
+              Comparativo de Género por Distrito
+            </h4>
+            <ResponsiveContainer width="100%" height={280}>
+              <ComposedChart
+                data={distritos.map(d => ({
+                  name: `${nivel === "federal" ? "D" : "L"}${d.distritoId}`,
+                  hombres: d.hombres,
+                  mujeres: d.mujeres,
+                  pctMujeres: d.listaNominal > 0 ? +((d.mujeres / d.listaNominal) * 100).toFixed(1) : 0,
+                }))}
+                margin={{ top: 5, right: 30, left: 10, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(215, 12%, 20%)" />
+                <XAxis dataKey="name" tick={{ fontSize: 10, fill: "hsl(215, 12%, 50%)" }} />
+                <YAxis yAxisId="abs" tick={{ fontSize: 9, fill: "hsl(215, 12%, 50%)" }} tickFormatter={v => (v / 1000).toFixed(0) + "k"} />
+                <YAxis yAxisId="pct" orientation="right" domain={[48, 56]} tick={{ fontSize: 9, fill: "hsl(330, 70%, 55%)" }} tickFormatter={v => v + "%"} />
+                <Tooltip
+                  content={({ active, payload }) => {
+                    if (!active || !payload?.[0]) return null;
+                    const d = payload[0].payload;
+                    return (
+                      <div className="bg-popover border border-border rounded-md p-2 text-[11px] shadow-lg">
+                        <p className="font-semibold text-foreground mb-1">{d.name}</p>
+                        <p className="text-blue-400">Hombres: {d.hombres.toLocaleString()}</p>
+                        <p className="text-pink-400">Mujeres: {d.mujeres.toLocaleString()}</p>
+                        <p className="text-muted-foreground">% Mujeres: {d.pctMujeres}%</p>
+                      </div>
+                    );
+                  }}
+                />
+                <Bar yAxisId="abs" dataKey="hombres" fill="hsl(210, 90%, 50%)" radius={[3, 3, 0, 0]} barSize={nivel === "local" ? 10 : 18} />
+                <Bar yAxisId="abs" dataKey="mujeres" fill="hsl(330, 70%, 55%)" radius={[3, 3, 0, 0]} barSize={nivel === "local" ? 10 : 18} />
+                <Line yAxisId="pct" type="monotone" dataKey="pctMujeres" stroke="hsl(45, 90%, 55%)" strokeWidth={2} dot={{ r: 3, fill: "hsl(45, 90%, 55%)" }} name="% Mujeres" />
+              </ComposedChart>
+            </ResponsiveContainer>
+            <div className="flex justify-center gap-6 text-[10px]">
+              <span className="flex items-center gap-1"><span className="w-3 h-2 rounded bg-blue-500" /> Hombres</span>
+              <span className="flex items-center gap-1"><span className="w-3 h-2 rounded bg-pink-500" /> Mujeres</span>
+              <span className="flex items-center gap-1"><span className="w-3 h-2 rounded" style={{ background: "hsl(45, 90%, 55%)" }} /> % Mujeres</span>
+            </div>
+          </div>
+
+          {/* Age-Gender heatmap table across districts */}
+          <div className="space-y-2">
+            <h4 className="text-[11px] font-semibold text-foreground flex items-center gap-1.5">
+              <Users className="w-3.5 h-3.5 text-primary" />
+              Distribución Edad × Género por Distrito
+            </h4>
+            <div className="overflow-auto max-h-[350px]">
+              <table className="w-full text-[10px]">
+                <thead className="sticky top-0 bg-card z-10">
+                  <tr className="text-muted-foreground font-mono">
+                    <th className="text-left p-1 sticky left-0 bg-card">Dto.</th>
+                    {selected?.rangoEdad.map(r => (
+                      <th key={r.rango} className="text-center p-1 whitespace-nowrap" colSpan={2}>{r.rango}</th>
+                    ))}
+                  </tr>
+                  <tr className="text-[8px] text-muted-foreground/70 font-mono">
+                    <th className="sticky left-0 bg-card"></th>
+                    {selected?.rangoEdad.map(r => (
+                      <React.Fragment key={r.rango}>
+                        <th className="text-center p-0.5 text-blue-400">H</th>
+                        <th className="text-center p-0.5 text-pink-400">M</th>
+                      </React.Fragment>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {distritos.map(d => {
+                    const maxCell = Math.max(...d.rangoEdad.map(r => Math.max(r.hombres, r.mujeres)));
+                    return (
+                      <tr key={d.distritoId} className={`border-t border-border/20 hover:bg-secondary/30 ${selectedDist === d.distritoId ? "bg-primary/10" : ""}`} onClick={() => setSelectedDist(d.distritoId)}>
+                        <td className="p-1 font-mono font-semibold text-foreground sticky left-0 bg-card cursor-pointer">{nivel === "federal" ? "D" : "L"}{d.distritoId}</td>
+                        {d.rangoEdad.map(r => {
+                          const hIntensity = maxCell > 0 ? (r.hombres / maxCell) : 0;
+                          const mIntensity = maxCell > 0 ? (r.mujeres / maxCell) : 0;
+                          return (
+                            <React.Fragment key={r.rango}>
+                              <td className="p-0.5 text-center" style={{ background: `hsla(210, 90%, 50%, ${hIntensity * 0.4})` }}>
+                                {r.hombres > 0 ? (r.hombres / 1000).toFixed(1) + "k" : "–"}
+                              </td>
+                              <td className="p-0.5 text-center" style={{ background: `hsla(330, 70%, 55%, ${mIntensity * 0.4})` }}>
+                                {r.mujeres > 0 ? (r.mujeres / 1000).toFixed(1) + "k" : "–"}
+                              </td>
+                            </React.Fragment>
+                          );
+                        })}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            <p className="text-[9px] text-muted-foreground">Intensidad del color = proporción relativa dentro del distrito. H = Hombres, M = Mujeres. Valores en miles.</p>
+          </div>
+
           {/* All districts overview */}
           <div>
             <h4 className="text-[11px] font-semibold text-foreground mb-2">Resumen por Distrito — Lista Nominal</h4>
@@ -247,6 +347,7 @@ export function DemografiaPanel() {
                     <th className="text-right p-1.5">LN Total</th>
                     <th className="text-right p-1.5">Hombres</th>
                     <th className="text-right p-1.5">Mujeres</th>
+                    <th className="text-right p-1.5">% Mujeres</th>
                     <th className="text-right p-1.5">Secciones</th>
                     <th className="text-left p-1.5">Pob. Principal</th>
                   </tr>
@@ -262,6 +363,9 @@ export function DemografiaPanel() {
                       <td className="p-1.5 text-right text-foreground">{d.listaNominal.toLocaleString()}</td>
                       <td className="p-1.5 text-right text-blue-400">{d.hombres.toLocaleString()}</td>
                       <td className="p-1.5 text-right text-pink-400">{d.mujeres.toLocaleString()}</td>
+                      <td className="p-1.5 text-right text-muted-foreground font-mono">
+                        {d.listaNominal > 0 ? ((d.mujeres / d.listaNominal) * 100).toFixed(1) : "0"}%
+                      </td>
                       <td className="p-1.5 text-right text-muted-foreground">{d.secciones}</td>
                       <td className="p-1.5 text-foreground font-mono">{d.poblacionPrincipal}</td>
                     </tr>
