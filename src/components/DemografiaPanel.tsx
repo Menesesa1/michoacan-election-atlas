@@ -97,7 +97,7 @@ export function DemografiaPanel() {
         </div>
       </div>
 
-      {data && data.success && (
+      {(!data || data.success) && distritos.length > 0 && (
         <>
           {/* Summary KPIs */}
           {(() => {
