@@ -1,8 +1,9 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Upload, Users, BarChart3, Info, CheckCircle2, AlertCircle } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import { parseDemographicCsv, type DemographicParseResult } from "@/lib/demographic-parser";
 import type { DemograficoDistrito } from "@/data/demographic-types";
+import { demograficosFederalesMock, demograficosLocalesMock } from "@/data/demographic-mock";
 import { useElectoralData } from "@/context/DataContext";
 import { useToast } from "@/hooks/use-toast";
 
@@ -12,10 +13,23 @@ export function DemografiaPanel() {
   const fileRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<DemographicParseResult | null>(null);
-  const [selectedDist, setSelectedDist] = useState<number | null>(null);
+  const [selectedDist, setSelectedDist] = useState<number>(1);
 
-  const distritos = data ? (nivel === "federal" ? data.distritosFed : data.distritosLoc) : [];
-  const selected = selectedDist !== null ? distritos.find(d => d.distritoId === selectedDist) : distritos[0] || null;
+  // Use imported data if available, otherwise use mock
+  const distritos = data
+    ? (nivel === "federal" ? data.distritosFed : data.distritosLoc)
+    : (nivel === "federal" ? demograficosFederalesMock : demograficosLocalesMock);
+  const selected = distritos.find(d => d.distritoId === selectedDist) || distritos[0] || null;
+
+  // Reset selection when nivel changes
+  useEffect(() => {
+    const dists = data
+      ? (nivel === "federal" ? data.distritosFed : data.distritosLoc)
+      : (nivel === "federal" ? demograficosFederalesMock : demograficosLocalesMock);
+    if (dists.length > 0 && !dists.find(d => d.distritoId === selectedDist)) {
+      setSelectedDist(dists[0].distritoId);
+    }
+  }, [nivel, data, selectedDist]);
 
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -65,40 +79,25 @@ export function DemografiaPanel() {
         </div>
       </div>
 
-      {!data && (
-        <>
-          <div className="p-3 rounded-md bg-primary/5 border border-primary/20 text-[11px]">
-            <div className="flex gap-2">
-              <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-              <div className="text-muted-foreground leading-relaxed">
-                <p className="font-medium text-primary mb-1">Datos del Padrón Electoral</p>
-                <p>
-                  Importa el CSV de <span className="font-mono text-foreground">Lista Nominal por rangos de edad y sexo</span> desde{" "}
-                  <a href="https://www.ine.mx/transparencia/datos-abiertos/#/archivo/datos-por-rangos-de-edad-entidad-de-origen-y-sexo-del-padron-electoral-y-lista-nominal-2026" target="_blank" rel="noopener" className="text-primary hover:underline">Datos Abiertos INE</a>.
-                </p>
-                <p className="mt-1">
-                  Columnas esperadas: <span className="font-mono text-foreground">SECCION, DISTRITO, SEXO, RANGO_EDAD, LISTA_NOMINAL</span>
-                </p>
-              </div>
+      {/* CSV upload option */}
+      <div className="p-3 rounded-md bg-primary/5 border border-primary/20 text-[11px]">
+        <div className="flex gap-2 items-center">
+          <Info className="w-4 h-4 text-primary shrink-0" />
+          <span className="text-muted-foreground">
+            {data ? "✅ Datos importados del INE" : "Usando datos estimados. Importa CSV del INE para datos reales:"}
+          </span>
+          {!data && (
+            <div className="relative ml-auto">
+              <input ref={fileRef} type="file" accept=".csv" onChange={handleFile} className="absolute inset-0 opacity-0 cursor-pointer z-10 w-24" disabled={loading} />
+              <span className="px-3 py-1 rounded bg-primary/20 text-primary text-[10px] font-mono cursor-pointer hover:bg-primary/30 transition-colors">
+                {loading ? "Procesando..." : "Subir CSV"}
+              </span>
             </div>
-          </div>
-          <div className="relative">
-            <input ref={fileRef} type="file" accept=".csv" onChange={handleFile} className="absolute inset-0 opacity-0 cursor-pointer z-10" disabled={loading} />
-            <div className="flex items-center justify-center gap-3 p-6 rounded-lg border-2 border-dashed border-border/50 hover:border-primary/50 transition-colors bg-secondary/20">
-              {loading ? (
-                <span className="text-xs text-primary animate-pulse font-mono">Procesando datos demográficos...</span>
-              ) : (
-                <>
-                  <Upload className="w-5 h-5 text-muted-foreground" />
-                  <span className="text-xs text-muted-foreground">Sube CSV de Lista Nominal con rangos de edad y sexo</span>
-                </>
-              )}
-            </div>
-          </div>
-        </>
-      )}
+          )}
+        </div>
+      </div>
 
-      {data && data.success && (
+      {(!data || data.success) && distritos.length > 0 && (
         <>
           {/* Summary KPIs */}
           {(() => {
@@ -111,7 +110,7 @@ export function DemografiaPanel() {
               <>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   <KPIBox label="Total Lista Nominal" value={totalLN.toLocaleString()} />
-                  <KPIBox label="Secciones" value={data.stats.seccionesFound.toLocaleString()} />
+                  <KPIBox label="Secciones" value={distritos.reduce((s, d) => s + d.secciones, 0).toLocaleString()} />
                   <KPIBox label={`Hombres (${pctH}%)`} value={totalH.toLocaleString()} color="text-blue-400" />
                   <KPIBox label={`Mujeres (${pctM}%)`} value={totalM.toLocaleString()} color="text-pink-400" />
                 </div>
