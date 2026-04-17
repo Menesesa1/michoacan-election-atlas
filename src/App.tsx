@@ -16,6 +16,9 @@ import Tendencias from "./pages/Tendencias";
 import Crisis from "./pages/Crisis";
 import Fuentes from "./pages/Fuentes";
 import Socioeconomico from "./pages/Socioeconomico";
+import Gobernador from "./pages/Gobernador";
+import DiputadosLocales from "./pages/DiputadosLocales";
+import Ayuntamientos from "./pages/Ayuntamientos";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -39,11 +42,14 @@ const App = () => (
                 }
               >
                 <Route path="/mando" element={<MandoCentral />} />
-                <Route path="/distritos" element={<Distritos />} />
+                <Route path="/gobernador" element={<Gobernador />} />
+                <Route path="/diputados-locales" element={<DiputadosLocales />} />
+                <Route path="/ayuntamientos" element={<Ayuntamientos />} />
+                <Route path="/socioeconomico" element={<Socioeconomico />} />
                 <Route path="/demografia" element={<Demografia />} />
                 <Route path="/tendencias" element={<Tendencias />} />
                 <Route path="/crisis" element={<Crisis />} />
-                <Route path="/socioeconomico" element={<Socioeconomico />} />
+                <Route path="/distritos" element={<Distritos />} />
                 <Route path="/fuentes" element={<Fuentes />} />
               </Route>
               <Route path="*" element={<NotFound />} />
