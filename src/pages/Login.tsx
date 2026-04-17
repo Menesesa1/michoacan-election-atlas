@@ -9,8 +9,8 @@ import { useAuth } from "@/context/AuthContext";
 import { EmeLogo } from "@/components/EmeLogo";
 
 const schema = z.object({
-  username: z.string().trim().min(2, "Usuario requerido").max(60),
-  password: z.string().min(4, "Contraseña requerida").max(120),
+  username: z.string().trim().email("Correo electrónico inválido").max(120),
+  password: z.string().min(6, "Mínimo 6 caracteres").max(120),
 });
 
 export default function Login() {
@@ -28,7 +28,7 @@ export default function Login() {
     navigate(from, { replace: true });
   }
 
-  const onSubmit = (e: FormEvent) => {
+  const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
     const parsed = schema.safeParse({ username, password });
@@ -37,7 +37,7 @@ export default function Login() {
       return;
     }
     setSubmitting(true);
-    const res = login(parsed.data.username, parsed.data.password);
+    const res = await login(parsed.data.username, parsed.data.password);
     setSubmitting(false);
     if (!res.ok) {
       setError(res.error || "Error al iniciar sesión");
@@ -92,15 +92,15 @@ export default function Login() {
           <form onSubmit={onSubmit} className="space-y-5 executive-panel p-6 gold-border">
             <div className="space-y-2">
               <Label htmlFor="username" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Usuario
+                Correo electrónico
               </Label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   id="username"
-                  type="text"
-                  autoComplete="username"
-                  placeholder="admin"
+                  type="email"
+                  autoComplete="email"
+                  placeholder="tu@correo.com"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   className="pl-9 bg-background/40 border-border focus-visible:ring-primary"
@@ -141,8 +141,10 @@ export default function Login() {
               {submitting ? "Verificando…" : "Acceder al sistema"}
             </Button>
 
-            <div className="text-[10px] text-muted-foreground font-mono text-center pt-2 border-t border-border/50">
-              Demo: <span className="text-primary">admin</span> / <span className="text-primary">eme2025</span>
+            <div className="text-[10px] text-muted-foreground font-mono text-center pt-2 border-t border-border/50 leading-relaxed">
+              Si es tu primera vez, se creará la cuenta automáticamente.
+              <br />
+              Mínimo 6 caracteres en la contraseña.
             </div>
           </form>
 
