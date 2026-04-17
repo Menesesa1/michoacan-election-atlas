@@ -1,6 +1,7 @@
 // Loader for INEGI ECEG (Estadísticas Censales a Escalas Geoelectorales)
 // Source: ECEG_16_Michoacan.xlsx — 2,694 secciones × 192 indicadores
 import * as XLSX from "xlsx";
+import { loadCatalogo, lookupSeccion, nombreMunicipio, type SeccionCat } from "./secciones-catalogo";
 
 export interface SeccionCenso {
   entidad: number;
@@ -48,7 +49,7 @@ let cache: SeccionCenso[] | null = null;
 
 export async function loadECEG(): Promise<SeccionCenso[]> {
   if (cache) return cache;
-  const res = await fetch("/data/ECEG_16_Michoacan.xlsx");
+  const [, res] = await Promise.all([loadCatalogo(), fetch("/data/ECEG_16_Michoacan.xlsx")]);
   if (!res.ok) throw new Error("No se pudo cargar el dataset ECEG");
   const buf = await res.arrayBuffer();
   const wb = XLSX.read(buf, { type: "array" });
@@ -56,6 +57,36 @@ export async function loadECEG(): Promise<SeccionCenso[]> {
   const rows = XLSX.utils.sheet_to_json<SeccionCenso>(sheet, { defval: 0 });
   cache = rows.filter((r) => Number(r.entidad) === 16 && Number(r.seccion) > 0);
   return cache;
+}
+
+// Agrupa secciones por municipio o distrito federal (usa catálogo INE)
+export interface GrupoCenso {
+  clave: number;
+  nombre: string;
+  numSecciones: number;
+  resumen: ResumenCenso;
+}
+
+export function agruparPor(
+  rows: SeccionCenso[],
+  dimension: "municipio" | "distrito",
+): GrupoCenso[] {
+  const groups = new Map<number, SeccionCenso[]>();
+  for (const r of rows) {
+    const cat = lookupSeccion(Number(r.seccion));
+    if (!cat) continue;
+    const key = dimension === "municipio" ? cat.mun : cat.dis;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key)!.push(r);
+  }
+  return Array.from(groups.entries())
+    .map(([clave, secs]) => ({
+      clave,
+      nombre: dimension === "municipio" ? nombreMunicipio(clave) : `Distrito ${clave.toString().padStart(2, "0")}`,
+      numSecciones: secs.length,
+      resumen: resumir(secs),
+    }))
+    .sort((a, b) => b.resumen.POBTOT - a.resumen.POBTOT);
 }
 
 export interface ResumenCenso {

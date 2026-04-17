@@ -22,7 +22,8 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { loadECEG, resumir, type SeccionCenso } from "@/lib/eceg-loader";
+import { loadECEG, resumir, agruparPor, type SeccionCenso, type GrupoCenso } from "@/lib/eceg-loader";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Database, GraduationCap, Home, Users, Wifi, Briefcase } from "lucide-react";
 
 const fmt = (n: number) => new Intl.NumberFormat("es-MX").format(Math.round(n));
@@ -40,6 +41,8 @@ export default function Socioeconomico() {
   }, []);
 
   const resumen = useMemo(() => (data ? resumir(data) : null), [data]);
+  const porMunicipio = useMemo<GrupoCenso[]>(() => (data ? agruparPor(data, "municipio") : []), [data]);
+  const porDistrito = useMemo<GrupoCenso[]>(() => (data ? agruparPor(data, "distrito") : []), [data]);
 
   const seccionesFiltradas = useMemo(() => {
     if (!data) return [];
@@ -139,52 +142,76 @@ export default function Socioeconomico() {
             </Card>
           </div>
 
-          {/* Tabla de secciones */}
-          <Card className="p-4">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-3">
-              <div>
-                <h3 className="text-sm font-semibold text-foreground">Detalle por sección electoral</h3>
-                <p className="text-xs text-muted-foreground">Mostrando primeras 50 de {fmt(data!.length)} secciones</p>
-              </div>
-              <Input
-                placeholder="Filtrar por número de sección..."
-                value={filtro}
-                onChange={(e) => setFiltro(e.target.value)}
-                className="md:w-64"
-              />
-            </div>
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Sección</TableHead>
-                    <TableHead className="text-right">Población</TableHead>
-                    <TableHead className="text-right">18+</TableHead>
-                    <TableHead className="text-right">Escolaridad</TableHead>
-                    <TableHead className="text-right">% Internet</TableHead>
-                    <TableHead className="text-right">% Auto</TableHead>
-                    <TableHead className="text-right">% Sin SS</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {seccionesFiltradas.map((r) => {
-                    const tviv = Number(r.TVIVHAB) || 1;
-                    return (
-                      <TableRow key={r.seccion}>
-                        <TableCell className="font-mono">{r.seccion}</TableCell>
-                        <TableCell className="text-right">{fmt(r.POBTOT)}</TableCell>
-                        <TableCell className="text-right">{fmt(r.P_18YMAS)}</TableCell>
-                        <TableCell className="text-right">{Number(r.GRAPROES).toFixed(1)}</TableCell>
-                        <TableCell className="text-right">{((Number(r.VPH_INTER) / tviv) * 100).toFixed(1)}%</TableCell>
-                        <TableCell className="text-right">{((Number(r.VPH_AUTOM) / tviv) * 100).toFixed(1)}%</TableCell>
-                        <TableCell className="text-right">{((Number(r.PSINDER) / Math.max(1, Number(r.POBTOT))) * 100).toFixed(1)}%</TableCell>
+          {/* Tabs: Municipios / Distritos / Secciones */}
+          <Tabs defaultValue="municipios" className="w-full">
+            <TabsList>
+              <TabsTrigger value="municipios">Municipios ({porMunicipio.length})</TabsTrigger>
+              <TabsTrigger value="distritos">Distritos federales ({porDistrito.length})</TabsTrigger>
+              <TabsTrigger value="secciones">Secciones ({fmt(data!.length)})</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="municipios">
+              <Card className="p-4">
+                <h3 className="text-sm font-semibold text-foreground mb-3">Perfil por municipio (113 municipios INEGI)</h3>
+                <GrupoTable grupos={porMunicipio} colName="Municipio" />
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="distritos">
+              <Card className="p-4">
+                <h3 className="text-sm font-semibold text-foreground mb-3">Perfil por distrito federal (cartografía INE 2022)</h3>
+                <GrupoTable grupos={porDistrito} colName="Distrito" />
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="secciones">
+              <Card className="p-4">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-3">
+                  <div>
+                    <h3 className="text-sm font-semibold text-foreground">Detalle por sección electoral</h3>
+                    <p className="text-xs text-muted-foreground">Mostrando primeras 50 de {fmt(data!.length)} secciones</p>
+                  </div>
+                  <Input
+                    placeholder="Filtrar por número de sección..."
+                    value={filtro}
+                    onChange={(e) => setFiltro(e.target.value)}
+                    className="md:w-64"
+                  />
+                </div>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Sección</TableHead>
+                        <TableHead className="text-right">Población</TableHead>
+                        <TableHead className="text-right">18+</TableHead>
+                        <TableHead className="text-right">Escolaridad</TableHead>
+                        <TableHead className="text-right">% Internet</TableHead>
+                        <TableHead className="text-right">% Auto</TableHead>
+                        <TableHead className="text-right">% Sin SS</TableHead>
                       </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </div>
-          </Card>
+                    </TableHeader>
+                    <TableBody>
+                      {seccionesFiltradas.map((r) => {
+                        const tviv = Number(r.TVIVHAB) || 1;
+                        return (
+                          <TableRow key={r.seccion}>
+                            <TableCell className="font-mono">{r.seccion}</TableCell>
+                            <TableCell className="text-right">{fmt(r.POBTOT)}</TableCell>
+                            <TableCell className="text-right">{fmt(r.P_18YMAS)}</TableCell>
+                            <TableCell className="text-right">{Number(r.GRAPROES).toFixed(1)}</TableCell>
+                            <TableCell className="text-right">{((Number(r.VPH_INTER) / tviv) * 100).toFixed(1)}%</TableCell>
+                            <TableCell className="text-right">{((Number(r.VPH_AUTOM) / tviv) * 100).toFixed(1)}%</TableCell>
+                            <TableCell className="text-right">{((Number(r.PSINDER) / Math.max(1, Number(r.POBTOT))) * 100).toFixed(1)}%</TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              </Card>
+            </TabsContent>
+          </Tabs>
 
           <Card className="p-4 bg-muted/30">
             <p className="text-xs text-muted-foreground">
@@ -210,5 +237,42 @@ function KPI({ icon: Icon, label, value, sub }: { icon: any; label: string; valu
         <Icon className="w-4 h-4 text-primary mt-0.5" />
       </div>
     </Card>
+  );
+}
+
+function GrupoTable({ grupos, colName }: { grupos: GrupoCenso[]; colName: string }) {
+  return (
+    <div className="overflow-x-auto max-h-[600px] overflow-y-auto">
+      <Table>
+        <TableHeader className="sticky top-0 bg-card z-10">
+          <TableRow>
+            <TableHead>{colName}</TableHead>
+            <TableHead className="text-right">Secciones</TableHead>
+            <TableHead className="text-right">Población</TableHead>
+            <TableHead className="text-right">Escolaridad</TableHead>
+            <TableHead className="text-right">% Postbásica</TableHead>
+            <TableHead className="text-right">% Ocupación</TableHead>
+            <TableHead className="text-right">% Internet</TableHead>
+            <TableHead className="text-right">% Sin SS</TableHead>
+            <TableHead className="text-right">% Lengua ind.</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {grupos.map((g) => (
+            <TableRow key={g.clave}>
+              <TableCell className="font-medium">{g.nombre}</TableCell>
+              <TableCell className="text-right font-mono text-xs">{g.numSecciones}</TableCell>
+              <TableCell className="text-right">{fmt(g.resumen.POBTOT)}</TableCell>
+              <TableCell className="text-right">{g.resumen.graProEscolaridad.toFixed(1)}</TableCell>
+              <TableCell className="text-right">{pct(g.resumen.pctPostBasica)}</TableCell>
+              <TableCell className="text-right">{pct(g.resumen.pctOcupacion)}</TableCell>
+              <TableCell className="text-right">{pct(g.resumen.pctVivConInternet)}</TableCell>
+              <TableCell className="text-right">{pct(g.resumen.pctSinDerechohabiencia)}</TableCell>
+              <TableCell className="text-right">{pct(g.resumen.pctHablaLenguaIndigena)}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
   );
 }
