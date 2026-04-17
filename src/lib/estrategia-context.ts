@@ -235,6 +235,7 @@ export function buildSnapshot(params: {
     horizonte,
     historico: historico.sort((a, b) => a.año - b.año),
     demografia,
+    composicion_territorial,
     competitividad,
     alertas_activas: alertas,
     supuestos_usuario: supuestos,
