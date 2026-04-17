@@ -1,54 +1,89 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
-
-interface AuthUser {
-  username: string;
-  loggedAt: string;
-}
+import { supabase } from "@/integrations/supabase/client";
+import type { Session, User } from "@supabase/supabase-js";
 
 interface AuthContextValue {
-  user: AuthUser | null;
+  user: User | null;
+  session: Session | null;
   isAuthenticated: boolean;
-  login: (username: string, password: string) => { ok: boolean; error?: string };
-  logout: () => void;
+  loading: boolean;
+  /**
+   * Inicia sesión con email + password. Si la cuenta no existe, intenta crearla
+   * (signup) y entrar inmediatamente — flujo demo con auto-confirm activo.
+   */
+  login: (email: string, password: string) => Promise<{ ok: boolean; error?: string }>;
+  logout: () => Promise<void>;
 }
-
-const STORAGE_KEY = "eme_auth_user";
-
-// Demo credentials — client-side only. Replace with real backend auth later.
-const DEMO_USER = "admin";
-const DEMO_PASS = "eme2025";
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) setUser(JSON.parse(raw));
-    } catch {
-      // ignore
-    }
+    // Subscribirse PRIMERO para no perder eventos durante la hidratación.
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, sess) => {
+      setSession(sess);
+      setUser(sess?.user ?? null);
+    });
+    // Luego hidratar la sesión existente.
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session);
+      setUser(data.session?.user ?? null);
+      setLoading(false);
+    });
+    return () => sub.subscription.unsubscribe();
   }, []);
 
-  const login = (username: string, password: string) => {
-    if (username.trim().toLowerCase() === DEMO_USER && password === DEMO_PASS) {
-      const u: AuthUser = { username: username.trim(), loggedAt: new Date().toISOString() };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(u));
-      setUser(u);
-      return { ok: true };
-    }
-    return { ok: false, error: "Credenciales inválidas. Verifique usuario y contraseña." };
+  const login = async (email: string, password: string) => {
+    const emailNorm = email.trim().toLowerCase();
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: emailNorm,
+      password,
+    });
+    if (!signInError) return { ok: true };
+
+    // Si el usuario no existe, intenta crearlo (auto-confirm activo en Cloud).
+    const msg = signInError.message?.toLowerCase() ?? "";
+    const looksMissing =
+      msg.includes("invalid login") ||
+      msg.includes("invalid credentials") ||
+      msg.includes("user not found");
+    if (!looksMissing) return { ok: false, error: signInError.message };
+
+    const { error: signUpError } = await supabase.auth.signUp({
+      email: emailNorm,
+      password,
+      options: { emailRedirectTo: window.location.origin },
+    });
+    if (signUpError) return { ok: false, error: signUpError.message };
+
+    // Reintenta sign-in (si auto-confirm está activo, ya hay sesión inmediata).
+    const { error: retryError } = await supabase.auth.signInWithPassword({
+      email: emailNorm,
+      password,
+    });
+    if (retryError) return { ok: false, error: retryError.message };
+    return { ok: true };
   };
 
-  const logout = () => {
-    localStorage.removeItem(STORAGE_KEY);
-    setUser(null);
+  const logout = async () => {
+    await supabase.auth.signOut();
   };
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, logout }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        session,
+        isAuthenticated: !!session,
+        loading,
+        login,
+        logout,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

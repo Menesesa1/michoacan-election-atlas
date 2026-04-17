@@ -195,7 +195,7 @@ export function AppSidebar() {
       <SidebarFooter className="border-t border-sidebar-border p-3">
         {!collapsed && user && (
           <div className="text-[10px] font-mono text-muted-foreground mb-2 px-1 truncate">
-            <span className="text-primary">●</span> {user.username}
+            <span className="text-primary">●</span> {user.email}
           </div>
         )}
         <SidebarMenuButton onClick={logout} className="hover:bg-destructive/15 hover:text-destructive">
