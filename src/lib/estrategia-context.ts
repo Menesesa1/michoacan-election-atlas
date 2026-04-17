@@ -3,6 +3,11 @@
 import type { DistritoFederal, DistritoLocal, Partido } from "@/data/electoral-data";
 import type { NivelEstrategia, Posicion } from "@/data/estrategia-templates";
 import { MUNICIPIOS_ESTRATEGICOS } from "@/data/locales/ayuntamientos";
+import {
+  getCatalogoSync,
+  getDistritosLocales,
+  type SeccionCat,
+} from "@/lib/secciones-catalogo";
 
 export interface SnapshotPayload {
   nivel: NivelEstrategia;
