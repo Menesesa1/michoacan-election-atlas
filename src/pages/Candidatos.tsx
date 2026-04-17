@@ -92,11 +92,9 @@ export default function Candidatos() {
   };
 
   const toggleSeleccion = (id: string) => {
-    setSeleccionados((prev) => {
-      if (prev.includes(id)) return prev.filter((x) => x !== id);
-      if (prev.length >= 2) return [prev[1], id];
-      return [...prev, id];
-    });
+    setSeleccionados((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
   };
 
   const filtrados = useMemo(() => {
@@ -126,10 +124,15 @@ export default function Candidatos() {
             Compáralos lado a lado y conéctalos a tu Estrategia 360.
           </p>
         </div>
-        <div className="flex gap-2">
-          {seleccionados.length === 2 && (
+        <div className="flex flex-wrap gap-2">
+          {seleccionados.length >= 2 && (
             <Button variant="outline" onClick={() => setComparando(true)}>
               <GitCompare className="w-4 h-4 mr-1.5" /> Comparar ({seleccionados.length})
+            </Button>
+          )}
+          {seleccionados.length > 0 && (
+            <Button variant="ghost" size="sm" onClick={() => setSeleccionados([])}>
+              Limpiar selección
             </Button>
           )}
           <CandidatoForm onSaved={cargar} />
@@ -157,9 +160,9 @@ export default function Candidatos() {
         </Select>
       </div>
 
-      {comparando && candidatosCompare.length === 2 && (
+      {comparando && candidatosCompare.length >= 2 && (
         <ComparadorCandidatos
-          candidatos={candidatosCompare as [Candidato, Candidato]}
+          candidatos={candidatosCompare}
           onClose={() => setComparando(false)}
         />
       )}
