@@ -214,12 +214,16 @@ export function buildSnapshot(params: {
         riesgo_alternancia: ultimo.margen_pp < 5 ? "alto" : ultimo.margen_pp < 12 ? "medio" : "bajo",
       };
     }
+    // Composición estatal: todas las secciones de Michoacán
+    composicion_territorial = calcComposicion(() => true);
   } else if (nivel === "ayuntamientos" && territorio.startsWith("mun-")) {
     const clave = parseInt(territorio.replace("mun-", ""), 10);
     const mun = MUNICIPIOS_ESTRATEGICOS.find((m) => m.clave === clave);
     if (mun) {
       demografia = { lista_nominal: Math.round(mun.poblacion * 0.72) };
     }
+    // Composición municipal: secciones cuya `mun` coincide
+    composicion_territorial = calcComposicion((s) => s.mun === clave);
   }
 
   return {
