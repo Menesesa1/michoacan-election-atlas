@@ -13,6 +13,7 @@ import { Loader2, Sparkles, AlertTriangle, RotateCcw, Search, MessageSquare, Use
 import type {
   Candidato, TipoAnalisis, AnalisisPerfil, AnalisisOSINT, AnalisisDiscurso,
 } from "@/lib/candidatos/types";
+import { PartidoBadges } from "./PartidoBadges";
 
 interface Props {
   candidato: Candidato | null;
@@ -111,9 +112,9 @@ export function FichaCandidato({ candidato, open, onClose }: Props) {
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-w-4xl max-h-[92vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+          <DialogTitle className="flex flex-wrap items-center gap-2">
             <span>{candidato.nombre}</span>
-            <Badge variant="outline" className="text-[10px]">{candidato.partido}</Badge>
+            <PartidoBadges partido={candidato.partido} />
             <Badge variant="secondary" className="text-[10px]">{candidato.territorio}</Badge>
           </DialogTitle>
         </DialogHeader>
