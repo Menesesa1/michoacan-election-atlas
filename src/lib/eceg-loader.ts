@@ -1,7 +1,7 @@
 // Loader for INEGI ECEG (Estadísticas Censales a Escalas Geoelectorales)
 // Source: ECEG_16_Michoacan.xlsx — 2,694 secciones × 192 indicadores
 import * as XLSX from "xlsx";
-import { loadCatalogo, lookupSeccion, nombreMunicipio, type SeccionCat } from "./secciones-catalogo";
+import { loadCatalogo, lookupSeccion, nombreMunicipio, distritoLocalDeSeccion, infoDistritoLocal, type SeccionCat } from "./secciones-catalogo";
 
 export interface SeccionCenso {
   entidad: number;
@@ -69,24 +69,32 @@ export interface GrupoCenso {
 
 export function agruparPor(
   rows: SeccionCenso[],
-  dimension: "municipio" | "distrito",
+  dimension: "municipio" | "distrito" | "distritoLocal",
 ): GrupoCenso[] {
   const groups = new Map<number, SeccionCenso[]>();
   for (const r of rows) {
     const cat = lookupSeccion(Number(r.seccion));
     if (!cat) continue;
-    const key = dimension === "municipio" ? cat.mun : cat.dis;
+    let key: number | undefined;
+    if (dimension === "municipio") key = cat.mun;
+    else if (dimension === "distrito") key = cat.dis;
+    else key = distritoLocalDeSeccion(Number(r.seccion));
+    if (key === undefined) continue;
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key)!.push(r);
   }
   return Array.from(groups.entries())
-    .map(([clave, secs]) => ({
-      clave,
-      nombre: dimension === "municipio" ? nombreMunicipio(clave) : `Distrito ${clave.toString().padStart(2, "0")}`,
-      numSecciones: secs.length,
-      resumen: resumir(secs),
-    }))
-    .sort((a, b) => b.resumen.POBTOT - a.resumen.POBTOT);
+    .map(([clave, secs]) => {
+      let nombre: string;
+      if (dimension === "municipio") nombre = nombreMunicipio(clave);
+      else if (dimension === "distrito") nombre = `Distrito ${clave.toString().padStart(2, "0")}`;
+      else {
+        const info = infoDistritoLocal(clave);
+        nombre = info ? `D${clave.toString().padStart(2, "0")} · ${info.cabecera}` : `Distrito local ${clave}`;
+      }
+      return { clave, nombre, numSecciones: secs.length, resumen: resumir(secs) };
+    })
+    .sort((a, b) => (dimension === "distritoLocal" ? a.clave - b.clave : b.resumen.POBTOT - a.resumen.POBTOT));
 }
 
 export interface ResumenCenso {

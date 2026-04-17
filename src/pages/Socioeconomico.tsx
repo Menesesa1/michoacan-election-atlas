@@ -43,6 +43,7 @@ export default function Socioeconomico() {
   const resumen = useMemo(() => (data ? resumir(data) : null), [data]);
   const porMunicipio = useMemo<GrupoCenso[]>(() => (data ? agruparPor(data, "municipio") : []), [data]);
   const porDistrito = useMemo<GrupoCenso[]>(() => (data ? agruparPor(data, "distrito") : []), [data]);
+  const porDistritoLocal = useMemo<GrupoCenso[]>(() => (data ? agruparPor(data, "distritoLocal") : []), [data]);
 
   const seccionesFiltradas = useMemo(() => {
     if (!data) return [];
@@ -142,10 +143,11 @@ export default function Socioeconomico() {
             </Card>
           </div>
 
-          {/* Tabs: Municipios / Distritos / Secciones */}
+          {/* Tabs: Municipios / Distritos locales / Distritos federales / Secciones */}
           <Tabs defaultValue="municipios" className="w-full">
-            <TabsList>
+            <TabsList className="flex-wrap h-auto">
               <TabsTrigger value="municipios">Municipios ({porMunicipio.length})</TabsTrigger>
+              <TabsTrigger value="distritosLocales">Distritos locales IEM ({porDistritoLocal.length})</TabsTrigger>
               <TabsTrigger value="distritos">Distritos federales ({porDistrito.length})</TabsTrigger>
               <TabsTrigger value="secciones">Secciones ({fmt(data!.length)})</TabsTrigger>
             </TabsList>
@@ -154,6 +156,18 @@ export default function Socioeconomico() {
               <Card className="p-4">
                 <h3 className="text-sm font-semibold text-foreground mb-3">Perfil por municipio (113 municipios INEGI)</h3>
                 <GrupoTable grupos={porMunicipio} colName="Municipio" />
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="distritosLocales">
+              <Card className="p-4">
+                <h3 className="text-sm font-semibold text-foreground mb-3">
+                  Perfil por distrito local (24 distritos · IEM/INE Distritación 2016)
+                </h3>
+                <p className="text-xs text-muted-foreground mb-3">
+                  Base territorial para análisis de Diputados Locales y campañas IEM. Cabecera + municipios integrantes según D16.pdf INE.
+                </p>
+                <GrupoTable grupos={porDistritoLocal} colName="Distrito local" />
               </Card>
             </TabsContent>
 
@@ -215,8 +229,9 @@ export default function Socioeconomico() {
 
           <Card className="p-4 bg-muted/30">
             <p className="text-xs text-muted-foreground">
-              <span className="text-primary font-mono">FUENTE:</span> INEGI · Estadísticas Censales a Escalas Geoelectorales (ECEG) · Censo de Población y Vivienda 2020 · Marco geoelectoral INE.
-              Dataset original: <code className="text-foreground/80">ECEG_16_Michoacán.xlsx</code> con 192 indicadores socioeconómicos por sección electoral.
+              <span className="text-primary font-mono">FUENTES:</span> INEGI · ECEG Censo 2020 (192 indicadores × 2,694 secciones) ·
+              INE · Catálogo de secciones <code className="text-foreground/80">SECCION.dbf</code> (113 municipios + 12 distritos federales) ·
+              INE · Descriptivo Distritación Local 2016 <code className="text-foreground/80">D16.pdf</code> (24 distritos locales IEM con cabecera y municipios integrantes).
             </p>
           </Card>
         </>
