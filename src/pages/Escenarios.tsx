@@ -8,6 +8,7 @@ import {
   type NivelEstrategia,
 } from "@/data/estrategia-templates";
 import { buildSnapshot, getTerritorios, type SnapshotPayload } from "@/lib/estrategia-context";
+import { loadCatalogo } from "@/lib/secciones-catalogo";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
@@ -48,6 +49,14 @@ export default function Escenarios() {
     [nivel, distritosLocales],
   );
 
+  // Cargar catálogo INE de secciones (composición urbano/rural en snapshot)
+  const [catalogoLoaded, setCatalogoLoaded] = useState(false);
+  useEffect(() => {
+    void loadCatalogo()
+      .then(() => setCatalogoLoaded(true))
+      .catch((e) => console.warn("loadCatalogo failed:", e));
+  }, []);
+
   // Reset territorio cuando cambia nivel
   useEffect(() => {
     if (territorios.length > 0 && !territorios.find((t) => t.value === territorio)) {
@@ -70,7 +79,7 @@ export default function Escenarios() {
       distritosLocales,
       supuestos,
     }),
-    [nivel, territorio, territorioLabel, posicion, coalicion, horizonte, distritos, distritosLocales, supuestos],
+    [nivel, territorio, territorioLabel, posicion, coalicion, horizonte, distritos, distritosLocales, supuestos, catalogoLoaded],
   );
 
   const generar = async () => {

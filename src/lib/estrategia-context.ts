@@ -3,6 +3,11 @@
 import type { DistritoFederal, DistritoLocal, Partido } from "@/data/electoral-data";
 import type { NivelEstrategia, Posicion } from "@/data/estrategia-templates";
 import { MUNICIPIOS_ESTRATEGICOS } from "@/data/locales/ayuntamientos";
+import {
+  getCatalogoSync,
+  getDistritosLocales,
+  type SeccionCat,
+} from "@/lib/secciones-catalogo";
 
 export interface SnapshotPayload {
   nivel: NivelEstrategia;
@@ -26,6 +31,13 @@ export interface SnapshotPayload {
     pct_jovenes_18_29?: number;
     pct_mujeres?: number;
     pct_adultos_mayores?: number;
+  };
+  composicion_territorial?: {
+    secciones_total: number;
+    pct_urbano: number;
+    pct_mixto: number;
+    pct_rural: number;
+    perfil: "urbano" | "rural" | "mixto" | "balanceado";
   };
   competitividad?: {
     margen_ultimo_pct: number;
@@ -77,6 +89,30 @@ function calcMargenPp(votos: Partial<Record<Partido, number>> | undefined, total
   return ((sorted[0] - sorted[1]) / total) * 100;
 }
 
+/**
+ * Calcula composición territorial (urbano/mixto/rural) a partir del catálogo
+ * de secciones. Tipo INE: 2=Urbana, 3=Mixta, 4=Rural.
+ * Devuelve `undefined` si el catálogo aún no se cargó (no bloqueante).
+ */
+function calcComposicion(filter: (s: SeccionCat) => boolean): SnapshotPayload["composicion_territorial"] {
+  const cat = getCatalogoSync();
+  if (!cat) return undefined;
+  const subset = cat.filter(filter);
+  const total = subset.length;
+  if (total === 0) return undefined;
+  const urb = subset.filter((s) => s.tipo === 2).length;
+  const mix = subset.filter((s) => s.tipo === 3).length;
+  const rur = subset.filter((s) => s.tipo === 4).length;
+  const pct_urbano = +((urb / total) * 100).toFixed(1);
+  const pct_mixto = +((mix / total) * 100).toFixed(1);
+  const pct_rural = +((rur / total) * 100).toFixed(1);
+  let perfil: "urbano" | "rural" | "mixto" | "balanceado" = "balanceado";
+  if (pct_urbano >= 60) perfil = "urbano";
+  else if (pct_rural >= 60) perfil = "rural";
+  else if (pct_mixto >= 50) perfil = "mixto";
+  return { secciones_total: total, pct_urbano, pct_mixto, pct_rural, perfil };
+}
+
 export function buildSnapshot(params: {
   nivel: NivelEstrategia;
   nivelLabel: string;
@@ -98,6 +134,13 @@ export function buildSnapshot(params: {
   const historico: SnapshotPayload["historico"] = [];
   let demografia: SnapshotPayload["demografia"];
   let competitividad: SnapshotPayload["competitividad"];
+  let composicion_territorial: SnapshotPayload["composicion_territorial"];
+
+  // Mapas auxiliares para resolver secciones por distrito local (catálogo IEM)
+  const distritoLocalSecciones = new Map<number, Set<number>>();
+  getDistritosLocales().forEach((dl) => {
+    distritoLocalSecciones.set(dl.distrito, new Set(dl.secciones));
+  });
 
   if (nivel === "diputados" && territorio.startsWith("distrito-")) {
     const id = parseInt(territorio.replace("distrito-", ""), 10);
@@ -124,6 +167,9 @@ export function buildSnapshot(params: {
           riesgo_alternancia: margen < 5 ? "alto" : margen < 12 ? "medio" : "bajo",
         };
       }
+      // Composición territorial: secciones del distrito local id
+      const secciones = distritoLocalSecciones.get(id);
+      if (secciones) composicion_territorial = calcComposicion((s) => secciones.has(s.sec));
     }
   } else if (nivel === "gobernador") {
     // Agregado estatal: suma de distritos locales últimos 3 procesos
@@ -168,12 +214,16 @@ export function buildSnapshot(params: {
         riesgo_alternancia: ultimo.margen_pp < 5 ? "alto" : ultimo.margen_pp < 12 ? "medio" : "bajo",
       };
     }
+    // Composición estatal: todas las secciones de Michoacán
+    composicion_territorial = calcComposicion(() => true);
   } else if (nivel === "ayuntamientos" && territorio.startsWith("mun-")) {
     const clave = parseInt(territorio.replace("mun-", ""), 10);
     const mun = MUNICIPIOS_ESTRATEGICOS.find((m) => m.clave === clave);
     if (mun) {
       demografia = { lista_nominal: Math.round(mun.poblacion * 0.72) };
     }
+    // Composición municipal: secciones cuya `mun` coincide
+    composicion_territorial = calcComposicion((s) => s.mun === clave);
   }
 
   return {
@@ -185,6 +235,7 @@ export function buildSnapshot(params: {
     horizonte,
     historico: historico.sort((a, b) => a.año - b.año),
     demografia,
+    composicion_territorial,
     competitividad,
     alertas_activas: alertas,
     supuestos_usuario: supuestos,
