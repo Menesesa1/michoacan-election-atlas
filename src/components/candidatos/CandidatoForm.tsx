@@ -21,7 +21,8 @@ import {
   type TipoCandidatura,
 } from "@/lib/candidatos/coaliciones";
 import type { Candidato } from "@/lib/candidatos/types";
-import { Loader2, Plus, Pencil, X } from "lucide-react";
+import { generarTodosLosAnalisis, TIPOS_ANALISIS } from "@/lib/candidatos/auto-analisis";
+import { Loader2, Plus, Pencil, X, Sparkles } from "lucide-react";
 
 const schema = z.object({
   nombre: z.string().trim().min(2).max(120),
