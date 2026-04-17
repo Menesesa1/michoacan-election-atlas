@@ -5,13 +5,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Users, GitCompare, Search } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Users, GitCompare, Search, Layers } from "lucide-react";
 import { CandidatoCard } from "@/components/candidatos/CandidatoCard";
 import { CandidatoForm } from "@/components/candidatos/CandidatoForm";
 import { FichaCandidato } from "@/components/candidatos/FichaCandidato";
 import { ComparadorCandidatos } from "@/components/candidatos/ComparadorCandidatos";
 import type { Candidato, TipoAnalisis } from "@/lib/candidatos/types";
 import { obtenerTiposExistentes, generarTodosLosAnalisis } from "@/lib/candidatos/auto-analisis";
+import { FASES_CANDIDATURA, FASE_LABEL, contiendaKey, contiendaLabel, type FaseCandidatura } from "@/lib/candidatos/fase";
 
 export default function Candidatos() {
   const { toast } = useToast();
