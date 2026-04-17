@@ -239,3 +239,40 @@ function KPI({ icon: Icon, label, value, sub }: { icon: any; label: string; valu
     </Card>
   );
 }
+
+function GrupoTable({ grupos, colName }: { grupos: GrupoCenso[]; colName: string }) {
+  return (
+    <div className="overflow-x-auto max-h-[600px] overflow-y-auto">
+      <Table>
+        <TableHeader className="sticky top-0 bg-card z-10">
+          <TableRow>
+            <TableHead>{colName}</TableHead>
+            <TableHead className="text-right">Secciones</TableHead>
+            <TableHead className="text-right">Población</TableHead>
+            <TableHead className="text-right">Escolaridad</TableHead>
+            <TableHead className="text-right">% Postbásica</TableHead>
+            <TableHead className="text-right">% Ocupación</TableHead>
+            <TableHead className="text-right">% Internet</TableHead>
+            <TableHead className="text-right">% Sin SS</TableHead>
+            <TableHead className="text-right">% Lengua ind.</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {grupos.map((g) => (
+            <TableRow key={g.clave}>
+              <TableCell className="font-medium">{g.nombre}</TableCell>
+              <TableCell className="text-right font-mono text-xs">{g.numSecciones}</TableCell>
+              <TableCell className="text-right">{fmt(g.resumen.POBTOT)}</TableCell>
+              <TableCell className="text-right">{g.resumen.graProEscolaridad.toFixed(1)}</TableCell>
+              <TableCell className="text-right">{pct(g.resumen.pctPostBasica)}</TableCell>
+              <TableCell className="text-right">{pct(g.resumen.pctOcupacion)}</TableCell>
+              <TableCell className="text-right">{pct(g.resumen.pctVivConInternet)}</TableCell>
+              <TableCell className="text-right">{pct(g.resumen.pctSinDerechohabiencia)}</TableCell>
+              <TableCell className="text-right">{pct(g.resumen.pctHablaLenguaIndigena)}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  );
+}
