@@ -7,6 +7,7 @@ import { DataProvider } from "@/context/DataContext";
 import { AuthProvider } from "@/context/AuthContext";
 import { RequireAuth } from "@/components/RequireAuth";
 import { AppLayout } from "@/layouts/AppLayout";
+import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import MandoCentral from "./pages/MandoCentral";
 import Distritos from "./pages/Distritos";
@@ -27,6 +28,7 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <Routes>
+              <Route path="/" element={<Landing />} />
               <Route path="/login" element={<Login />} />
               <Route
                 element={
@@ -35,7 +37,7 @@ const App = () => (
                   </RequireAuth>
                 }
               >
-                <Route path="/" element={<MandoCentral />} />
+                <Route path="/mando" element={<MandoCentral />} />
                 <Route path="/distritos" element={<Distritos />} />
                 <Route path="/demografia" element={<Demografia />} />
                 <Route path="/tendencias" element={<Tendencias />} />

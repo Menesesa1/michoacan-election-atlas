@@ -17,7 +17,7 @@ export default function Login() {
   const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const from = (location.state as { from?: { pathname: string } } | null)?.from?.pathname || "/";
+  const from = (location.state as { from?: { pathname: string } } | null)?.from?.pathname || "/mando";
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
