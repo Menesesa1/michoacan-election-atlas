@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { UserStar, ChevronRight, Star } from "lucide-react";
+import { UserCheck, ChevronRight, Star } from "lucide-react";
 import type { Candidato } from "@/lib/candidatos/types";
 import { FASE_LABEL_CORTO } from "@/lib/candidatos/fase";
 
@@ -64,7 +64,7 @@ export function CandidatosDestacados() {
     <Card className="p-4 bg-card/60 backdrop-blur border-border">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <UserStar className="w-4 h-4 text-primary" />
+          <UserCheck className="w-4 h-4 text-primary" />
           <h3 className="text-xs font-semibold uppercase tracking-widest">Candidatos destacados</h3>
         </div>
         <Link to="/candidatos" className="text-[10px] text-muted-foreground hover:text-primary font-mono flex items-center gap-1">
