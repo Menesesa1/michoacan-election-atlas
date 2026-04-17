@@ -13,8 +13,13 @@ import {
   Building2,
   FolderOpen,
   LogOut,
+  Vote,
+  Building,
+  Landmark,
+  ChevronDown,
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
+import { useState } from "react";
 import {
   Sidebar,
   SidebarContent,
@@ -31,14 +36,20 @@ import {
 import { EmeLogo } from "@/components/EmeLogo";
 import { useAuth } from "@/context/AuthContext";
 
-const mando = [
+const locales = [
   { title: "Mando Central", url: "/mando", icon: LayoutDashboard, end: true },
-  { title: "Distritos", url: "/distritos", icon: Map },
+  { title: "Gobernador", url: "/gobernador", icon: Landmark },
+  { title: "Diputados Locales", url: "/diputados-locales", icon: Vote },
+  { title: "Ayuntamientos", url: "/ayuntamientos", icon: Building },
+  { title: "Socioeconómico", url: "/socioeconomico", icon: PieChart },
   { title: "Demografía", url: "/demografia", icon: Users },
   { title: "Tendencias", url: "/tendencias", icon: TrendingUp },
   { title: "Crisis", url: "/crisis", icon: ShieldAlert },
-  { title: "Socioeconómico", url: "/socioeconomico", icon: PieChart },
   { title: "Fuentes", url: "/fuentes", icon: Database },
+];
+
+const federal = [
+  { title: "Distritos federales", url: "/distritos", icon: Map },
 ];
 
 const tools = [
@@ -54,6 +65,9 @@ export function AppSidebar() {
   const location = useLocation();
   const { user, logout } = useAuth();
 
+  const isFederalActive = federal.some((f) => location.pathname.startsWith(f.url));
+  const [federalOpen, setFederalOpen] = useState(isFederalActive);
+
   const isActive = (url: string, end?: boolean) =>
     end ? location.pathname === url : location.pathname.startsWith(url);
 
@@ -65,21 +79,24 @@ export function AppSidebar() {
           {!collapsed && (
             <div className="leading-tight overflow-hidden">
               <div className="text-sm font-bold text-sidebar-foreground truncate">EME Estratégico</div>
-              <div className="text-[9px] text-primary font-mono uppercase tracking-wider truncate">Michoacán 360</div>
+              <div className="text-[9px] text-primary font-mono uppercase tracking-wider truncate">
+                Michoacán de Ocampo · Local
+              </div>
             </div>
           )}
         </div>
       </SidebarHeader>
 
       <SidebarContent>
+        {/* Elecciones Locales */}
         <SidebarGroup>
           <SidebarGroupLabel className="text-primary/80 font-semibold uppercase tracking-widest text-[10px]">
             <BarChart3 className="w-3 h-3 mr-1.5 inline" />
-            {!collapsed && "Mando Central"}
+            {!collapsed && "Elecciones Locales"}
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {mando.map((item) => {
+              {locales.map((item) => {
                 const active = isActive(item.url, item.end);
                 return (
                   <SidebarMenuItem key={item.title}>
@@ -100,6 +117,46 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
+        {/* Federal (referencia) — colapsable */}
+        <SidebarGroup>
+          <button
+            onClick={() => setFederalOpen((v) => !v)}
+            className="w-full flex items-center justify-between px-2 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors"
+            type="button"
+          >
+            <span className="flex items-center">
+              <Map className="w-3 h-3 mr-1.5 inline opacity-70" />
+              {!collapsed && "Federal (referencia)"}
+            </span>
+            {!collapsed && (
+              <ChevronDown className={`w-3 h-3 transition-transform ${federalOpen ? "rotate-180" : ""}`} />
+            )}
+          </button>
+          {(federalOpen || collapsed) && (
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {federal.map((item) => {
+                  const active = isActive(item.url);
+                  return (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton asChild isActive={active}>
+                        <NavLink
+                          to={item.url}
+                          className={`${active ? "bg-sidebar-accent text-primary font-semibold border-l-2 border-primary" : "hover:bg-sidebar-accent/60"} opacity-90`}
+                        >
+                          <item.icon className="w-4 h-4" />
+                          {!collapsed && <span>{item.title}</span>}
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          )}
+        </SidebarGroup>
+
+        {/* Herramientas externas */}
         <SidebarGroup>
           <SidebarGroupLabel className="text-primary/80 font-semibold uppercase tracking-widest text-[10px]">
             <ExternalLink className="w-3 h-3 mr-1.5 inline" />
