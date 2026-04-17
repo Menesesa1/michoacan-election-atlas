@@ -130,10 +130,38 @@ export default function Candidatos() {
   const filtrados = useMemo(() => {
     return candidatos.filter((c) => {
       if (filtroNivel !== "all" && c.nivel !== filtroNivel) return false;
+      if (filtroPartido !== "all" && c.partido !== filtroPartido) return false;
+      if (filtroFase !== "all" && (c.fase ?? "precampana") !== filtroFase) return false;
       if (busqueda && !`${c.nombre} ${c.partido} ${c.territorio}`.toLowerCase().includes(busqueda.toLowerCase())) return false;
       return true;
     });
-  }, [candidatos, filtroNivel, busqueda]);
+  }, [candidatos, filtroNivel, filtroPartido, filtroFase, busqueda]);
+
+  // Lista de partidos únicos detectados (para el selector de filtro)
+  const partidosDisponibles = useMemo(() => {
+    const set = new Set<string>();
+    for (const c of candidatos) set.add(c.partido);
+    return Array.from(set).sort();
+  }, [candidatos]);
+
+  // Agrupa por contienda (mismo cargo + territorio + partido + fase)
+  const grupos = useMemo(() => {
+    const map = new Map<string, { key: ContiendaKeyT; candidatos: Candidato[] }>();
+    for (const c of filtrados) {
+      const key: ContiendaKeyT = {
+        nivel: c.nivel,
+        territorio: c.territorio,
+        partido: c.partido,
+        fase: (c.fase ?? "precampana") as FaseCandidatura,
+      };
+      const k = contiendaKey(key);
+      const g = map.get(k);
+      if (g) g.candidatos.push(c);
+      else map.set(k, { key, candidatos: [c] });
+    }
+    // Ordena: grupos con más aspirantes primero (los más interesantes para comparar)
+    return Array.from(map.values()).sort((a, b) => b.candidatos.length - a.candidatos.length);
+  }, [filtrados]);
 
   const candidatosCompare = seleccionados
     .map((id) => candidatos.find((c) => c.id === id))
