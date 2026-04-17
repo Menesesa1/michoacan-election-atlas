@@ -91,8 +91,13 @@ export function MapaInteractivo({ eleccion }: MapaInteractivoProps) {
           const r = distrito.resultados[eleccion];
           if (!r) return;
           const comp = getCompetitividadDistrito(distrito, eleccion);
-          layer.bindPopup(popupHtml(distrito, r, comp, prefix), { className: "electoral-popup" });
-          layer.on("mouseover", function () { (this as L.Path).setStyle({ fillOpacity: 0.8, weight: 3 }); });
+          const { lealtad, riesgo } = computeLealtadRiesgo(comp, r);
+          layer.bindPopup(popupHtml(distrito, r, comp, prefix, lealtad, riesgo), { className: "electoral-popup" });
+          layer.bindTooltip(
+            `<b>${prefix}${distrito.id} · ${distrito.cabecera}</b><br/>Lealtad: <b>${lealtad}%</b> · Riesgo: <b>${riesgo}</b>`,
+            { sticky: true, className: "electoral-tooltip", direction: "top" }
+          );
+          layer.on("mouseover", function () { (this as L.Path).setStyle({ fillOpacity: 0.85, weight: 3 }); });
           layer.on("mouseout", function () { geoLayer.resetStyle(this as L.Path); });
         },
       });
