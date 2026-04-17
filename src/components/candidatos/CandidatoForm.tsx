@@ -130,6 +130,7 @@ export function CandidatoForm({ candidato, onSaved, trigger }: Props) {
         nivel: parsed.data.nivel,
         territorio: parsed.data.territorio,
         fase: form.fase,
+        es_propio: form.es_propio,
         cargo_buscado: parsed.data.cargo_buscado || null,
         bio_breve: parsed.data.bio_breve || null,
         redes: {
