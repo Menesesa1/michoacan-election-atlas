@@ -1,7 +1,7 @@
 // Loader for INEGI ECEG (Estadísticas Censales a Escalas Geoelectorales)
 // Source: ECEG_16_Michoacan.xlsx — 2,694 secciones × 192 indicadores
 import * as XLSX from "xlsx";
-import { loadCatalogo, lookupSeccion, nombreMunicipio, type SeccionCat } from "./secciones-catalogo";
+import { loadCatalogo, lookupSeccion, nombreMunicipio, distritoLocalDeSeccion, infoDistritoLocal, type SeccionCat } from "./secciones-catalogo";
 
 export interface SeccionCenso {
   entidad: number;
