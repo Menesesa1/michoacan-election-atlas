@@ -92,6 +92,50 @@ export function SnapshotDatos({ snapshot, supuestos, setSupuestos }: Props) {
             <div className="text-xs text-muted-foreground italic">Sin alertas registradas</div>
           )}
         </div>
+
+        <div className="rounded-lg border border-border/60 bg-card/40 p-4 space-y-2 md:col-span-2">
+          <div className="flex items-center gap-1.5 text-primary text-[10px] font-mono uppercase tracking-widest">
+            <MapPin className="w-3 h-3" /> Composición territorial (catálogo INE)
+          </div>
+          {snapshot.composicion_territorial ? (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-muted-foreground">
+                  {snapshot.composicion_territorial.secciones_total} secciones · perfil
+                </span>
+                <span className="text-foreground font-mono uppercase text-[10px] px-2 py-0.5 rounded bg-primary/15 text-primary">
+                  {snapshot.composicion_territorial.perfil}
+                </span>
+              </div>
+              <div className="flex h-2 w-full rounded-full overflow-hidden bg-secondary/40">
+                <div
+                  className="bg-primary"
+                  style={{ width: `${snapshot.composicion_territorial.pct_urbano}%` }}
+                  title={`Urbano ${snapshot.composicion_territorial.pct_urbano}%`}
+                />
+                <div
+                  className="bg-accent"
+                  style={{ width: `${snapshot.composicion_territorial.pct_mixto}%` }}
+                  title={`Mixto ${snapshot.composicion_territorial.pct_mixto}%`}
+                />
+                <div
+                  className="bg-muted-foreground/60"
+                  style={{ width: `${snapshot.composicion_territorial.pct_rural}%` }}
+                  title={`Rural ${snapshot.composicion_territorial.pct_rural}%`}
+                />
+              </div>
+              <div className="flex justify-between text-[10px] font-mono">
+                <span className="text-primary">Urbano {snapshot.composicion_territorial.pct_urbano}%</span>
+                <span className="text-accent-foreground/80">Mixto {snapshot.composicion_territorial.pct_mixto}%</span>
+                <span className="text-muted-foreground">Rural {snapshot.composicion_territorial.pct_rural}%</span>
+              </div>
+            </div>
+          ) : (
+            <div className="text-xs text-muted-foreground italic">
+              Catálogo de secciones cargando o sin datos para este territorio…
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="rounded-lg border border-primary/30 bg-primary/5 p-4 space-y-3">
