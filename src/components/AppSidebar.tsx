@@ -31,7 +31,7 @@ import { EmeLogo } from "@/components/EmeLogo";
 import { useAuth } from "@/context/AuthContext";
 
 const mando = [
-  { title: "Mando Central", url: "/", icon: LayoutDashboard, end: true },
+  { title: "Mando Central", url: "/mando", icon: LayoutDashboard, end: true },
   { title: "Distritos", url: "/distritos", icon: Map },
   { title: "Demografía", url: "/demografia", icon: Users },
   { title: "Tendencias", url: "/tendencias", icon: TrendingUp },
