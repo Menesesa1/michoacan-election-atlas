@@ -23,6 +23,7 @@ import {
 import type { Candidato } from "@/lib/candidatos/types";
 import { generarTodosLosAnalisis, TIPOS_ANALISIS } from "@/lib/candidatos/auto-analisis";
 import { cargoSugerido, etiquetaTerritorio } from "@/lib/candidatos/territorios";
+import { FASES_CANDIDATURA, FASE_LABEL, FASE_DESCRIPCION, type FaseCandidatura } from "@/lib/candidatos/fase";
 import { TerritorioInput } from "./TerritorioInput";
 import { Loader2, Plus, Pencil, X, Sparkles } from "lucide-react";
 
