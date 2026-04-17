@@ -84,8 +84,23 @@ export default function Candidatos() {
         notas: "Liderazgo morenista con base en colonias populares y zona rural del municipio.",
       },
     ];
-    const { error } = await supabase.from("candidatos").insert(seed);
-    if (!error) await cargar();
+    const { data: insertados, error } = await supabase.from("candidatos").insert(seed).select();
+    if (error || !insertados) return;
+    await cargar();
+
+    // Auto-genera análisis para los seed (en background, sin bloquear UI)
+    toast({
+      title: "Generando análisis IA de candidatos demo…",
+      description: "Alfonso Martínez y Raúl Morón. Tarda ~1-2 min.",
+    });
+    for (const cand of insertados) {
+      void generarTodosLosAnalisis(
+        { ...(cand as unknown as Candidato), redes: (cand.redes ?? {}) as Record<string, string | undefined> },
+        authData.user.id,
+      ).then(() => {
+        void cargar();
+      });
+    }
   };
 
   const eliminar = async (id: string) => {
