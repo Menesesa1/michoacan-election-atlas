@@ -9,6 +9,7 @@ import type { Candidato, TipoAnalisis } from "@/lib/candidatos/types";
 import { CandidatoForm } from "./CandidatoForm";
 import { PartidoBadges } from "./PartidoBadges";
 import { generarTodosLosAnalisis, TIPOS_ANALISIS } from "@/lib/candidatos/auto-analisis";
+import { FASE_LABEL_CORTO } from "@/lib/candidatos/fase";
 import { cn } from "@/lib/utils";
 
 interface Props {
