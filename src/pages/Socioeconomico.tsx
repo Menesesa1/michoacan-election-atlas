@@ -143,10 +143,11 @@ export default function Socioeconomico() {
             </Card>
           </div>
 
-          {/* Tabs: Municipios / Distritos / Secciones */}
+          {/* Tabs: Municipios / Distritos locales / Distritos federales / Secciones */}
           <Tabs defaultValue="municipios" className="w-full">
-            <TabsList>
+            <TabsList className="flex-wrap h-auto">
               <TabsTrigger value="municipios">Municipios ({porMunicipio.length})</TabsTrigger>
+              <TabsTrigger value="distritosLocales">Distritos locales IEM ({porDistritoLocal.length})</TabsTrigger>
               <TabsTrigger value="distritos">Distritos federales ({porDistrito.length})</TabsTrigger>
               <TabsTrigger value="secciones">Secciones ({fmt(data!.length)})</TabsTrigger>
             </TabsList>
@@ -155,6 +156,18 @@ export default function Socioeconomico() {
               <Card className="p-4">
                 <h3 className="text-sm font-semibold text-foreground mb-3">Perfil por municipio (113 municipios INEGI)</h3>
                 <GrupoTable grupos={porMunicipio} colName="Municipio" />
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="distritosLocales">
+              <Card className="p-4">
+                <h3 className="text-sm font-semibold text-foreground mb-3">
+                  Perfil por distrito local (24 distritos · IEM/INE Distritación 2016)
+                </h3>
+                <p className="text-xs text-muted-foreground mb-3">
+                  Base territorial para análisis de Diputados Locales y campañas IEM. Cabecera + municipios integrantes según D16.pdf INE.
+                </p>
+                <GrupoTable grupos={porDistritoLocal} colName="Distrito local" />
               </Card>
             </TabsContent>
 
