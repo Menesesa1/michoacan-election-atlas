@@ -112,14 +112,14 @@ export default function Escenarios() {
         });
         return;
       }
-      const { error } = await supabase.from("estrategias_guardadas").insert({
+      const { error } = await supabase.from("estrategias_guardadas").insert([{
         user_id: authData.user.id,
         nivel: snapshot.nivel,
         territorio: snapshot.territorio,
         titulo: `${snapshot.nivelLabel} · ${snapshot.territorio}`,
-        snapshot_json: snapshot as unknown as Record<string, unknown>,
-        output_json: output as unknown as Record<string, unknown>,
-      });
+        snapshot_json: snapshot as never,
+        output_json: output as never,
+      }]);
       if (error) throw error;
       toast({ title: "Versión guardada", description: "La estrategia se guardó en tu repositorio." });
     } catch (err) {
