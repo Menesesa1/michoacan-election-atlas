@@ -1,0 +1,232 @@
+// Edge function: analiza un candidato desde tres ángulos (perfil, OSINT, discurso)
+// usando Lovable AI Gateway con tool-calling para garantizar JSON estructurado.
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
+};
+
+type Tipo = "perfil" | "osint" | "discurso";
+
+interface Input {
+  tipo: Tipo;
+  candidato: {
+    nombre: string;
+    partido: string;
+    nivel: string;
+    territorio: string;
+    cargo_buscado?: string;
+    bio_breve?: string;
+    redes?: Record<string, string>;
+    notas?: string;
+  };
+  contexto_territorial?: string;
+}
+
+const TOOLS = {
+  perfil: {
+    type: "function",
+    function: {
+      name: "perfil_candidato",
+      description: "Devuelve análisis FODA y perfil competitivo del candidato.",
+      parameters: {
+        type: "object",
+        properties: {
+          fortalezas: { type: "array", items: { type: "string" }, minItems: 3, maxItems: 6 },
+          debilidades: { type: "array", items: { type: "string" }, minItems: 3, maxItems: 6 },
+          oportunidades: { type: "array", items: { type: "string" }, minItems: 3, maxItems: 6 },
+          amenazas: { type: "array", items: { type: "string" }, minItems: 3, maxItems: 6 },
+          score_competitividad: { type: "number", minimum: 0, maximum: 100 },
+          perfil_votante_natural: { type: "string" },
+        },
+        required: ["fortalezas", "debilidades", "oportunidades", "amenazas", "score_competitividad", "perfil_votante_natural"],
+        additionalProperties: false,
+      },
+    },
+  },
+  osint: {
+    type: "function",
+    function: {
+      name: "osint_candidato",
+      description: "Análisis OSINT basado en información pública conocida del modelo.",
+      parameters: {
+        type: "object",
+        properties: {
+          presencia_digital: {
+            type: "object",
+            properties: {
+              nivel: { type: "string", enum: ["alta", "media", "baja"] },
+              plataformas_fuertes: { type: "array", items: { type: "string" } },
+              observaciones: { type: "string" },
+            },
+            required: ["nivel", "plataformas_fuertes", "observaciones"],
+            additionalProperties: false,
+          },
+          controversias: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                tema: { type: "string" },
+                gravedad: { type: "string", enum: ["alta", "media", "baja"] },
+                descripcion: { type: "string" },
+              },
+              required: ["tema", "gravedad", "descripcion"],
+              additionalProperties: false,
+            },
+          },
+          aliados_clave: { type: "array", items: { type: "string" } },
+          temas_recurrentes: { type: "array", items: { type: "string" } },
+          menciones_recientes: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                fuente: { type: "string" },
+                titular: { type: "string" },
+                tono: { type: "string", enum: ["positivo", "neutral", "negativo"] },
+              },
+              required: ["fuente", "titular", "tono"],
+              additionalProperties: false,
+            },
+          },
+        },
+        required: ["presencia_digital", "controversias", "aliados_clave", "temas_recurrentes", "menciones_recientes"],
+        additionalProperties: false,
+      },
+    },
+  },
+  discurso: {
+    type: "function",
+    function: {
+      name: "discurso_candidato",
+      description: "Análisis discursivo y narrativa del candidato.",
+      parameters: {
+        type: "object",
+        properties: {
+          ejes_narrativos: { type: "array", items: { type: "string" }, minItems: 3, maxItems: 6 },
+          tono: { type: "string" },
+          frames_dominantes: { type: "array", items: { type: "string" } },
+          vulnerabilidades_argumentales: { type: "array", items: { type: "string" } },
+          contraargumentos_sugeridos: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                vs_eje: { type: "string" },
+                respuesta: { type: "string" },
+              },
+              required: ["vs_eje", "respuesta"],
+              additionalProperties: false,
+            },
+          },
+        },
+        required: ["ejes_narrativos", "tono", "frames_dominantes", "vulnerabilidades_argumentales", "contraargumentos_sugeridos"],
+        additionalProperties: false,
+      },
+    },
+  },
+} as const;
+
+const SYSTEM_PROMPT = `Eres un consultor político senior especializado en Michoacán, México.
+Analizas candidatos a cargos de elección popular (gobernatura, diputaciones locales, ayuntamientos).
+Tu análisis se basa SOLO en información pública conocida (medios, redes públicas, declaraciones públicas).
+NO inventas datos privados, financieros internos ni acusaciones sin sustento público.
+Cuando no tengas información específica, sé explícito al respecto en lugar de inventar.
+Responde SIEMPRE invocando la herramienta correspondiente con JSON estructurado.
+Idioma: español de México, profesional y neutral.`;
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY no configurado");
+
+    const input = (await req.json()) as Input;
+    if (!input?.tipo || !input?.candidato?.nombre) {
+      return new Response(JSON.stringify({ error: "Faltan campos requeridos (tipo, candidato.nombre)" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const tool = TOOLS[input.tipo];
+    if (!tool) {
+      return new Response(JSON.stringify({ error: `Tipo inválido: ${input.tipo}` }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const userPrompt = `Analiza al siguiente candidato político:
+
+NOMBRE: ${input.candidato.nombre}
+PARTIDO: ${input.candidato.partido}
+NIVEL: ${input.candidato.nivel}
+TERRITORIO: ${input.candidato.territorio}
+${input.candidato.cargo_buscado ? `CARGO BUSCADO: ${input.candidato.cargo_buscado}` : ""}
+${input.candidato.bio_breve ? `BIO: ${input.candidato.bio_breve}` : ""}
+${input.candidato.redes && Object.keys(input.candidato.redes).length > 0
+  ? `REDES: ${JSON.stringify(input.candidato.redes)}`
+  : ""}
+${input.candidato.notas ? `NOTAS DEL CONSULTOR: ${input.candidato.notas}` : ""}
+${input.contexto_territorial ? `\nCONTEXTO TERRITORIAL:\n${input.contexto_territorial}` : ""}
+
+Tipo de análisis solicitado: ${input.tipo.toUpperCase()}.
+Devuelve la herramienta con todos los campos requeridos.`;
+
+    const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash",
+        messages: [
+          { role: "system", content: SYSTEM_PROMPT },
+          { role: "user", content: userPrompt },
+        ],
+        tools: [tool],
+        tool_choice: { type: "function", function: { name: tool.function.name } },
+      }),
+    });
+
+    if (!aiRes.ok) {
+      if (aiRes.status === 429) {
+        return new Response(JSON.stringify({ error: "Límite de uso alcanzado. Intenta en un momento." }), {
+          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (aiRes.status === 402) {
+        return new Response(JSON.stringify({ error: "Créditos de IA agotados. Agrega fondos en Settings → Workspace → Usage." }), {
+          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const txt = await aiRes.text();
+      console.error("Gateway error:", aiRes.status, txt);
+      throw new Error(`AI gateway ${aiRes.status}`);
+    }
+
+    const data = await aiRes.json();
+    const toolCall = data?.choices?.[0]?.message?.tool_calls?.[0];
+    if (!toolCall?.function?.arguments) {
+      throw new Error("La IA no devolvió tool_call estructurado");
+    }
+    const parsed = JSON.parse(toolCall.function.arguments);
+
+    return new Response(JSON.stringify({ output: parsed, model: "google/gemini-2.5-flash" }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  } catch (err) {
+    console.error("analizar-candidato error:", err);
+    return new Response(
+      JSON.stringify({ error: err instanceof Error ? err.message : "Error desconocido" }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
+  }
+});
