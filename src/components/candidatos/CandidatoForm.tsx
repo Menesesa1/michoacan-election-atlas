@@ -68,6 +68,7 @@ export function CandidatoForm({ candidato, onSaved, trigger }: Props) {
   const [form, setForm] = useState({
     nombre: "", nivel: "ayuntamientos" as NivelEstrategia, territorio: "",
     fase: "precampana" as FaseCandidatura,
+    es_propio: false,
     cargo_buscado: "", bio_breve: "", twitter: "", facebook: "", instagram: "", web: "", notas: "",
   });
 
@@ -81,6 +82,7 @@ export function CandidatoForm({ candidato, onSaved, trigger }: Props) {
         nivel: candidato.nivel,
         territorio: candidato.territorio,
         fase: candidato.fase ?? "precampana",
+        es_propio: !!candidato.es_propio,
         cargo_buscado: candidato.cargo_buscado ?? "",
         bio_breve: candidato.bio_breve ?? "",
         twitter: candidato.redes?.twitter ?? "",
