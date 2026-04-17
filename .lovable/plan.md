@@ -1,128 +1,113 @@
 
 
-## Plan: Sistema de Mando Estratégico Michoacán 360
+## Contexto
 
-Transformación del dashboard actual en una plataforma ejecutiva con login, sidebar de inteligencia, módulo de crisis y rebrand visual completo. Mantengo toda la funcionalidad existente (electoral, demografía, mapas, importador CSV) y la reorganizo bajo el nuevo sistema.
+El usuario quiere convertir `/escenarios` (que hoy genera 3 escenarios con 4-5 estrategias genéricas vía IA) en un **generador sistematizado de estrategia 360 para consultor político** que aproveche TODOS los datos del sistema:
 
-### 1. Rebrand visual "Executive Dark Mode / Corporate Blue"
+- Resultados electorales 2015-2024 (Gobernador, 24 distritos locales, 11 federales, 113 ayuntamientos)
+- Demografía INE (lista nominal, pirámides, género/edad)
+- Datos socioeconómicos INEGI (ECEG)
+- Crisis/menciones (cuando RSS esté ingiriendo)
+- Competitividad, lealtad, riesgo por distrito
+- Catálogo IEM real (distritos + secciones)
 
-**Archivos**: `src/index.css`, `tailwind.config.ts`
+Hoy los escenarios son **abstractos**: no leen contexto real del distrito/municipio, no priorizan secciones, no proponen presupuesto, no definen mensaje por segmento, no dan calendario.
 
-Nueva paleta en HSL (manteniendo el sistema de tokens semánticos):
-- `--background`: Azul marino profundo (`#1a2b4b` → `217 49% 20%`)
-- `--card`: Azul marino más oscuro para paneles
-- `--primary`: Dorado metálico (`#c5a059` → `40 49% 56%`)
-- `--accent`: Dorado claro para hover/glow
-- `--foreground`: Gris neutro claro (`#f4f4f4`)
-- `--muted`: Azul intermedio
-- Tipografía: Inter (ya cargada, se mantiene como sustituto profesional de Arial)
-- Nuevos utilitarios: `.executive-panel`, `.gold-border`, `.glow-gold`
+## Diagnóstico: qué falta
 
-Se actualizan colores de partidos para que mantengan contraste sobre fondo azul marino.
+### 1. Contexto real al prompt de IA
+El edge function `generar-escenarios` solo recibe título, supuestos y métricas base. **No le pasamos** los datos electorales históricos, demografía ni socioeconómico del nivel/territorio elegido. Por eso las estrategias salen genéricas.
 
-### 2. Pantalla de login profesional
+### 2. Selector de territorio
+Hoy solo se elige nivel (Gobernador/Diputados/Ayuntamientos). Falta elegir **qué distrito o municipio específico** analizar para que la estrategia sea local.
 
-**Nuevo**: `src/pages/Login.tsx`, `src/context/AuthContext.tsx`
+### 3. Dimensiones 360 ausentes
+Faltan los pilares clásicos de campaña:
+- **Diagnóstico**: FODA basado en datos reales
+- **Segmentación de votantes** (duro, blando, indeciso, opositor) con % y volumen
+- **Mensaje y narrativa** por segmento
+- **Plan territorial** (secciones prioritarias ordenadas por ROI)
+- **Calendario 90/60/30 días**
+- **Presupuesto sugerido** por rubro
+- **Estructura de campaña** (coordinaciones, brigadistas estimados)
+- **KPIs de seguimiento** semanales
+- **Matriz de riesgos** + plan de contingencia
+- **Alianzas** sugeridas (basado en histórico de coaliciones)
 
-- Login client-side simple (sin backend) usando `localStorage` con un usuario demo configurable. **Nota importante para el usuario**: esto es solo una "puerta de presentación", no seguridad real. Si necesitan auth real, se debe activar Lovable Cloud después.
-- Layout: split screen — izquierda branding ("EME Gabinete Estratégico" + eslogan "Movemos realidades" + logo SVG generado), derecha formulario.
-- Validación con `zod`.
-- Ruta protegida: `App.tsx` envuelve rutas con `<RequireAuth>`.
+### 4. Salidas accionables
+Hoy solo hay cards en pantalla. Falta:
+- Export PDF ejecutivo con branding EME
+- Guardar/versionar estrategias
+- Comparar escenarios lado a lado
 
-### 3. Layout con Sidebar "Herramientas de Inteligencia"
+## Propuesta: Generador Estratégico 360
 
-**Nuevo**: `src/components/AppSidebar.tsx`, `src/layouts/AppLayout.tsx`
+Reestructurar `/escenarios` (renombrar a "Estrategia 360" en sidebar, mantener ruta) en un **wizard de 3 pasos** que produce un brief ejecutivo completo.
 
-Usando `shadcn/sidebar` (`collapsible="icon"`):
+### Paso 1 — Definir alcance
+- Nivel: Gobernador / Diputado Local / Ayuntamiento
+- Territorio: dropdown dinámico (estado / distrito 1-24 / municipio top 113)
+- Posición de partida: Oficialismo / Oposición / Aspirante nuevo
+- Coalición tentativa (multi-select de partidos)
+- Horizonte: 2027 (default) / personalizado
 
-Secciones del sidebar:
-- **Mando Central** (interno): Resumen, Distritos, Demografía, Tendencias, Crisis, Fuentes
-- **Herramientas de Inteligencia** (externos, abren en nueva pestaña):
-  - Meta Business Suite → `https://business.facebook.com/`
-  - Google Trends Michoacán → `https://trends.google.com/trends/explore?geo=MX-MIC`
-  - IEM Michoacán → `https://iem.org.mx/`
-  - Repositorio Drive → placeholder configurable
+### Paso 2 — Snapshot de datos (auto-generado, editable)
+Panel que **lee del DataContext y archivos locales** y muestra:
+- Histórico electoral del territorio (gráfica 2015-2024)
+- Demografía: pirámide + lista nominal
+- Socioeconómico: nivel marginación, % juventud, ocupación dominante
+- Competitividad y margen del último proceso
+- Alertas activas de `/crisis` relacionadas
 
-`SidebarTrigger` siempre visible en el header. La navegación interna reemplaza las tabs actuales del `Header`.
+El usuario puede ajustar supuestos (participación esperada, % voto duro, etc.).
 
-### 4. Nuevo módulo "Alertas de Operación" (Crisis)
+### Paso 3 — Generación IA enriquecida
+Edge function nueva `generar-estrategia-360` que recibe TODO el snapshot + supuestos y devuelve via tool calling un JSON con 10 secciones:
 
-**Nuevo**: `src/components/AlertasOperacion.tsx`, `src/data/alertas-mock.ts`
+1. **FODA** (4 listas)
+2. **3 escenarios** (optimista/moderado/pesimista) con probabilidad calibrada por datos reales
+3. **Segmentación**: duro/blando/indeciso/opositor con % y volumen estimado
+4. **Narrativa central** + 3 mensajes por segmento
+5. **Plan territorial**: top 10 secciones/colonias prioritarias con justificación
+6. **Calendario 90/60/30**: hitos semanales
+7. **Presupuesto sugerido**: % por rubro (territorio, digital, medios, eventos, defensa del voto)
+8. **Estructura mínima**: coordinaciones, brigadistas, casa de campaña
+9. **Matriz de riesgos** con mitigación
+10. **KPIs semanales** medibles
 
-- Feed estilo timeline de noticias.
-- Cada alerta: tag de prioridad (`Urgente` rojo, `Preventivo` dorado, `Informativo` azul claro), distrito, timestamp, descripción, fuente.
-- Filtros por prioridad y distrito.
-- Preparado para recibir datos vía:
-  - JSON local (mock inicial)
-  - URL de Google Sheets publicada como CSV (input configurable + parser usando el `csv-parser` ya existente)
-- Skeleton loader (`@/components/ui/skeleton`) mientras carga.
-- Auto-refresh cada 60s cuando hay URL configurada.
+Modelo: `google/gemini-2.5-pro` (mejor reasoning para análisis multi-fuente).
 
-### 5. Dashboard ejecutivo con charts dinámicos
+### UI resultado
+Tabs: `Resumen | FODA | Escenarios | Segmentos | Territorio | Calendario | Presupuesto | Riesgos | KPIs`
 
-**Nuevo**: `src/components/IntencionVotoChart.tsx`, `src/components/SentimientoMoreliaChart.tsx`
+Botones: `Exportar PDF ejecutivo` · `Guardar versión` · `Comparar con otra estrategia`
 
-- Recharts: línea temporal de intención de voto por partido en Morelia
-- Área apilada del sentimiento social (positivo/neutro/negativo) en el tiempo
-- Skeleton loaders mientras montan
-- Datos desde `src/data/intencion-voto-mock.ts` (preparado para reemplazar con CSV/JSON)
+## Qué se construye
 
-Se integran en una nueva vista **Mando Central** (reemplaza/complementa "Resumen").
+### Backend (Lovable Cloud)
+- Tabla `estrategias_guardadas` (id, user_id, nivel, territorio, snapshot_json, output_json, created_at) con RLS
+- Edge function `generar-estrategia-360` (nueva, no toca la existente)
+- Helper server-side `build-context-snapshot.ts` que arma el contexto desde los datos
 
-### 6. Mapa con tooltips de Lealtad y Riesgo
+### Frontend
+- Refactor `src/pages/Escenarios.tsx` → wizard de 3 pasos
+- `src/components/estrategia/WizardAlcance.tsx`
+- `src/components/estrategia/SnapshotDatos.tsx` (lee DataContext)
+- `src/components/estrategia/ResultadoTabs.tsx` (9 tabs)
+- `src/components/estrategia/ExportarPDF.tsx` (usa jsPDF + branding EME)
+- `src/lib/estrategia-context.ts` (extrae datos del territorio elegido)
+- `src/data/estrategia-templates.ts` (segmentos, rubros presupuesto, KPIs base)
 
-**Edita**: `src/components/MapaInteractivo.tsx`
+### Sidebar
+- Renombrar "Escenarios IA" → "Estrategia 360"
 
-- Añadir campos `lealtad` (0-100) y `riesgo` ("Alto"/"Medio"/"Bajo") al modelo de distrito (en `electoral-data.ts` y `distritos-locales.ts`, calculados desde competitividad + mock).
-- Tooltip permanente en hover (no solo popup en click) mostrando: distrito, lealtad %, nivel de riesgo, ganador.
-- Color de borde según riesgo (rojo/dorado/verde).
+## Fuera de alcance (siguiente iteración)
+- Comparador lado a lado de versiones guardadas
+- Auto-refresh cuando cambian datos de `/crisis`
+- Integración con WhatsApp Business para distribuir tareas a coordinadores
+- Modo colaborativo multi-usuario
 
-### 7. Conectividad JSON / Google Sheets CSV
+## Preguntas antes de implementar
 
-**Nuevo**: `src/lib/data-source.ts`, `src/components/DataSourceConfig.tsx` (en pestaña Fuentes)
-
-- Helper `fetchFromUrl(url)` que detecta JSON vs CSV.
-- Soporte para URLs públicas de Google Sheets (`/pub?output=csv`).
-- Hook `useRemoteData(url, parser)` con estado loading/error/data → habilita Skeletons en consumidores.
-
-### 8. Skeleton loaders consistentes
-
-**Edita**: `KPICards`, `ResultadosPorPartido`, `CompetitividadChart`, `TablaDistritos`, `DemografiaPanel`, nuevos charts y alertas.
-
-Usar `<Skeleton>` ya disponible. Patrón: `if (loading) return <SkeletonVariant />`.
-
-### 9. Reestructura de rutas
-
-```text
-/login                  → Login (público)
-/                       → AppLayout (protegido)
-  /                     → Mando Central (dashboard ejecutivo)
-  /distritos            → Distritos + Mapa
-  /demografia           → Demografía
-  /tendencias           → Tendencias + Simulador
-  /crisis               → Alertas de Operación  [NUEVO]
-  /fuentes              → Importador + Config remota + Fuentes
-*                       → NotFound
-```
-
-`Header.tsx` se simplifica (solo branding + user menu + logout); la navegación pasa al sidebar.
-
-### Detalles técnicos
-
-- **Auth**: `AuthContext` con `login(user, pass)`, `logout()`, `isAuthenticated`. Persistencia en `localStorage`. Usuario demo: `admin / eme2025` (configurable). Documentar limitación.
-- **Logo EME**: SVG inline generado con monograma "EME" en dorado sobre azul marino, reusable en login, sidebar y header.
-- **Tipografía**: mantener Inter (cumple "limpia y profesional" tipo Arial). Sin nuevas fuentes para evitar peso.
-- **Compatibilidad**: el `DataContext` actual se mantiene intacto; solo se añade `AuthContext` y el nuevo layout por encima.
-- **Mobile**: sidebar colapsa a offcanvas en <768px, header muestra `SidebarTrigger`.
-
-### Archivos creados (≈10)
-`src/pages/Login.tsx`, `src/pages/MandoCentral.tsx`, `src/pages/Crisis.tsx`, `src/context/AuthContext.tsx`, `src/components/RequireAuth.tsx`, `src/components/AppSidebar.tsx`, `src/components/AlertasOperacion.tsx`, `src/components/IntencionVotoChart.tsx`, `src/components/SentimientoMoreliaChart.tsx`, `src/components/EmeLogo.tsx`, `src/components/DataSourceConfig.tsx`, `src/layouts/AppLayout.tsx`, `src/lib/data-source.ts`, `src/data/alertas-mock.ts`, `src/data/intencion-voto-mock.ts`
-
-### Archivos editados (≈8)
-`src/App.tsx`, `src/index.css`, `tailwind.config.ts`, `src/pages/Index.tsx` (se convierte en redirect o se integra en MandoCentral), `src/components/Header.tsx`, `src/components/MapaInteractivo.tsx`, `src/data/electoral-data.ts`, `src/data/distritos-locales.ts`
-
-### Fuera de alcance (sugerido como siguiente paso)
-- Auth real con backend (requiere activar Lovable Cloud)
-- Embebido directo de Meta/Trends dentro de la app (los sitios bloquean iframes; se enlaza en pestaña nueva)
-- Integración real con APIs de Meta Ads (requiere OAuth y backend)
+Para no asumir, necesito 3 decisiones clave del usuario.
 
