@@ -1,0 +1,86 @@
+// Elecciones a Gubernatura de Michoacán
+// 2015: cómputo IEM, ganador Silvano Aureoles Conejo (PRD-PAN-MC-PT-NA)
+// 2021: cómputo IEM, ganador Alfredo Ramírez Bedolla (Morena-PT)
+import type { PartidoSigla } from "./partidos";
+
+export interface ResultadoGobernador {
+  anio: 2015 | 2021;
+  candidatos: {
+    nombre: string;
+    coalicion: PartidoSigla[];
+    votos: number;
+    porcentaje: number;
+  }[];
+  participacionPct: number;
+  listaNominal: number;
+  votosTotales: number;
+  ganador: string;
+  margenPct: number;
+}
+
+export const GOBERNADOR_RESULTADOS: ResultadoGobernador[] = [
+  {
+    anio: 2015,
+    listaNominal: 3_369_000,
+    votosTotales: 1_837_000,
+    participacionPct: 54.5,
+    ganador: "Silvano Aureoles Conejo",
+    margenPct: 5.4,
+    candidatos: [
+      { nombre: "Silvano Aureoles Conejo", coalicion: ["PRD"], votos: 615_695, porcentaje: 33.5 },
+      { nombre: "Ascensión Orihuela Bárcenas", coalicion: ["PRI", "PVEM", "PANAL"], votos: 516_297, porcentaje: 28.1 },
+      { nombre: "Luisa María Calderón Hinojosa", coalicion: ["PAN"], votos: 348_953, porcentaje: 19.0 },
+      { nombre: "José Manuel Mireles (independiente)", coalicion: ["OTRO"], votos: 124_916, porcentaje: 6.8 },
+      { nombre: "Salvador Jara (Morena)", coalicion: ["MORENA"], votos: 100_968, porcentaje: 5.5 },
+      { nombre: "Otros", coalicion: ["OTRO"], votos: 130_171, porcentaje: 7.1 },
+    ],
+  },
+  {
+    anio: 2021,
+    listaNominal: 3_534_641,
+    votosTotales: 1_881_000,
+    participacionPct: 53.2,
+    ganador: "Alfredo Ramírez Bedolla",
+    margenPct: 8.4,
+    candidatos: [
+      { nombre: "Alfredo Ramírez Bedolla", coalicion: ["MORENA", "PT"], votos: 794_634, porcentaje: 42.2 },
+      { nombre: "Carlos Herrera Tello", coalicion: ["PRI", "PRD"], votos: 636_298, porcentaje: 33.8 },
+      { nombre: "Juan Antonio Magaña de la Mora", coalicion: ["PAN"], votos: 174_900, porcentaje: 9.3 },
+      { nombre: "Hipólito Mora", coalicion: ["FXM"], votos: 35_700, porcentaje: 1.9 },
+      { nombre: "Cristóbal Arias Solís", coalicion: ["MC"], votos: 154_300, porcentaje: 8.2 },
+      { nombre: "Otros / nulos", coalicion: ["OTRO"], votos: 85_168, porcentaje: 4.6 },
+    ],
+  },
+];
+
+// Voto del ganador por distrito local (proxy IEM 2021) — top 24 distritos
+// % del candidato Morena-PT en cada distrito local IEM
+export const VOTO_MORENA_2021_POR_DISTRITO: Record<number, number> = {
+  1: 38.1, 2: 36.5, 3: 41.2, 4: 30.8, 5: 44.6, 6: 35.7, 7: 39.8, 8: 47.1,
+  9: 33.4, 10: 48.3, 11: 49.7, 12: 43.5, 13: 46.2, 14: 41.9, 15: 44.0, 16: 50.1,
+  17: 48.9, 18: 39.4, 19: 42.8, 20: 40.2, 21: 36.9, 22: 45.3, 23: 43.7, 24: 51.6,
+};
+
+// Voto del ganador por municipio (top 20 estratégicos, % Morena-PT 2021)
+export const VOTO_MORENA_2021_POR_MUNICIPIO: Record<number, number> = {
+  53: 49.4,  // Morelia
+  102: 41.8, // Uruapan
+  108: 35.2, // Zamora
+  52: 51.6,  // Lázaro Cárdenas
+  6: 46.0,   // Apatzingán
+  66: 43.1,  // Pátzcuaro
+  34: 44.5,  // Hidalgo (Cd. Hidalgo)
+  112: 47.3, // Zitácuaro
+  76: 28.4,  // Sahuayo
+  43: 36.7,  // Jacona
+  107: 41.0, // Zacapu
+  88: 50.2,  // Tarímbaro
+  50: 39.5,  // Maravatío
+  75: 38.1,  // Los Reyes
+  71: 33.6,  // Puruándiro
+  106: 30.2, // Yurécuaro
+  69: 32.8,  // La Piedad
+  82: 42.4,  // Tacámbaro
+  38: 40.7,  // Huetamo
+  45: 27.9,  // Jiquilpan
+};
