@@ -40,7 +40,7 @@ const mando = [
 ];
 
 const tools = [
-  { title: "Meta Business Suite", url: "https://business.facebook.com/", icon: Briefcase },
+  { title: "Meta Business Suite", url: "https://business.facebook.com/latest/home", icon: Briefcase },
   { title: "Google Trends Michoacán", url: "https://trends.google.com/trends/explore?geo=MX-MIC", icon: Search },
   { title: "IEM Michoacán", url: "https://iem.org.mx/", icon: Building2 },
   { title: "Repositorio Drive", url: "https://drive.google.com/", icon: FolderOpen },
