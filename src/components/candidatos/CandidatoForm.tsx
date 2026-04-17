@@ -377,6 +377,22 @@ export function CandidatoForm({ candidato, onSaved, trigger }: Props) {
             </Select>
             <p className="text-[10px] text-muted-foreground mt-1">{FASE_DESCRIPCION[form.fase]}</p>
           </div>
+          <div className="md:col-span-2 flex items-start gap-3 p-3 rounded-md bg-secondary/40 border border-border">
+            <input
+              type="checkbox"
+              id="es_propio"
+              checked={form.es_propio}
+              onChange={(e) => setForm({ ...form, es_propio: e.target.checked })}
+              className="mt-0.5 h-4 w-4 accent-primary cursor-pointer"
+            />
+            <div className="flex-1">
+              <Label htmlFor="es_propio" className="cursor-pointer flex items-center gap-1.5">
+                ⭐ Mi candidato (equipo propio)
+              </Label>
+              <p className="text-[10px] text-muted-foreground mt-0.5">
+                Marca esta casilla si es candidato del equipo a apoyar. Aparecerá destacado en Mando Central.
+              </p>
+            </div>
           <div className="md:col-span-2">
             <Label>Cargo buscado</Label>
             <Input
