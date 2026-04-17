@@ -197,25 +197,55 @@ export default function Candidatos() {
         </div>
       </div>
 
-      <div className="flex flex-col md:flex-row gap-2">
-        <div className="relative flex-1">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
-            placeholder="Buscar por nombre, partido o territorio…"
-            className="pl-9"
-          />
+      <div className="flex flex-col gap-2">
+        <div className="flex flex-col md:flex-row gap-2">
+          <div className="relative flex-1">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+              placeholder="Buscar por nombre, partido o territorio…"
+              className="pl-9"
+            />
+          </div>
+          <Select value={filtroNivel} onValueChange={setFiltroNivel}>
+            <SelectTrigger className="w-full md:w-44"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos los cargos</SelectItem>
+              <SelectItem value="gobernador">Gobernatura</SelectItem>
+              <SelectItem value="diputados">Diputado Local</SelectItem>
+              <SelectItem value="ayuntamientos">Ayuntamiento</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={filtroPartido} onValueChange={setFiltroPartido}>
+            <SelectTrigger className="w-full md:w-44"><SelectValue placeholder="Partido" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos los partidos</SelectItem>
+              {partidosDisponibles.map((p) => (
+                <SelectItem key={p} value={p}>{p}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={filtroFase} onValueChange={setFiltroFase}>
+            <SelectTrigger className="w-full md:w-44"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas las fases</SelectItem>
+              {FASES_CANDIDATURA.map((f) => (
+                <SelectItem key={f} value={f}>{FASE_LABEL[f]}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
-        <Select value={filtroNivel} onValueChange={setFiltroNivel}>
-          <SelectTrigger className="w-full md:w-56"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos los niveles</SelectItem>
-            <SelectItem value="gobernador">Gobernatura</SelectItem>
-            <SelectItem value="diputados">Diputado Local</SelectItem>
-            <SelectItem value="ayuntamientos">Ayuntamiento</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex items-center gap-2 px-1">
+          <Switch id="agrupar" checked={agruparContienda} onCheckedChange={setAgruparContienda} />
+          <Label htmlFor="agrupar" className="text-xs cursor-pointer flex items-center gap-1.5">
+            <Layers className="w-3.5 h-3.5" />
+            Agrupar por contienda interna (mismo partido + cargo + territorio + fase)
+          </Label>
+          <span className="text-[10px] text-muted-foreground ml-auto font-mono">
+            {filtrados.length} candidato{filtrados.length === 1 ? "" : "s"} · {grupos.length} contienda{grupos.length === 1 ? "" : "s"}
+          </span>
+        </div>
       </div>
 
       {comparando && candidatosCompare.length >= 2 && (
@@ -232,6 +262,50 @@ export default function Candidatos() {
       ) : filtrados.length === 0 ? (
         <div className="text-center py-12 text-sm text-muted-foreground">
           No hay candidatos que coincidan con los filtros. Agrega uno nuevo arriba.
+        </div>
+      ) : agruparContienda ? (
+        <div className="space-y-6">
+          {grupos.map((g) => (
+            <div key={contiendaKey(g.key)} className="space-y-2">
+              <div className="flex items-center justify-between gap-2 pb-2 border-b border-border">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Badge variant="outline" className="font-mono text-[10px]">
+                    {g.candidatos.length} aspirante{g.candidatos.length === 1 ? "" : "s"}
+                  </Badge>
+                  <h3 className="text-sm font-semibold">{contiendaLabel(g.key)}</h3>
+                  <span className="text-[10px] text-muted-foreground font-mono uppercase">
+                    {g.key.nivel === "gobernador" ? "Gobernatura" : g.key.nivel === "diputados" ? "Diputado local" : "Ayuntamiento"}
+                  </span>
+                </div>
+                {g.candidatos.length >= 2 && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setSeleccionados(g.candidatos.map((c) => c.id));
+                      setComparando(true);
+                    }}
+                  >
+                    <GitCompare className="w-3.5 h-3.5 mr-1.5" /> Comparar grupo
+                  </Button>
+                )}
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {g.candidatos.map((c) => (
+                  <CandidatoCard
+                    key={c.id}
+                    candidato={c}
+                    onOpen={() => setFichaAbierta(c)}
+                    onDelete={() => eliminar(c.id)}
+                    onChanged={cargar}
+                    selected={seleccionados.includes(c.id)}
+                    onToggleSelect={() => toggleSeleccion(c.id)}
+                    analisisHechos={analisisMap[c.id]}
+                  />
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
