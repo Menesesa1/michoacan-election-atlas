@@ -209,6 +209,7 @@ export default function Candidatos() {
               onChanged={cargar}
               selected={seleccionados.includes(c.id)}
               onToggleSelect={() => toggleSeleccion(c.id)}
+              analisisHechos={analisisMap[c.id]}
             />
           ))}
         </div>
