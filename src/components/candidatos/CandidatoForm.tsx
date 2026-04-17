@@ -68,6 +68,7 @@ export function CandidatoForm({ candidato, onSaved, trigger }: Props) {
   const [form, setForm] = useState({
     nombre: "", nivel: "ayuntamientos" as NivelEstrategia, territorio: "",
     fase: "precampana" as FaseCandidatura,
+    es_propio: false,
     cargo_buscado: "", bio_breve: "", twitter: "", facebook: "", instagram: "", web: "", notas: "",
   });
 
@@ -81,6 +82,7 @@ export function CandidatoForm({ candidato, onSaved, trigger }: Props) {
         nivel: candidato.nivel,
         territorio: candidato.territorio,
         fase: candidato.fase ?? "precampana",
+        es_propio: !!candidato.es_propio,
         cargo_buscado: candidato.cargo_buscado ?? "",
         bio_breve: candidato.bio_breve ?? "",
         twitter: candidato.redes?.twitter ?? "",
@@ -128,6 +130,7 @@ export function CandidatoForm({ candidato, onSaved, trigger }: Props) {
         nivel: parsed.data.nivel,
         territorio: parsed.data.territorio,
         fase: form.fase,
+        es_propio: form.es_propio,
         cargo_buscado: parsed.data.cargo_buscado || null,
         bio_breve: parsed.data.bio_breve || null,
         redes: {
@@ -373,6 +376,23 @@ export function CandidatoForm({ candidato, onSaved, trigger }: Props) {
               </SelectContent>
             </Select>
             <p className="text-[10px] text-muted-foreground mt-1">{FASE_DESCRIPCION[form.fase]}</p>
+          </div>
+          <div className="md:col-span-2 flex items-start gap-3 p-3 rounded-md bg-secondary/40 border border-border">
+            <input
+              type="checkbox"
+              id="es_propio"
+              checked={form.es_propio}
+              onChange={(e) => setForm({ ...form, es_propio: e.target.checked })}
+              className="mt-0.5 h-4 w-4 accent-primary cursor-pointer"
+            />
+            <div className="flex-1">
+              <Label htmlFor="es_propio" className="cursor-pointer flex items-center gap-1.5">
+                ⭐ Mi candidato (equipo propio)
+              </Label>
+              <p className="text-[10px] text-muted-foreground mt-0.5">
+                Marca esta casilla si es candidato del equipo a apoyar. Aparecerá destacado en Mando Central.
+              </p>
+            </div>
           </div>
           <div className="md:col-span-2">
             <Label>Cargo buscado</Label>

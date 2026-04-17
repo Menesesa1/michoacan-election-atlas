@@ -57,6 +57,7 @@ export type Database = {
           bio_breve: string | null
           cargo_buscado: string | null
           created_at: string
+          es_propio: boolean
           fase: string
           foto_url: string | null
           id: string
@@ -74,6 +75,7 @@ export type Database = {
           bio_breve?: string | null
           cargo_buscado?: string | null
           created_at?: string
+          es_propio?: boolean
           fase?: string
           foto_url?: string | null
           id?: string
@@ -91,6 +93,7 @@ export type Database = {
           bio_breve?: string | null
           cargo_buscado?: string | null
           created_at?: string
+          es_propio?: boolean
           fase?: string
           foto_url?: string | null
           id?: string
