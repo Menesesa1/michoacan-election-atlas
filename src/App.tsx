@@ -19,6 +19,7 @@ import Socioeconomico from "./pages/Socioeconomico";
 import Gobernador from "./pages/Gobernador";
 import DiputadosLocales from "./pages/DiputadosLocales";
 import Ayuntamientos from "./pages/Ayuntamientos";
+import Escenarios from "./pages/Escenarios";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -49,6 +50,7 @@ const App = () => (
                 <Route path="/demografia" element={<Demografia />} />
                 <Route path="/tendencias" element={<Tendencias />} />
                 <Route path="/crisis" element={<Crisis />} />
+                <Route path="/escenarios" element={<Escenarios />} />
                 <Route path="/distritos" element={<Distritos />} />
                 <Route path="/fuentes" element={<Fuentes />} />
               </Route>
