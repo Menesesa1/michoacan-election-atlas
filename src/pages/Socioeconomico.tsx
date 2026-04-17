@@ -229,8 +229,9 @@ export default function Socioeconomico() {
 
           <Card className="p-4 bg-muted/30">
             <p className="text-xs text-muted-foreground">
-              <span className="text-primary font-mono">FUENTE:</span> INEGI · Estadísticas Censales a Escalas Geoelectorales (ECEG) · Censo de Población y Vivienda 2020 · Marco geoelectoral INE.
-              Dataset original: <code className="text-foreground/80">ECEG_16_Michoacán.xlsx</code> con 192 indicadores socioeconómicos por sección electoral.
+              <span className="text-primary font-mono">FUENTES:</span> INEGI · ECEG Censo 2020 (192 indicadores × 2,694 secciones) ·
+              INE · Catálogo de secciones <code className="text-foreground/80">SECCION.dbf</code> (113 municipios + 12 distritos federales) ·
+              INE · Descriptivo Distritación Local 2016 <code className="text-foreground/80">D16.pdf</code> (24 distritos locales IEM con cabecera y municipios integrantes).
             </p>
           </Card>
         </>
