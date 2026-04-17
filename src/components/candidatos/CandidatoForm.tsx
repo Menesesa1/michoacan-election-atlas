@@ -55,6 +55,9 @@ export function CandidatoForm({ candidato, onSaved, trigger }: Props) {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [analizando, setAnalizando] = useState<null | { hechos: number; total: number; tipo: string }>(null);
+  // Sólo aplica auto-análisis cuando es candidato nuevo (no en edición).
+  const [autoAnalizar, setAutoAnalizar] = useState(true);
 
   const [tipo, setTipo] = useState<TipoCandidatura>("partido");
   const [partidos, setPartidos] = useState<PartidoSigla[]>(["MORENA"]);
