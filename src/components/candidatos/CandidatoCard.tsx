@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Trash2, FileSearch, Twitter, Facebook, Instagram, Globe } from "lucide-react";
 import type { Candidato } from "@/lib/candidatos/types";
 import { CandidatoForm } from "./CandidatoForm";
+import { PartidoBadges } from "./PartidoBadges";
 
 interface Props {
   candidato: Candidato;
@@ -32,8 +33,8 @@ export function CandidatoCard({ candidato, onOpen, onDelete, onChanged, selected
           {candidato.cargo_buscado && (
             <p className="text-xs text-muted-foreground truncate">{candidato.cargo_buscado}</p>
           )}
-          <div className="flex flex-wrap gap-1 mt-2">
-            <Badge variant="outline" className="text-[10px] font-mono">{candidato.partido}</Badge>
+          <div className="flex flex-wrap items-center gap-1 mt-2">
+            <PartidoBadges partido={candidato.partido} />
             {candidato.tags?.slice(0, 3).map((t) => (
               <Badge key={t} variant="secondary" className="text-[10px]">{t}</Badge>
             ))}
