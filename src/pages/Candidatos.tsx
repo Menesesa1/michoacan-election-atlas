@@ -10,7 +10,8 @@ import { CandidatoCard } from "@/components/candidatos/CandidatoCard";
 import { CandidatoForm } from "@/components/candidatos/CandidatoForm";
 import { FichaCandidato } from "@/components/candidatos/FichaCandidato";
 import { ComparadorCandidatos } from "@/components/candidatos/ComparadorCandidatos";
-import type { Candidato } from "@/lib/candidatos/types";
+import type { Candidato, TipoAnalisis } from "@/lib/candidatos/types";
+import { obtenerTiposExistentes, generarTodosLosAnalisis } from "@/lib/candidatos/auto-analisis";
 
 export default function Candidatos() {
   const { toast } = useToast();
@@ -21,6 +22,7 @@ export default function Candidatos() {
   const [seleccionados, setSeleccionados] = useState<string[]>([]);
   const [comparando, setComparando] = useState(false);
   const [fichaAbierta, setFichaAbierta] = useState<Candidato | null>(null);
+  const [analisisMap, setAnalisisMap] = useState<Record<string, Set<TipoAnalisis>>>({});
 
   const cargar = async () => {
     setLoading(true);
@@ -31,7 +33,13 @@ export default function Candidatos() {
     if (error) {
       toast({ title: "Error cargando candidatos", description: error.message, variant: "destructive" });
     } else {
-      setCandidatos((data ?? []) as unknown as Candidato[]);
+      const lista = (data ?? []) as unknown as Candidato[];
+      setCandidatos(lista);
+      // Carga estado de análisis por candidato
+      if (lista.length > 0) {
+        const map = await obtenerTiposExistentes(lista.map((c) => c.id));
+        setAnalisisMap(map);
+      }
     }
     setLoading(false);
   };
@@ -76,8 +84,23 @@ export default function Candidatos() {
         notas: "Liderazgo morenista con base en colonias populares y zona rural del municipio.",
       },
     ];
-    const { error } = await supabase.from("candidatos").insert(seed);
-    if (!error) await cargar();
+    const { data: insertados, error } = await supabase.from("candidatos").insert(seed).select();
+    if (error || !insertados) return;
+    await cargar();
+
+    // Auto-genera análisis para los seed (en background, sin bloquear UI)
+    toast({
+      title: "Generando análisis IA de candidatos demo…",
+      description: "Alfonso Martínez y Raúl Morón. Tarda ~1-2 min.",
+    });
+    for (const cand of insertados) {
+      void generarTodosLosAnalisis(
+        { ...(cand as unknown as Candidato), redes: (cand.redes ?? {}) as Record<string, string | undefined> },
+        authData.user.id,
+      ).then(() => {
+        void cargar();
+      });
+    }
   };
 
   const eliminar = async (id: string) => {
@@ -186,6 +209,7 @@ export default function Candidatos() {
               onChanged={cargar}
               selected={seleccionados.includes(c.id)}
               onToggleSelect={() => toggleSeleccion(c.id)}
+              analisisHechos={analisisMap[c.id]}
             />
           ))}
         </div>

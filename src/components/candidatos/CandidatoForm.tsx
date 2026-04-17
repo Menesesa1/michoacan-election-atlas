@@ -21,7 +21,8 @@ import {
   type TipoCandidatura,
 } from "@/lib/candidatos/coaliciones";
 import type { Candidato } from "@/lib/candidatos/types";
-import { Loader2, Plus, Pencil, X } from "lucide-react";
+import { generarTodosLosAnalisis, TIPOS_ANALISIS } from "@/lib/candidatos/auto-analisis";
+import { Loader2, Plus, Pencil, X, Sparkles } from "lucide-react";
 
 const schema = z.object({
   nombre: z.string().trim().min(2).max(120),
@@ -54,6 +55,9 @@ export function CandidatoForm({ candidato, onSaved, trigger }: Props) {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [analizando, setAnalizando] = useState<null | { hechos: number; total: number; tipo: string }>(null);
+  // Sólo aplica auto-análisis cuando es candidato nuevo (no en edición).
+  const [autoAnalizar, setAutoAnalizar] = useState(true);
 
   const [tipo, setTipo] = useState<TipoCandidatura>("partido");
   const [partidos, setPartidos] = useState<PartidoSigla[]>(["MORENA"]);
@@ -133,13 +137,55 @@ export function CandidatoForm({ candidato, onSaved, trigger }: Props) {
         const { error } = await supabase.from("candidatos").update(payload).eq("id", candidato.id);
         if (error) throw error;
         toast({ title: "Candidato actualizado" });
+        setOpen(false);
+        onSaved?.();
       } else {
-        const { error } = await supabase.from("candidatos").insert([payload]);
+        const { data: inserted, error } = await supabase
+          .from("candidatos")
+          .insert([payload])
+          .select()
+          .single();
         if (error) throw error;
         toast({ title: "Candidato registrado" });
+        setOpen(false);
+        onSaved?.();
+
+        // Auto-análisis (los 3 tipos en serie). No bloquea el cierre del diálogo.
+        if (autoAnalizar && inserted) {
+          setAnalizando({ hechos: 0, total: TIPOS_ANALISIS.length, tipo: TIPOS_ANALISIS[0] });
+          toast({
+            title: "Generando análisis IA…",
+            description: `Perfil, OSINT y discurso para ${inserted.nombre}. Tarda ~30-60s.`,
+          });
+          void generarTodosLosAnalisis(
+            { ...inserted, redes: (inserted.redes ?? {}) as Record<string, string | undefined> },
+            authData.user.id,
+            (p) => {
+              setAnalizando((prev) => prev && {
+                hechos: prev.hechos + 1,
+                total: prev.total,
+                tipo: p.tipo,
+              });
+            },
+          ).then((resultados) => {
+            const errores = resultados.filter((r) => r.estado === "error");
+            if (errores.length === 0) {
+              toast({
+                title: "Análisis listos ✓",
+                description: `${inserted.nombre} ya tiene perfil, OSINT y discurso.`,
+              });
+            } else {
+              toast({
+                title: `Análisis parcial (${resultados.length - errores.length}/${resultados.length})`,
+                description: `Falló: ${errores.map((e) => e.tipo).join(", ")}. Reintenta desde la tarjeta.`,
+                variant: "destructive",
+              });
+            }
+            setAnalizando(null);
+            onSaved?.();
+          });
+        }
       }
-      setOpen(false);
-      onSaved?.();
     } catch (err) {
       toast({
         title: "Error",
@@ -300,11 +346,33 @@ export function CandidatoForm({ candidato, onSaved, trigger }: Props) {
             <Textarea rows={2} value={form.notas} onChange={(e) => setForm({ ...form, notas: e.target.value })} placeholder="Información adicional para enriquecer el análisis IA" />
           </div>
         </div>
+
+        {!candidato && (
+          <div className="flex items-start gap-2 p-2.5 rounded-md bg-primary/5 border border-primary/30">
+            <input
+              id="auto-analizar"
+              type="checkbox"
+              checked={autoAnalizar}
+              onChange={(e) => setAutoAnalizar(e.target.checked)}
+              className="mt-0.5 accent-primary"
+            />
+            <label htmlFor="auto-analizar" className="text-xs cursor-pointer flex-1">
+              <span className="font-semibold flex items-center gap-1">
+                <Sparkles className="w-3 h-3 text-primary" />
+                Generar análisis IA al guardar (recomendado)
+              </span>
+              <span className="text-muted-foreground">
+                Crea automáticamente perfil FODA, OSINT y análisis discursivo. Necesario para que el candidato aparezca con score en el comparador. Tarda ~30-60s en background.
+              </span>
+            </label>
+          </div>
+        )}
+
         <DialogFooter>
           <Button variant="ghost" onClick={() => setOpen(false)}>Cancelar</Button>
-          <Button onClick={submit} disabled={saving}>
-            {saving && <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />}
-            Guardar
+          <Button onClick={submit} disabled={saving || analizando !== null}>
+            {(saving || analizando !== null) && <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />}
+            {analizando ? `Analizando ${analizando.hechos}/${analizando.total}…` : "Guardar"}
           </Button>
         </DialogFooter>
       </DialogContent>
