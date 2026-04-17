@@ -79,7 +79,7 @@ export default function Escenarios() {
       distritosLocales,
       supuestos,
     }),
-    [nivel, territorio, territorioLabel, posicion, coalicion, horizonte, distritos, distritosLocales, supuestos],
+    [nivel, territorio, territorioLabel, posicion, coalicion, horizonte, distritos, distritosLocales, supuestos, catalogoLoaded],
   );
 
   const generar = async () => {
