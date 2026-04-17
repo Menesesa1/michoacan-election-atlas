@@ -346,11 +346,33 @@ export function CandidatoForm({ candidato, onSaved, trigger }: Props) {
             <Textarea rows={2} value={form.notas} onChange={(e) => setForm({ ...form, notas: e.target.value })} placeholder="Información adicional para enriquecer el análisis IA" />
           </div>
         </div>
+
+        {!candidato && (
+          <div className="flex items-start gap-2 p-2.5 rounded-md bg-primary/5 border border-primary/30">
+            <input
+              id="auto-analizar"
+              type="checkbox"
+              checked={autoAnalizar}
+              onChange={(e) => setAutoAnalizar(e.target.checked)}
+              className="mt-0.5 accent-primary"
+            />
+            <label htmlFor="auto-analizar" className="text-xs cursor-pointer flex-1">
+              <span className="font-semibold flex items-center gap-1">
+                <Sparkles className="w-3 h-3 text-primary" />
+                Generar análisis IA al guardar (recomendado)
+              </span>
+              <span className="text-muted-foreground">
+                Crea automáticamente perfil FODA, OSINT y análisis discursivo. Necesario para que el candidato aparezca con score en el comparador. Tarda ~30-60s en background.
+              </span>
+            </label>
+          </div>
+        )}
+
         <DialogFooter>
           <Button variant="ghost" onClick={() => setOpen(false)}>Cancelar</Button>
-          <Button onClick={submit} disabled={saving}>
-            {saving && <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />}
-            Guardar
+          <Button onClick={submit} disabled={saving || analizando !== null}>
+            {(saving || analizando !== null) && <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />}
+            {analizando ? `Analizando ${analizando.hechos}/${analizando.total}…` : "Guardar"}
           </Button>
         </DialogFooter>
       </DialogContent>
