@@ -103,8 +103,20 @@ export function CandidatoCard({
     )}>
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
-          <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
-            {NIVEL_LABEL[candidato.nivel]} · {candidato.territorio}
+          <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground flex items-center gap-1.5 flex-wrap">
+            <span>{NIVEL_LABEL[candidato.nivel]} · {candidato.territorio}</span>
+            <Badge
+              variant="outline"
+              className={cn(
+                "text-[9px] px-1.5 py-0 h-4 font-mono",
+                candidato.fase === "aspirante" && "border-violet-500/40 text-violet-400",
+                candidato.fase === "precampana" && "border-amber-500/40 text-amber-400",
+                candidato.fase === "campana" && "border-primary/40 text-primary",
+                candidato.fase === "electo" && "border-emerald-500/40 text-emerald-400",
+              )}
+            >
+              {FASE_LABEL_CORTO[candidato.fase ?? "precampana"]}
+            </Badge>
           </div>
           <h3 className="text-base font-bold text-foreground truncate mt-0.5">{candidato.nombre}</h3>
           {candidato.cargo_buscado && (
