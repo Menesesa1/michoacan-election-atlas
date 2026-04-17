@@ -167,6 +167,9 @@ export function buildSnapshot(params: {
           riesgo_alternancia: margen < 5 ? "alto" : margen < 12 ? "medio" : "bajo",
         };
       }
+      // Composición territorial: secciones del distrito local id
+      const secciones = distritoLocalSecciones.get(id);
+      if (secciones) composicion_territorial = calcComposicion((s) => secciones.has(s.sec));
     }
   } else if (nivel === "gobernador") {
     // Agregado estatal: suma de distritos locales últimos 3 procesos
