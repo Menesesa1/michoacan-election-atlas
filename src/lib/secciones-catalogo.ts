@@ -36,15 +36,41 @@ export const MUNICIPIOS_MICH: Record<number, string> = {
 
 export const TIPO_SECCION: Record<number, string> = { 2: "Urbana", 3: "Mixta", 4: "Rural" };
 
+// Distritación LOCAL 2016 (IEM/INE) — 24 distritos, fuente: D16.pdf INE
+export interface DistritoLocal {
+  distrito: number;
+  cabecera: string;
+  municipio_cabecera: string;
+  municipios: string[];
+  secciones: number[];
+  num_secciones: number;
+}
+interface DistritosLocalesPayload {
+  distritos: DistritoLocal[];
+  seccion_a_distrito_local: Record<string, number>;
+}
+
 let cache: SeccionCat[] | null = null;
 let bySec: Map<number, SeccionCat> | null = null;
+let distritosLocales: DistritoLocal[] | null = null;
+let secToDistritoLocal: Map<number, number> | null = null;
 
 export async function loadCatalogo(): Promise<SeccionCat[]> {
   if (cache) return cache;
-  const res = await fetch("/data/secciones-catalogo.json");
-  if (!res.ok) throw new Error("No se pudo cargar el catálogo de secciones");
-  cache = (await res.json()) as SeccionCat[];
+  const [resCat, resDL] = await Promise.all([
+    fetch("/data/secciones-catalogo.json"),
+    fetch("/data/distritos-locales-secciones.json"),
+  ]);
+  if (!resCat.ok) throw new Error("No se pudo cargar el catálogo de secciones");
+  cache = (await resCat.json()) as SeccionCat[];
   bySec = new Map(cache.map((c) => [c.sec, c]));
+  if (resDL.ok) {
+    const dl = (await resDL.json()) as DistritosLocalesPayload;
+    distritosLocales = dl.distritos;
+    secToDistritoLocal = new Map(
+      Object.entries(dl.seccion_a_distrito_local).map(([k, v]) => [Number(k), v]),
+    );
+  }
   return cache;
 }
 
@@ -59,3 +85,16 @@ export function lookupSeccion(sec: number): SeccionCat | undefined {
 export function nombreMunicipio(clave: number): string {
   return MUNICIPIOS_MICH[clave] ?? `Municipio ${clave}`;
 }
+
+export function getDistritosLocales(): DistritoLocal[] {
+  return distritosLocales ?? [];
+}
+
+export function distritoLocalDeSeccion(sec: number): number | undefined {
+  return secToDistritoLocal?.get(sec);
+}
+
+export function infoDistritoLocal(num: number): DistritoLocal | undefined {
+  return distritosLocales?.find((d) => d.distrito === num);
+}
+
