@@ -32,8 +32,8 @@ export function ComparadorCandidatos({ candidatos, onClose }: Props) {
     const d: Record<string, AnalisisDiscurso> = {};
     for (const row of data) {
       const t = row.tipo as TipoAnalisis;
-      if (t === "perfil" && !p[row.candidato_id]) p[row.candidato_id] = row.output_json as AnalisisPerfil;
-      if (t === "discurso" && !d[row.candidato_id]) d[row.candidato_id] = row.output_json as AnalisisDiscurso;
+      if (t === "perfil" && !p[row.candidato_id]) p[row.candidato_id] = row.output_json as unknown as AnalisisPerfil;
+      if (t === "discurso" && !d[row.candidato_id]) d[row.candidato_id] = row.output_json as unknown as AnalisisDiscurso;
     }
     setPerfiles(p);
     setDiscursos(d);
