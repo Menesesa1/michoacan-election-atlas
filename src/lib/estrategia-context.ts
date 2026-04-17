@@ -134,6 +134,13 @@ export function buildSnapshot(params: {
   const historico: SnapshotPayload["historico"] = [];
   let demografia: SnapshotPayload["demografia"];
   let competitividad: SnapshotPayload["competitividad"];
+  let composicion_territorial: SnapshotPayload["composicion_territorial"];
+
+  // Mapas auxiliares para resolver secciones por distrito local (catálogo IEM)
+  const distritoLocalSecciones = new Map<number, Set<number>>();
+  getDistritosLocales().forEach((dl) => {
+    distritoLocalSecciones.set(dl.distrito, new Set(dl.secciones));
+  });
 
   if (nivel === "diputados" && territorio.startsWith("distrito-")) {
     const id = parseInt(territorio.replace("distrito-", ""), 10);
