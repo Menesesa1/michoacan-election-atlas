@@ -22,6 +22,7 @@ export default function Candidatos() {
   const [seleccionados, setSeleccionados] = useState<string[]>([]);
   const [comparando, setComparando] = useState(false);
   const [fichaAbierta, setFichaAbierta] = useState<Candidato | null>(null);
+  const [analisisMap, setAnalisisMap] = useState<Record<string, Set<TipoAnalisis>>>({});
 
   const cargar = async () => {
     setLoading(true);
@@ -32,7 +33,13 @@ export default function Candidatos() {
     if (error) {
       toast({ title: "Error cargando candidatos", description: error.message, variant: "destructive" });
     } else {
-      setCandidatos((data ?? []) as unknown as Candidato[]);
+      const lista = (data ?? []) as unknown as Candidato[];
+      setCandidatos(lista);
+      // Carga estado de análisis por candidato
+      if (lista.length > 0) {
+        const map = await obtenerTiposExistentes(lista.map((c) => c.id));
+        setAnalisisMap(map);
+      }
     }
     setLoading(false);
   };
