@@ -363,6 +363,18 @@ export function CandidatoForm({ candidato, onSaved, trigger }: Props) {
             />
           </div>
           <div className="md:col-span-2">
+            <Label>Fase del proceso *</Label>
+            <Select value={form.fase} onValueChange={(v) => setForm({ ...form, fase: v as FaseCandidatura })}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {FASES_CANDIDATURA.map((f) => (
+                  <SelectItem key={f} value={f}>{FASE_LABEL[f]}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-[10px] text-muted-foreground mt-1">{FASE_DESCRIPCION[form.fase]}</p>
+          </div>
+          <div className="md:col-span-2">
             <Label>Cargo buscado</Label>
             <Input
               value={form.cargo_buscado}
