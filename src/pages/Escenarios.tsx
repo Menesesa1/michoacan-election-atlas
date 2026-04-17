@@ -257,20 +257,6 @@ export default function Escenarios() {
           </div>
         </div>
       )}
-
-      {/* Disclaimer */}
-      <div className="rounded-lg border border-primary/30 bg-primary/5 p-4 space-y-2">
-        <div className="flex items-center gap-2 text-primary text-[10px] font-mono uppercase tracking-widest">
-          <Sparkles className="w-3 h-3" />
-          Producto exclusivo · Uso restringido
-        </div>
-        <p className="text-xs text-foreground/90 leading-relaxed">
-          Generador desarrollado por <span className="font-semibold text-foreground">Job Meneses, CEO de EME</span>,
-          en específico para las campañas de <span className="font-semibold text-foreground">Alfonso Martínez</span> y aliados estratégicos para
-          <span className="font-semibold text-foreground"> diputaciones locales y ayuntamientos</span>.
-          Su aplicación está centrada en el <span className="font-semibold text-foreground">War Room (WR) de cada escenario</span>.
-        </p>
-      </div>
     </div>
   );
 }
