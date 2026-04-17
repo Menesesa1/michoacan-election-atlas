@@ -57,6 +57,7 @@ export type Database = {
           bio_breve: string | null
           cargo_buscado: string | null
           created_at: string
+          fase: string
           foto_url: string | null
           id: string
           nivel: string
@@ -73,6 +74,7 @@ export type Database = {
           bio_breve?: string | null
           cargo_buscado?: string | null
           created_at?: string
+          fase?: string
           foto_url?: string | null
           id?: string
           nivel: string
@@ -89,6 +91,7 @@ export type Database = {
           bio_breve?: string | null
           cargo_buscado?: string | null
           created_at?: string
+          fase?: string
           foto_url?: string | null
           id?: string
           nivel?: string
