@@ -308,7 +308,22 @@ export default function Escenarios() {
         })}
       </div>
 
-      {/* Footer disclaimer */}
+      {/* Disclaimer producto */}
+      <div className="rounded-lg border border-primary/30 bg-primary/5 p-4 space-y-2">
+        <div className="flex items-center gap-2 text-primary text-[10px] font-mono uppercase tracking-widest">
+          <Sparkles className="w-3 h-3" />
+          Producto exclusivo · Uso restringido
+        </div>
+        <p className="text-xs text-foreground/90 leading-relaxed">
+          Producto desarrollado por <span className="font-semibold text-foreground">Job Meneses, CEO de EME</span>,
+          en específico para las campañas de <span className="font-semibold text-foreground">Alfonso Martínez</span> y
+          aliados estratégicos para <span className="font-semibold text-foreground">diputaciones locales y ayuntamientos</span>.
+          Uso exclusivo del equipo de campaña; su aplicación está centrada en el
+          <span className="font-semibold text-foreground"> War Room (WR) de cada escenario</span>.
+        </p>
+      </div>
+
+      {/* Footer disclaimer técnico */}
       <div className="text-[10px] text-muted-foreground font-mono border-t border-border/50 pt-3">
         Probabilidades base son estimaciones del equipo, no proyecciones formales.
         Las estrategias son sugerencias generadas por IA sobre datos disponibles —
