@@ -393,6 +393,7 @@ export function CandidatoForm({ candidato, onSaved, trigger }: Props) {
                 Marca esta casilla si es candidato del equipo a apoyar. Aparecerá destacado en Mando Central.
               </p>
             </div>
+          </div>
           <div className="md:col-span-2">
             <Label>Cargo buscado</Label>
             <Input
