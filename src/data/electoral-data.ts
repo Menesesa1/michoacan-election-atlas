@@ -178,6 +178,7 @@ export const FUENTES_DATOS = [
   { nombre: "Cómputos Distritales 2018", url: "https://computos2018.ine.mx/", estado: "disponible" },
   { nombre: "Lista Nominal por Edad y Sexo", url: "https://www.ine.mx/transparencia/datos-abiertos/#/archivo/datos-por-rangos-de-edad-entidad-de-origen-y-sexo-del-padron-electoral-y-lista-nominal-2026", estado: "disponible" },
   { nombre: "Cartografía Seccional SIGE", url: "https://cartografia.ine.mx/sige8/mapas/mapas-digitales", estado: "disponible" },
+  { nombre: "Estudios Geoelectorales · Distritación 2017/2023", url: "https://cartografia.ine.mx/sige8/estudiosGeoelectorales/resultados-distritacion", estado: "disponible" },
   { nombre: "Cómputos PJ 2025", url: "https://computospj2025.ine.mx/scjn/nacional/candidatas", estado: "disponible" },
   { nombre: "Lista Nominal DERFE", url: "https://www.ine.mx/transparencia/datos-abiertos/", estado: "disponible" },
   { nombre: "Cartografía Electoral Descargable", url: "https://portal.ine.mx/productos-geografia-electoral-descargables/", estado: "disponible" },
