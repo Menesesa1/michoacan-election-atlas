@@ -1,5 +1,6 @@
 // Tipos compartidos del módulo de Estrategia 360
 import type { NivelEstrategia, Posicion } from "@/data/estrategia-templates";
+import type { CandidatoSnapshot } from "@/lib/candidatos/types";
 
 export interface SnapshotPayload {
   nivel: NivelEstrategia;
@@ -36,6 +37,10 @@ export interface SnapshotPayload {
     riesgo_alternancia?: "alto" | "medio" | "bajo";
   };
   alertas_activas?: string[];
+  candidatos?: {
+    propio?: CandidatoSnapshot;
+    adversarios: CandidatoSnapshot[];
+  };
   supuestos_usuario?: {
     participacion_esperada_pct?: number;
     voto_duro_pct?: number;
