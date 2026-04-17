@@ -22,9 +22,12 @@ export default function Candidatos() {
   const [candidatos, setCandidatos] = useState<Candidato[]>([]);
   const [loading, setLoading] = useState(true);
   const [filtroNivel, setFiltroNivel] = useState<string>("all");
+  const [filtroPartido, setFiltroPartido] = useState<string>("all");
+  const [filtroFase, setFiltroFase] = useState<string>("all");
   const [busqueda, setBusqueda] = useState("");
   const [seleccionados, setSeleccionados] = useState<string[]>([]);
   const [comparando, setComparando] = useState(false);
+  const [agruparContienda, setAgruparContienda] = useState(false);
   const [fichaAbierta, setFichaAbierta] = useState<Candidato | null>(null);
   const [analisisMap, setAnalisisMap] = useState<Record<string, Set<TipoAnalisis>>>({});
 
