@@ -10,7 +10,8 @@ import { CandidatoCard } from "@/components/candidatos/CandidatoCard";
 import { CandidatoForm } from "@/components/candidatos/CandidatoForm";
 import { FichaCandidato } from "@/components/candidatos/FichaCandidato";
 import { ComparadorCandidatos } from "@/components/candidatos/ComparadorCandidatos";
-import type { Candidato } from "@/lib/candidatos/types";
+import type { Candidato, TipoAnalisis } from "@/lib/candidatos/types";
+import { obtenerTiposExistentes, generarTodosLosAnalisis } from "@/lib/candidatos/auto-analisis";
 
 export default function Candidatos() {
   const { toast } = useToast();
