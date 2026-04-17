@@ -32,6 +32,13 @@ export interface SnapshotPayload {
     pct_mujeres?: number;
     pct_adultos_mayores?: number;
   };
+  composicion_territorial?: {
+    secciones_total: number;
+    pct_urbano: number;
+    pct_mixto: number;
+    pct_rural: number;
+    perfil: "urbano" | "rural" | "mixto" | "balanceado";
+  };
   competitividad?: {
     margen_ultimo_pct: number;
     riesgo_alternancia?: "alto" | "medio" | "bajo";
