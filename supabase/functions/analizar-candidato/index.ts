@@ -129,11 +129,37 @@ const TOOLS = {
   },
 } as const;
 
+const NIVEL_CONTEXTO: Record<string, string> = {
+  gobernador: `CARGO: GOBERNATURA DEL ESTADO DE MICHOACÁN.
+Considera dinámicas estatales completas: 24 distritos locales, 113 municipios, coaliciones estatales,
+voto rural vs urbano (Morelia, Uruapan, Zamora, Lázaro Cárdenas), seguridad regional (Tierra Caliente,
+Meseta Purépecha), relación con federación, magisterio (CNTE-Sección XVIII) y autodefensas/normalistas.
+NO mezcles dinámicas locales municipales como si fueran estatales.`,
+  diputados: `CARGO: DIPUTACIÓN LOCAL EN EL CONGRESO DE MICHOACÁN (LXXVI Legislatura).
+Considera el distrito específico, su cabecera, composición rural/urbana, voto histórico distrital,
+agenda legislativa local (presupuesto, fiscalización, leyes secundarias), relación con presidencia
+municipal del distrito y con el gobierno estatal. Enfoca el FODA en territorio acotado y bancada.
+NO trates al candidato como si compitiera por gobernatura o alcaldía.`,
+  ayuntamientos: `CARGO: PRESIDENCIA MUNICIPAL EN MICHOACÁN.
+Considera dinámica MUNICIPAL específica: cabildo, regidurías, sindicatura, servicios públicos
+(agua, basura, alumbrado, panteones), seguridad municipal, obra pública local, relación con
+gobernador y diputado local del distrito. Si es Morelia/Uruapan/Zamora/Lázaro Cárdenas, factor
+metropolitano. Si es municipio rural, factor caciquismo, comunidades indígenas y migración.
+NO confundas con cargo legislativo ni estatal.`,
+};
+
 const SYSTEM_PROMPT = `Eres un consultor político senior especializado en Michoacán, México.
 Analizas candidatos a cargos de elección popular (gobernatura, diputaciones locales, ayuntamientos).
 Tu análisis se basa SOLO en información pública conocida (medios, redes públicas, declaraciones públicas).
 NO inventas datos privados, financieros internos ni acusaciones sin sustento público.
 Cuando no tengas información específica, sé explícito al respecto en lugar de inventar.
+
+CRÍTICO: TODO el análisis (FODA, OSINT, discurso) debe ser COHERENTE con el NIVEL del cargo:
+- Gobernatura → escala estatal (24 distritos, 113 municipios, coaliciones estatales).
+- Diputado Local → escala distrital (1 de 24 distritos, agenda legislativa local).
+- Ayuntamiento → escala municipal (gestión local, cabildo, servicios).
+NO mezcles escalas. Las fortalezas/oportunidades/amenazas deben aplicar al cargo específico que busca.
+
 Responde SIEMPRE invocando la herramienta correspondiente con JSON estructurado.
 Idioma: español de México, profesional y neutral.`;
 
@@ -162,6 +188,8 @@ Deno.serve(async (req) => {
       });
     }
 
+    const contextoNivel = NIVEL_CONTEXTO[input.candidato.nivel] ?? "";
+
     const userPrompt = `Analiza al siguiente candidato político:
 
 NOMBRE: ${input.candidato.nombre}
@@ -176,7 +204,11 @@ ${input.candidato.redes && Object.keys(input.candidato.redes).length > 0
 ${input.candidato.notas ? `NOTAS DEL CONSULTOR: ${input.candidato.notas}` : ""}
 ${input.contexto_territorial ? `\nCONTEXTO TERRITORIAL:\n${input.contexto_territorial}` : ""}
 
+CONTEXTO DEL CARGO (OBLIGATORIO RESPETAR):
+${contextoNivel}
+
 Tipo de análisis solicitado: ${input.tipo.toUpperCase()}.
+Todo el análisis debe estar acotado al cargo y territorio anteriores.
 Devuelve la herramienta con todos los campos requeridos.`;
 
     const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
