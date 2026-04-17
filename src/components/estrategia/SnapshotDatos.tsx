@@ -1,7 +1,7 @@
 import type { SnapshotPayload } from "@/lib/estrategia-context";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { TrendingUp, Users, AlertTriangle, BarChart3 } from "lucide-react";
+import { TrendingUp, Users, AlertTriangle, BarChart3, MapPin } from "lucide-react";
 
 interface Props {
   snapshot: SnapshotPayload;
