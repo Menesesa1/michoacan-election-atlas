@@ -135,6 +135,21 @@ export default function Escenarios() {
     }
   };
 
+  const cargarVersion = (snap: SnapshotPayload, out: EstrategiaOutput) => {
+    // Restaurar parámetros del wizard desde el snapshot guardado
+    setNivel(snap.nivel as NivelEscenario);
+    setPosicion(snap.posicion);
+    setCoalicion(snap.coalicion);
+    setHorizonte(snap.horizonte);
+    if (snap.supuestos_usuario) setSupuestos(snap.supuestos_usuario);
+    setOutput(out);
+    setStep(3);
+    toast({
+      title: "Versión cargada",
+      description: `${snap.nivelLabel} · ${snap.territorio}`,
+    });
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
