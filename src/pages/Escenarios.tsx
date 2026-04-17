@@ -8,6 +8,7 @@ import {
   type NivelEstrategia,
 } from "@/data/estrategia-templates";
 import { buildSnapshot, getTerritorios, type SnapshotPayload } from "@/lib/estrategia-context";
+import { loadCatalogo } from "@/lib/secciones-catalogo";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
