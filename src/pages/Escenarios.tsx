@@ -49,6 +49,11 @@ export default function Escenarios() {
     [nivel, distritosLocales],
   );
 
+  // Cargar catálogo INE de secciones (composición urbano/rural en snapshot)
+  useEffect(() => {
+    void loadCatalogo().catch((e) => console.warn("loadCatalogo failed:", e));
+  }, []);
+
   // Reset territorio cuando cambia nivel
   useEffect(() => {
     if (territorios.length > 0 && !territorios.find((t) => t.value === territorio)) {
