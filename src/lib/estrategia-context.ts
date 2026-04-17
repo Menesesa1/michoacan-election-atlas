@@ -112,6 +112,8 @@ function calcComposicion(filter: (s: SeccionCat) => boolean): SnapshotPayload["c
   else if (pct_mixto >= 50) perfil = "mixto";
   return { secciones_total: total, pct_urbano, pct_mixto, pct_rural, perfil };
 }
+
+export function buildSnapshot(params: {
   nivel: NivelEstrategia;
   nivelLabel: string;
   territorio: string;
