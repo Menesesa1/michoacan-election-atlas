@@ -104,15 +104,19 @@ export function MapaInteractivo({ eleccion }: MapaInteractivoProps) {
         const r = d.resultados[eleccion];
         if (!r) return;
         const comp = getCompetitividadDistrito(d, eleccion);
-        const color = PARTIDOS_CONFIG[r.ganador as Partido]?.color || "#444";
+          const color = PARTIDOS_CONFIG[r.ganador as Partido]?.color || "#444";
+        const { lealtad, riesgo, riesgoColor } = computeLealtadRiesgo(comp, r);
         const circle = L.circleMarker(coords, {
           radius: Math.max(10, Math.sqrt(d.listaNominal2024 / 5000)),
-          fillColor: color, fillOpacity: 0.7, color: "#e0e0e0", weight: 2,
+          fillColor: color, fillOpacity: 0.7, color: riesgoColor, weight: 2.5,
         });
-        circle.bindPopup(popupHtml(d, r, comp, prefix), { className: "electoral-popup" });
-        circle.bindTooltip(`${prefix}${d.id} · ${d.cabecera}`, { permanent: false, direction: "top", className: "electoral-tooltip" });
-        circle.on("mouseover", function () { this.setStyle({ fillOpacity: 1, weight: 3 }); });
-        circle.on("mouseout", function () { this.setStyle({ fillOpacity: 0.7, weight: 2 }); });
+        circle.bindPopup(popupHtml(d, r, comp, prefix, lealtad, riesgo), { className: "electoral-popup" });
+        circle.bindTooltip(
+          `<b>${prefix}${d.id} · ${d.cabecera}</b><br/>Lealtad: <b>${lealtad}%</b> · Riesgo: <b>${riesgo}</b>`,
+          { permanent: false, direction: "top", className: "electoral-tooltip", sticky: true }
+        );
+        circle.on("mouseover", function () { this.setStyle({ fillOpacity: 1, weight: 4 }); });
+        circle.on("mouseout", function () { this.setStyle({ fillOpacity: 0.7, weight: 2.5 }); });
         circle.addTo(layerRef.current!);
       });
     }
@@ -146,14 +150,27 @@ export function MapaInteractivo({ eleccion }: MapaInteractivoProps) {
   );
 }
 
-function popupHtml(d: { id: number; cabecera: string; listaNominal2024: number }, r: any, comp: any, prefix: string) {
-  return `<div style="font-family:Inter,sans-serif;font-size:12px;min-width:180px;">
-    <div style="font-weight:700;font-size:14px;margin-bottom:4px;">${prefix}${d.id} · ${d.cabecera}</div>
-    <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+function computeLealtadRiesgo(comp: { margen: number }, r: { ganador: string; votos: Record<string, number>; totalVotos: number }) {
+  const ganadorVotos = r.votos[r.ganador] || 0;
+  const lealtad = Math.round((ganadorVotos / Math.max(1, r.totalVotos)) * 100);
+  let riesgo: "Alto" | "Medio" | "Bajo" = "Bajo";
+  if (comp.margen < 5) riesgo = "Alto";
+  else if (comp.margen < 12) riesgo = "Medio";
+  const riesgoColor = riesgo === "Alto" ? "hsl(0, 75%, 55%)" : riesgo === "Medio" ? "hsl(40, 80%, 55%)" : "hsl(140, 60%, 50%)";
+  return { lealtad, riesgo, riesgoColor };
+}
+
+function popupHtml(d: { id: number; cabecera: string; listaNominal2024: number }, r: any, comp: any, prefix: string, lealtad: number, riesgo: string) {
+  const riesgoColor = riesgo === "Alto" ? "hsl(0, 75%, 60%)" : riesgo === "Medio" ? "hsl(40, 80%, 60%)" : "hsl(140, 60%, 55%)";
+  return `<div style="font-family:Inter,sans-serif;font-size:12px;min-width:200px;">
+    <div style="font-weight:700;font-size:14px;margin-bottom:6px;color:#f4f4f4;">${prefix}${d.id} · ${d.cabecera}</div>
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;flex-wrap:wrap;">
       <span style="background:${PARTIDOS_CONFIG[r.ganador as Partido]?.color};color:white;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;">${r.ganador}</span>
-      <span style="color:#888;font-size:11px;">${comp.nivel}</span>
+      <span style="color:#aaa;font-size:11px;">${comp.nivel}</span>
+      <span style="background:${riesgoColor};color:#0a0a0a;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;">RIESGO ${riesgo.toUpperCase()}</span>
     </div>
-    <div style="color:#aaa;font-size:11px;">
+    <div style="color:#bbb;font-size:11px;line-height:1.5;">
+      Lealtad ganador: <b style="color:#c5a059;">${lealtad}%</b><br/>
       Participación: <b style="color:#eee;">${r.participacion}%</b><br/>
       Margen: <b style="color:#eee;">${comp.margen.toFixed(1)}%</b><br/>
       Lista Nominal: <b style="color:#eee;">${d.listaNominal2024.toLocaleString()}</b>
