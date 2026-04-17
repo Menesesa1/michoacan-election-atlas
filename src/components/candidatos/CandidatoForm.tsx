@@ -22,6 +22,8 @@ import {
 } from "@/lib/candidatos/coaliciones";
 import type { Candidato } from "@/lib/candidatos/types";
 import { generarTodosLosAnalisis, TIPOS_ANALISIS } from "@/lib/candidatos/auto-analisis";
+import { cargoSugerido, etiquetaTerritorio } from "@/lib/candidatos/territorios";
+import { TerritorioInput } from "./TerritorioInput";
 import { Loader2, Plus, Pencil, X, Sparkles } from "lucide-react";
 
 const schema = z.object({
