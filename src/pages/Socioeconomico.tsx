@@ -43,6 +43,7 @@ export default function Socioeconomico() {
   const resumen = useMemo(() => (data ? resumir(data) : null), [data]);
   const porMunicipio = useMemo<GrupoCenso[]>(() => (data ? agruparPor(data, "municipio") : []), [data]);
   const porDistrito = useMemo<GrupoCenso[]>(() => (data ? agruparPor(data, "distrito") : []), [data]);
+  const porDistritoLocal = useMemo<GrupoCenso[]>(() => (data ? agruparPor(data, "distritoLocal") : []), [data]);
 
   const seccionesFiltradas = useMemo(() => {
     if (!data) return [];
