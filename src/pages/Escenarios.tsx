@@ -15,6 +15,7 @@ import { WizardAlcance } from "@/components/estrategia/WizardAlcance";
 import { SnapshotDatos } from "@/components/estrategia/SnapshotDatos";
 import { ResultadoTabs, type EstrategiaOutput } from "@/components/estrategia/ResultadoTabs";
 import { ExportarPDF } from "@/components/estrategia/ExportarPDF";
+import { EstrategiasGuardadas } from "@/components/estrategia/EstrategiasGuardadas";
 import { Sparkles, Loader2, ChevronRight, Save, RotateCcw } from "lucide-react";
 
 type Step = 1 | 2 | 3;
