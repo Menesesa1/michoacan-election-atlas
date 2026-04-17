@@ -15,6 +15,7 @@ import { WizardAlcance } from "@/components/estrategia/WizardAlcance";
 import { SnapshotDatos } from "@/components/estrategia/SnapshotDatos";
 import { ResultadoTabs, type EstrategiaOutput } from "@/components/estrategia/ResultadoTabs";
 import { ExportarPDF } from "@/components/estrategia/ExportarPDF";
+import { EstrategiasGuardadas } from "@/components/estrategia/EstrategiasGuardadas";
 import { Sparkles, Loader2, ChevronRight, Save, RotateCcw } from "lucide-react";
 
 type Step = 1 | 2 | 3;
@@ -134,6 +135,21 @@ export default function Escenarios() {
     }
   };
 
+  const cargarVersion = (snap: SnapshotPayload, out: EstrategiaOutput) => {
+    // Restaurar parámetros del wizard desde el snapshot guardado
+    setNivel(snap.nivel as NivelEscenario);
+    setPosicion(snap.posicion);
+    setCoalicion(snap.coalicion);
+    setHorizonte(snap.horizonte);
+    if (snap.supuestos_usuario) setSupuestos(snap.supuestos_usuario);
+    setOutput(out);
+    setStep(3);
+    toast({
+      title: "Versión cargada",
+      description: `${snap.nivelLabel} · ${snap.territorio}`,
+    });
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
@@ -188,7 +204,10 @@ export default function Escenarios() {
         })}
       </div>
 
-      {/* PASO 1 */}
+      {/* Panel de estrategias guardadas */}
+      <EstrategiasGuardadas onLoad={cargarVersion} />
+
+
       {step === 1 && (
         <div className="space-y-4">
           <WizardAlcance
