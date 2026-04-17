@@ -15,6 +15,7 @@ import Demografia from "./pages/Demografia";
 import Tendencias from "./pages/Tendencias";
 import Crisis from "./pages/Crisis";
 import Fuentes from "./pages/Fuentes";
+import Socioeconomico from "./pages/Socioeconomico";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -42,6 +43,7 @@ const App = () => (
                 <Route path="/demografia" element={<Demografia />} />
                 <Route path="/tendencias" element={<Tendencias />} />
                 <Route path="/crisis" element={<Crisis />} />
+                <Route path="/socioeconomico" element={<Socioeconomico />} />
                 <Route path="/fuentes" element={<Fuentes />} />
               </Route>
               <Route path="*" element={<NotFound />} />

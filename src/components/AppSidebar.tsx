@@ -5,6 +5,7 @@ import {
   TrendingUp,
   ShieldAlert,
   Database,
+  PieChart,
   BarChart3,
   ExternalLink,
   Briefcase,
@@ -36,6 +37,7 @@ const mando = [
   { title: "Demografía", url: "/demografia", icon: Users },
   { title: "Tendencias", url: "/tendencias", icon: TrendingUp },
   { title: "Crisis", url: "/crisis", icon: ShieldAlert },
+  { title: "Socioeconómico", url: "/socioeconomico", icon: PieChart },
   { title: "Fuentes", url: "/fuentes", icon: Database },
 ];
 
