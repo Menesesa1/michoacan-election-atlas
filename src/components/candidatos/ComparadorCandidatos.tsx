@@ -5,9 +5,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Sparkles, X } from "lucide-react";
 import type { Candidato, AnalisisPerfil, AnalisisDiscurso, TipoAnalisis } from "@/lib/candidatos/types";
+import { PartidoBadges } from "./PartidoBadges";
 
 interface Props {
-  candidatos: [Candidato, Candidato];
+  candidatos: Candidato[];
   onClose: () => void;
 }
 
@@ -15,17 +16,20 @@ export function ComparadorCandidatos({ candidatos, onClose }: Props) {
   const [perfiles, setPerfiles] = useState<Record<string, AnalisisPerfil | undefined>>({});
   const [discursos, setDiscursos] = useState<Record<string, AnalisisDiscurso | undefined>>({});
 
+  const ids = candidatos.map((c) => c.id).join(",");
+
   useEffect(() => {
     void cargar();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [candidatos[0].id, candidatos[1].id]);
+  }, [ids]);
 
   const cargar = async () => {
-    const ids = candidatos.map((c) => c.id);
+    const idList = candidatos.map((c) => c.id);
+    if (idList.length === 0) return;
     const { data } = await supabase
       .from("candidato_analisis")
       .select("*")
-      .in("candidato_id", ids)
+      .in("candidato_id", idList)
       .order("created_at", { ascending: false });
     if (!data) return;
     const p: Record<string, AnalisisPerfil> = {};
@@ -39,26 +43,35 @@ export function ComparadorCandidatos({ candidatos, onClose }: Props) {
     setDiscursos(d);
   };
 
+  // Grid responsivo: 1 col en xs, 2 en md, 3 en lg, 4 en xl si hay muchos.
+  const gridCols =
+    candidatos.length <= 1 ? "grid-cols-1"
+    : candidatos.length === 2 ? "grid-cols-1 md:grid-cols-2"
+    : candidatos.length === 3 ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
+    : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4";
+
   return (
     <Card className="p-4 bg-card/60 border-primary/30">
       <div className="flex items-center justify-between mb-3">
         <div>
-          <div className="text-[10px] font-mono uppercase tracking-widest text-primary">Comparador</div>
+          <div className="text-[10px] font-mono uppercase tracking-widest text-primary">
+            Comparador · {candidatos.length} candidatos
+          </div>
           <h3 className="text-base font-bold">Análisis lado a lado</h3>
         </div>
         <Button size="sm" variant="ghost" onClick={onClose}><X className="w-4 h-4" /></Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className={`grid ${gridCols} gap-4 ${candidatos.length > 3 ? "overflow-x-auto" : ""}`}>
         {candidatos.map((c) => {
           const perfil = perfiles[c.id];
           const discurso = discursos[c.id];
           return (
-            <div key={c.id} className="space-y-3">
+            <div key={c.id} className="space-y-3 min-w-0">
               <div className="border-b border-border pb-2">
-                <h4 className="font-bold">{c.nombre}</h4>
-                <div className="flex gap-1.5 mt-1">
-                  <Badge variant="outline" className="text-[10px]">{c.partido}</Badge>
+                <h4 className="font-bold truncate">{c.nombre}</h4>
+                <div className="flex flex-wrap items-center gap-1 mt-1">
+                  <PartidoBadges partido={c.partido} />
                   <Badge variant="secondary" className="text-[10px]">{c.territorio}</Badge>
                 </div>
               </div>
@@ -72,7 +85,10 @@ export function ComparadorCandidatos({ candidatos, onClose }: Props) {
                 <>
                   {perfil && (
                     <>
-                      <div className="text-2xl font-bold text-primary">{perfil.score_competitividad}<span className="text-xs text-muted-foreground">/100</span></div>
+                      <div className="text-2xl font-bold text-primary">
+                        {perfil.score_competitividad}
+                        <span className="text-xs text-muted-foreground">/100</span>
+                      </div>
                       <div>
                         <div className="text-[10px] font-mono uppercase text-emerald-400 mb-1">Fortalezas</div>
                         <ul className="text-xs space-y-0.5">{perfil.fortalezas.slice(0, 4).map((f, i) => (<li key={i}>• {f}</li>))}</ul>

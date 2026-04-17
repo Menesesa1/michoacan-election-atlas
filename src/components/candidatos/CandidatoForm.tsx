@@ -11,13 +11,20 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger,
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { PARTIDOS_DISPONIBLES, type NivelEstrategia } from "@/data/estrategia-templates";
+import { PARTIDO_COLOR, type PartidoSigla } from "@/data/locales/partidos";
+import {
+  COALICIONES_SUGERIDAS,
+  codificarPartido,
+  decodificarPartido,
+  type TipoCandidatura,
+} from "@/lib/candidatos/coaliciones";
 import type { Candidato } from "@/lib/candidatos/types";
-import { Loader2, Plus, Pencil } from "lucide-react";
+import { Loader2, Plus, Pencil, X } from "lucide-react";
 
 const schema = z.object({
   nombre: z.string().trim().min(2).max(120),
-  partido: z.string().min(1),
   nivel: z.enum(["gobernador", "diputados", "ayuntamientos"]),
   territorio: z.string().trim().min(1).max(120),
   cargo_buscado: z.string().trim().max(120).optional(),
@@ -35,21 +42,34 @@ interface Props {
   trigger?: React.ReactNode;
 }
 
+const TIPO_LABEL: Record<TipoCandidatura, string> = {
+  partido: "Un solo partido",
+  coalicion: "Coalición / Alianza",
+  independiente: "Candidato independiente",
+  candidatura_unica: "Candidatura única (consenso)",
+};
+
 export function CandidatoForm({ candidato, onSaved, trigger }: Props) {
   const { toast } = useToast();
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  const [tipo, setTipo] = useState<TipoCandidatura>("partido");
+  const [partidos, setPartidos] = useState<PartidoSigla[]>(["MORENA"]);
+
   const [form, setForm] = useState({
-    nombre: "", partido: "MORENA", nivel: "ayuntamientos" as NivelEstrategia, territorio: "",
+    nombre: "", nivel: "ayuntamientos" as NivelEstrategia, territorio: "",
     cargo_buscado: "", bio_breve: "", twitter: "", facebook: "", instagram: "", web: "", notas: "",
   });
 
   useEffect(() => {
     if (candidato && open) {
+      const dec = decodificarPartido(candidato.partido);
+      setTipo(dec.tipo);
+      setPartidos(dec.partidos.length ? dec.partidos : ["MORENA"]);
       setForm({
         nombre: candidato.nombre,
-        partido: candidato.partido,
         nivel: candidato.nivel,
         territorio: candidato.territorio,
         cargo_buscado: candidato.cargo_buscado ?? "",
@@ -63,10 +83,22 @@ export function CandidatoForm({ candidato, onSaved, trigger }: Props) {
     }
   }, [candidato, open]);
 
+  const togglePartido = (p: PartidoSigla) => {
+    setPartidos((prev) => (prev.includes(p) ? prev.filter((x) => x !== p) : [...prev, p]));
+  };
+
   const submit = async () => {
     const parsed = schema.safeParse(form);
     if (!parsed.success) {
       toast({ title: "Datos inválidos", description: parsed.error.issues[0]?.message, variant: "destructive" });
+      return;
+    }
+    if (tipo === "partido" && partidos.length !== 1) {
+      toast({ title: "Selecciona exactamente un partido", variant: "destructive" });
+      return;
+    }
+    if (tipo === "coalicion" && partidos.length < 2) {
+      toast({ title: "Una coalición requiere al menos 2 partidos", variant: "destructive" });
       return;
     }
     if (!user) {
@@ -78,10 +110,12 @@ export function CandidatoForm({ candidato, onSaved, trigger }: Props) {
       const { data: authData } = await supabase.auth.getUser();
       if (!authData?.user) throw new Error("No autenticado");
 
+      const partidoCodificado = codificarPartido(tipo, partidos);
+
       const payload = {
         user_id: authData.user.id,
         nombre: parsed.data.nombre,
-        partido: parsed.data.partido,
+        partido: partidoCodificado,
         nivel: parsed.data.nivel,
         territorio: parsed.data.territorio,
         cargo_buscado: parsed.data.cargo_buscado || null,
@@ -135,16 +169,105 @@ export function CandidatoForm({ candidato, onSaved, trigger }: Props) {
             <Label>Nombre completo *</Label>
             <Input value={form.nombre} onChange={(e) => setForm({ ...form, nombre: e.target.value })} placeholder="Ej. Alfonso Martínez Alcázar" />
           </div>
-          <div>
-            <Label>Partido *</Label>
-            <Select value={form.partido} onValueChange={(v) => setForm({ ...form, partido: v })}>
+
+          <div className="md:col-span-2">
+            <Label>Tipo de candidatura *</Label>
+            <Select
+              value={tipo}
+              onValueChange={(v) => {
+                const t = v as TipoCandidatura;
+                setTipo(t);
+                if (t === "independiente" || t === "candidatura_unica") setPartidos([]);
+                if (t === "partido" && partidos.length !== 1) setPartidos([partidos[0] ?? "MORENA"]);
+              }}
+            >
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                {PARTIDOS_DISPONIBLES.map((p) => (<SelectItem key={p} value={p}>{p}</SelectItem>))}
-                <SelectItem value="INDEPENDIENTE">INDEPENDIENTE</SelectItem>
+                {(Object.keys(TIPO_LABEL) as TipoCandidatura[]).map((t) => (
+                  <SelectItem key={t} value={t}>{TIPO_LABEL[t]}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
+
+          {tipo === "partido" && (
+            <div className="md:col-span-2">
+              <Label>Partido *</Label>
+              <Select value={partidos[0] ?? ""} onValueChange={(v) => setPartidos([v as PartidoSigla])}>
+                <SelectTrigger><SelectValue placeholder="Selecciona un partido" /></SelectTrigger>
+                <SelectContent>
+                  {PARTIDOS_DISPONIBLES.map((p) => (<SelectItem key={p} value={p}>{p}</SelectItem>))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {tipo === "coalicion" && (
+            <div className="md:col-span-2 space-y-2">
+              <Label>Partidos en la coalición * <span className="text-xs text-muted-foreground">(mínimo 2)</span></Label>
+              <div className="flex flex-wrap gap-1.5">
+                {PARTIDOS_DISPONIBLES.map((p) => {
+                  const active = partidos.includes(p);
+                  return (
+                    <button
+                      key={p}
+                      type="button"
+                      onClick={() => togglePartido(p)}
+                      className={`px-2.5 py-1 rounded-md text-xs border font-mono transition-colors ${
+                        active ? "text-foreground" : "text-muted-foreground bg-card/40 border-border hover:border-primary/40"
+                      }`}
+                      style={active ? { backgroundColor: `${PARTIDO_COLOR[p]}30`, borderColor: PARTIDO_COLOR[p] } : undefined}
+                    >
+                      {p}
+                    </button>
+                  );
+                })}
+              </div>
+              {partidos.length > 0 && (
+                <div className="flex flex-wrap items-center gap-1 pt-1">
+                  <span className="text-[10px] text-muted-foreground font-mono uppercase mr-1">Resultado:</span>
+                  {partidos.map((p) => (
+                    <Badge key={p} variant="outline" className="text-[10px] font-mono" style={{ borderColor: `${PARTIDO_COLOR[p]}80`, color: PARTIDO_COLOR[p] }}>
+                      {p}
+                    </Badge>
+                  ))}
+                </div>
+              )}
+              <div>
+                <Label className="text-xs text-muted-foreground">Coaliciones sugeridas</Label>
+                <div className="flex flex-wrap gap-1.5 mt-1">
+                  {COALICIONES_SUGERIDAS.map((c) => (
+                    <button
+                      key={c.etiqueta}
+                      type="button"
+                      onClick={() => setPartidos(c.partidos)}
+                      className="px-2 py-0.5 rounded text-[10px] border border-border hover:border-primary/40 text-muted-foreground hover:text-foreground"
+                    >
+                      {c.etiqueta}
+                    </button>
+                  ))}
+                  {partidos.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setPartidos([])}
+                      className="px-2 py-0.5 rounded text-[10px] border border-border hover:border-destructive/40 text-muted-foreground hover:text-destructive flex items-center gap-1"
+                    >
+                      <X className="w-3 h-3" /> Limpiar
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {(tipo === "independiente" || tipo === "candidatura_unica") && (
+            <div className="md:col-span-2 text-xs text-muted-foreground bg-muted/30 border border-border rounded-md p-2.5">
+              {tipo === "independiente"
+                ? "Sin partido. La IA tratará al candidato como aspirante independiente, ajustando estrategia de financiamiento, recolección de firmas y construcción de marca personal."
+                : "Candidatura de unidad/consenso (típica en planillas únicas locales o procesos sin contienda real). La IA enfocará la estrategia en legitimación, participación y blindaje reputacional."}
+            </div>
+          )}
+
           <div>
             <Label>Nivel *</Label>
             <Select value={form.nivel} onValueChange={(v) => setForm({ ...form, nivel: v as NivelEstrategia })}>
@@ -160,7 +283,7 @@ export function CandidatoForm({ candidato, onSaved, trigger }: Props) {
             <Label>Territorio *</Label>
             <Input value={form.territorio} onChange={(e) => setForm({ ...form, territorio: e.target.value })} placeholder="Ej. Morelia / Distrito 10 / Estatal" />
           </div>
-          <div>
+          <div className="md:col-span-2">
             <Label>Cargo buscado</Label>
             <Input value={form.cargo_buscado} onChange={(e) => setForm({ ...form, cargo_buscado: e.target.value })} placeholder="Ej. Presidente municipal de Morelia" />
           </div>

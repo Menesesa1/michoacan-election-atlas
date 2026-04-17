@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Users, Crown, Swords } from "lucide-react";
 import type { NivelEstrategia } from "@/data/estrategia-templates";
 import type { Candidato, AnalisisPerfil, AnalisisDiscurso, CandidatoSnapshot } from "@/lib/candidatos/types";
+import { siglasPartido } from "@/lib/candidatos/coaliciones";
 
 interface Props {
   nivel: NivelEstrategia;
@@ -116,7 +117,7 @@ export function SelectorCandidatos({
           <SelectContent>
             <SelectItem value="none">— Ninguno —</SelectItem>
             {filtrados.filter((c) => !adversariosIds.includes(c.id)).map((c) => (
-              <SelectItem key={c.id} value={c.id}>{c.nombre} ({c.partido}) · {c.territorio}</SelectItem>
+              <SelectItem key={c.id} value={c.id}>{c.nombre} ({siglasPartido(c.partido)}) · {c.territorio}</SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -136,7 +137,7 @@ export function SelectorCandidatos({
                   active ? "bg-rose-500/20 text-rose-300 border-rose-500/60" : "bg-card/40 text-muted-foreground border-border hover:border-rose-500/40"
                 }`}
               >
-                {c.nombre} <span className="opacity-60">· {c.partido}</span>
+                {c.nombre} <span className="opacity-60">· {siglasPartido(c.partido)}</span>
               </button>
             );
           })}
