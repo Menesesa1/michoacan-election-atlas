@@ -315,23 +315,57 @@ export function CandidatoForm({ candidato, onSaved, trigger }: Props) {
           )}
 
           <div>
-            <Label>Nivel *</Label>
-            <Select value={form.nivel} onValueChange={(v) => setForm({ ...form, nivel: v as NivelEstrategia })}>
+            <Label>Nivel / Cargo *</Label>
+            <Select
+              value={form.nivel}
+              onValueChange={(v) => {
+                const nivel = v as NivelEstrategia;
+                setForm((prev) => {
+                  // Al cambiar nivel: ajusta territorio y cargo sugerido si están vacíos o eran del nivel anterior.
+                  const nuevoTerritorio = nivel === "gobernador" ? "Estatal" : prev.territorio === "Estatal" ? "" : prev.territorio;
+                  const nuevoCargo = !prev.cargo_buscado || prev.cargo_buscado === cargoSugerido(prev.nivel, prev.territorio)
+                    ? cargoSugerido(nivel, nuevoTerritorio)
+                    : prev.cargo_buscado;
+                  return { ...prev, nivel, territorio: nuevoTerritorio, cargo_buscado: nuevoCargo };
+                });
+              }}
+            >
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="gobernador">Gobernatura</SelectItem>
-                <SelectItem value="diputados">Diputado Local</SelectItem>
-                <SelectItem value="ayuntamientos">Ayuntamiento</SelectItem>
+                <SelectItem value="gobernador">Gobernatura · Estatal</SelectItem>
+                <SelectItem value="diputados">Diputado Local · 24 distritos</SelectItem>
+                <SelectItem value="ayuntamientos">Ayuntamiento · 113 municipios</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div>
-            <Label>Territorio *</Label>
-            <Input value={form.territorio} onChange={(e) => setForm({ ...form, territorio: e.target.value })} placeholder="Ej. Morelia / Distrito 10 / Estatal" />
+            <Label>{etiquetaTerritorio(form.nivel)} *</Label>
+            <TerritorioInput
+              nivel={form.nivel}
+              value={form.territorio}
+              onChange={(v) => {
+                setForm((prev) => {
+                  // Al elegir territorio del catálogo, refresca el cargo sugerido si seguía el patrón.
+                  const cargoActualEsSugerido = !prev.cargo_buscado || prev.cargo_buscado === cargoSugerido(prev.nivel, prev.territorio);
+                  return {
+                    ...prev,
+                    territorio: v,
+                    cargo_buscado: cargoActualEsSugerido ? cargoSugerido(prev.nivel, v) : prev.cargo_buscado,
+                  };
+                });
+              }}
+            />
           </div>
           <div className="md:col-span-2">
             <Label>Cargo buscado</Label>
-            <Input value={form.cargo_buscado} onChange={(e) => setForm({ ...form, cargo_buscado: e.target.value })} placeholder="Ej. Presidente municipal de Morelia" />
+            <Input
+              value={form.cargo_buscado}
+              onChange={(e) => setForm({ ...form, cargo_buscado: e.target.value })}
+              placeholder={cargoSugerido(form.nivel, form.territorio)}
+            />
+            <p className="text-[10px] text-muted-foreground mt-1">
+              Sugerido: <span className="font-mono">{cargoSugerido(form.nivel, form.territorio)}</span>
+            </p>
           </div>
           <div className="md:col-span-2">
             <Label>Bio breve</Label>
