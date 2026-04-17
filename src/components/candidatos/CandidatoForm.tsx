@@ -137,13 +137,55 @@ export function CandidatoForm({ candidato, onSaved, trigger }: Props) {
         const { error } = await supabase.from("candidatos").update(payload).eq("id", candidato.id);
         if (error) throw error;
         toast({ title: "Candidato actualizado" });
+        setOpen(false);
+        onSaved?.();
       } else {
-        const { error } = await supabase.from("candidatos").insert([payload]);
+        const { data: inserted, error } = await supabase
+          .from("candidatos")
+          .insert([payload])
+          .select()
+          .single();
         if (error) throw error;
         toast({ title: "Candidato registrado" });
+        setOpen(false);
+        onSaved?.();
+
+        // Auto-análisis (los 3 tipos en serie). No bloquea el cierre del diálogo.
+        if (autoAnalizar && inserted) {
+          setAnalizando({ hechos: 0, total: TIPOS_ANALISIS.length, tipo: TIPOS_ANALISIS[0] });
+          toast({
+            title: "Generando análisis IA…",
+            description: `Perfil, OSINT y discurso para ${inserted.nombre}. Tarda ~30-60s.`,
+          });
+          void generarTodosLosAnalisis(
+            { ...inserted, redes: (inserted.redes ?? {}) as Record<string, string | undefined> },
+            authData.user.id,
+            (p) => {
+              setAnalizando((prev) => prev && {
+                hechos: prev.hechos + 1,
+                total: prev.total,
+                tipo: p.tipo,
+              });
+            },
+          ).then((resultados) => {
+            const errores = resultados.filter((r) => r.estado === "error");
+            if (errores.length === 0) {
+              toast({
+                title: "Análisis listos ✓",
+                description: `${inserted.nombre} ya tiene perfil, OSINT y discurso.`,
+              });
+            } else {
+              toast({
+                title: `Análisis parcial (${resultados.length - errores.length}/${resultados.length})`,
+                description: `Falló: ${errores.map((e) => e.tipo).join(", ")}. Reintenta desde la tarjeta.`,
+                variant: "destructive",
+              });
+            }
+            setAnalizando(null);
+            onSaved?.();
+          });
+        }
       }
-      setOpen(false);
-      onSaved?.();
     } catch (err) {
       toast({
         title: "Error",
