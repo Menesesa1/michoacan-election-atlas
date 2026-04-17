@@ -9,6 +9,8 @@ import {
 } from "@/data/estrategia-templates";
 import { buildSnapshot, getTerritorios, type SnapshotPayload } from "@/lib/estrategia-context";
 import { loadCatalogo } from "@/lib/secciones-catalogo";
+import { alertasMock } from "@/data/alertas-mock";
+import { filtrarAlertasTerritorio, alertasASnapshot } from "@/lib/alertas-territorio";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
@@ -66,6 +68,14 @@ export default function Escenarios() {
 
   const territorioLabel = territorios.find((t) => t.value === territorio)?.label ?? territorio;
 
+  // Alertas relevantes al territorio (feed de /crisis)
+  const alertasTerritorio = useMemo(
+    () => alertasASnapshot(
+      filtrarAlertasTerritorio(alertasMock, { nivel: nivel as NivelEstrategia, territorioLabel }),
+    ),
+    [nivel, territorioLabel],
+  );
+
   const snapshot = useMemo<SnapshotPayload>(
     () => buildSnapshot({
       nivel: nivel as NivelEstrategia,
@@ -77,9 +87,10 @@ export default function Escenarios() {
       horizonte,
       distritosFederales: distritos,
       distritosLocales,
+      alertas: alertasTerritorio,
       supuestos,
     }),
-    [nivel, territorio, territorioLabel, posicion, coalicion, horizonte, distritos, distritosLocales, supuestos, catalogoLoaded],
+    [nivel, territorio, territorioLabel, posicion, coalicion, horizonte, distritos, distritosLocales, alertasTerritorio, supuestos, catalogoLoaded],
   );
 
   const generar = async () => {
