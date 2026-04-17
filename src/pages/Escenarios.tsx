@@ -50,8 +50,11 @@ export default function Escenarios() {
   );
 
   // Cargar catálogo INE de secciones (composición urbano/rural en snapshot)
+  const [catalogoLoaded, setCatalogoLoaded] = useState(false);
   useEffect(() => {
-    void loadCatalogo().catch((e) => console.warn("loadCatalogo failed:", e));
+    void loadCatalogo()
+      .then(() => setCatalogoLoaded(true))
+      .catch((e) => console.warn("loadCatalogo failed:", e));
   }, []);
 
   // Reset territorio cuando cambia nivel
