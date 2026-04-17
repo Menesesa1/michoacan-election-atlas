@@ -34,9 +34,28 @@ interface DataStore {
 
 const DataContext = createContext<DataStore | null>(null);
 
-export function useElectoralData() {
+export function useElectoralData(): DataStore {
   const ctx = useContext(DataContext);
-  if (!ctx) throw new Error("useElectoralData must be used within DataProvider");
+  if (!ctx) {
+    // Fallback defensivo para evitar pantalla en blanco si el hook se ejecuta
+    // antes del Provider (p. ej. HMR stale tras hot-reload). En runtime real
+    // el DataProvider siempre envuelve la app desde App.tsx.
+    if (typeof window !== "undefined") {
+      console.warn("[DataContext] useElectoralData called outside DataProvider — using mock fallback.");
+    }
+    return {
+      distritos: mockDistritosFed,
+      distritosLocales: mockDistritosLoc,
+      nivel: "federal",
+      setNivel: () => {},
+      distritosActivos: mockDistritosFed,
+      elecciones: ELECCIONES.map((e) => ({ ...e })),
+      importedKeys: [],
+      isUsingMock: true,
+      importData: () => {},
+      resetToMock: () => {},
+    };
+  }
   return ctx;
 }
 
