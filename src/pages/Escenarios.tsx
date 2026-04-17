@@ -19,6 +19,8 @@ import { SnapshotDatos } from "@/components/estrategia/SnapshotDatos";
 import { ResultadoTabs, type EstrategiaOutput } from "@/components/estrategia/ResultadoTabs";
 import { ExportarPDF } from "@/components/estrategia/ExportarPDF";
 import { EstrategiasGuardadas } from "@/components/estrategia/EstrategiasGuardadas";
+import { SelectorCandidatos } from "@/components/estrategia/SelectorCandidatos";
+import type { CandidatoSnapshot } from "@/lib/candidatos/types";
 import { Sparkles, Loader2, ChevronRight, Save, RotateCcw } from "lucide-react";
 
 type Step = 1 | 2 | 3;
@@ -41,6 +43,9 @@ export default function Escenarios() {
   const [coalicion, setCoalicion] = useState<string[]>(["MORENA", "PT", "PVEM"]);
   const [horizonte, setHorizonte] = useState<string>("2027");
   const [supuestos, setSupuestos] = useState<NonNullable<SnapshotPayload["supuestos_usuario"]>>({});
+  const [propioId, setPropioId] = useState<string>("");
+  const [adversariosIds, setAdversariosIds] = useState<string[]>([]);
+  const [candidatosSnap, setCandidatosSnap] = useState<{ propio?: CandidatoSnapshot; adversarios: CandidatoSnapshot[] } | undefined>();
 
   const [output, setOutput] = useState<EstrategiaOutput | null>(null);
   const [loading, setLoading] = useState(false);
@@ -88,9 +93,10 @@ export default function Escenarios() {
       distritosFederales: distritos,
       distritosLocales,
       alertas: alertasTerritorio,
+      candidatos: candidatosSnap,
       supuestos,
     }),
-    [nivel, territorio, territorioLabel, posicion, coalicion, horizonte, distritos, distritosLocales, alertasTerritorio, supuestos, catalogoLoaded],
+    [nivel, territorio, territorioLabel, posicion, coalicion, horizonte, distritos, distritosLocales, alertasTerritorio, candidatosSnap, supuestos, catalogoLoaded],
   );
 
   const generar = async () => {
@@ -244,6 +250,17 @@ export default function Escenarios() {
             }
             horizonte={horizonte}
             setHorizonte={setHorizonte}
+          />
+          <SelectorCandidatos
+            nivel={nivel as NivelEstrategia}
+            territorioLabel={territorioLabel}
+            propioId={propioId}
+            setPropioId={setPropioId}
+            adversariosIds={adversariosIds}
+            toggleAdversario={(id) =>
+              setAdversariosIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))
+            }
+            onSnapshotChange={setCandidatosSnap}
           />
           <div className="flex justify-end">
             <Button onClick={() => setStep(2)} disabled={!territorio}>

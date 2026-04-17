@@ -22,13 +22,14 @@ export interface BuildSnapshotParams {
   distritosFederales: DistritoFederal[];
   distritosLocales: DistritoLocal[];
   alertas?: string[];
+  candidatos?: SnapshotPayload["candidatos"];
   supuestos?: SnapshotPayload["supuestos_usuario"];
 }
 
 export function buildSnapshot(params: BuildSnapshotParams): SnapshotPayload {
   const {
     nivel, nivelLabel, territorio, territorioLabel, posicion, coalicion, horizonte,
-    distritosLocales, alertas, supuestos,
+    distritosLocales, alertas, candidatos, supuestos,
   } = params;
 
   let historico: SnapshotPayload["historico"] = [];
@@ -91,6 +92,7 @@ export function buildSnapshot(params: BuildSnapshotParams): SnapshotPayload {
     composicion_territorial,
     competitividad,
     alertas_activas: alertas,
+    candidatos,
     supuestos_usuario: supuestos,
   };
 }

@@ -14,6 +14,95 @@ export type Database = {
   }
   public: {
     Tables: {
+      candidato_analisis: {
+        Row: {
+          candidato_id: string
+          created_at: string
+          id: string
+          model: string
+          output_json: Json
+          tipo: string
+          user_id: string
+        }
+        Insert: {
+          candidato_id: string
+          created_at?: string
+          id?: string
+          model?: string
+          output_json: Json
+          tipo: string
+          user_id: string
+        }
+        Update: {
+          candidato_id?: string
+          created_at?: string
+          id?: string
+          model?: string
+          output_json?: Json
+          tipo?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "candidato_analisis_candidato_id_fkey"
+            columns: ["candidato_id"]
+            isOneToOne: false
+            referencedRelation: "candidatos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      candidatos: {
+        Row: {
+          bio_breve: string | null
+          cargo_buscado: string | null
+          created_at: string
+          foto_url: string | null
+          id: string
+          nivel: string
+          nombre: string
+          notas: string | null
+          partido: string
+          redes: Json | null
+          tags: string[] | null
+          territorio: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bio_breve?: string | null
+          cargo_buscado?: string | null
+          created_at?: string
+          foto_url?: string | null
+          id?: string
+          nivel: string
+          nombre: string
+          notas?: string | null
+          partido: string
+          redes?: Json | null
+          tags?: string[] | null
+          territorio: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bio_breve?: string | null
+          cargo_buscado?: string | null
+          created_at?: string
+          foto_url?: string | null
+          id?: string
+          nivel?: string
+          nombre?: string
+          notas?: string | null
+          partido?: string
+          redes?: Json | null
+          tags?: string[] | null
+          territorio?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       estrategias_guardadas: {
         Row: {
           created_at: string
