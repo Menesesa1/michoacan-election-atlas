@@ -23,6 +23,7 @@ import {
 import type { Candidato } from "@/lib/candidatos/types";
 import { generarTodosLosAnalisis, TIPOS_ANALISIS } from "@/lib/candidatos/auto-analisis";
 import { cargoSugerido, etiquetaTerritorio } from "@/lib/candidatos/territorios";
+import { FASES_CANDIDATURA, FASE_LABEL, FASE_DESCRIPCION, type FaseCandidatura } from "@/lib/candidatos/fase";
 import { TerritorioInput } from "./TerritorioInput";
 import { Loader2, Plus, Pencil, X, Sparkles } from "lucide-react";
 
@@ -66,6 +67,7 @@ export function CandidatoForm({ candidato, onSaved, trigger }: Props) {
 
   const [form, setForm] = useState({
     nombre: "", nivel: "ayuntamientos" as NivelEstrategia, territorio: "",
+    fase: "precampana" as FaseCandidatura,
     cargo_buscado: "", bio_breve: "", twitter: "", facebook: "", instagram: "", web: "", notas: "",
   });
 
@@ -78,6 +80,7 @@ export function CandidatoForm({ candidato, onSaved, trigger }: Props) {
         nombre: candidato.nombre,
         nivel: candidato.nivel,
         territorio: candidato.territorio,
+        fase: candidato.fase ?? "precampana",
         cargo_buscado: candidato.cargo_buscado ?? "",
         bio_breve: candidato.bio_breve ?? "",
         twitter: candidato.redes?.twitter ?? "",
@@ -124,6 +127,7 @@ export function CandidatoForm({ candidato, onSaved, trigger }: Props) {
         partido: partidoCodificado,
         nivel: parsed.data.nivel,
         territorio: parsed.data.territorio,
+        fase: form.fase,
         cargo_buscado: parsed.data.cargo_buscado || null,
         bio_breve: parsed.data.bio_breve || null,
         redes: {
@@ -357,6 +361,18 @@ export function CandidatoForm({ candidato, onSaved, trigger }: Props) {
                 });
               }}
             />
+          </div>
+          <div className="md:col-span-2">
+            <Label>Fase del proceso *</Label>
+            <Select value={form.fase} onValueChange={(v) => setForm({ ...form, fase: v as FaseCandidatura })}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {FASES_CANDIDATURA.map((f) => (
+                  <SelectItem key={f} value={f}>{FASE_LABEL[f]}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-[10px] text-muted-foreground mt-1">{FASE_DESCRIPCION[form.fase]}</p>
           </div>
           <div className="md:col-span-2">
             <Label>Cargo buscado</Label>

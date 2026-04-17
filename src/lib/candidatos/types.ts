@@ -20,6 +20,7 @@ export interface Candidato {
   partido: string;
   nivel: NivelEstrategia;
   territorio: string;
+  fase: import("./fase").FaseCandidatura;
   cargo_buscado?: string | null;
   bio_breve?: string | null;
   redes: CandidatoRedes;

@@ -16,12 +16,15 @@ interface Input {
     partido: string;
     nivel: string;
     territorio: string;
+    fase?: "aspirante" | "precampana" | "campana" | "electo";
     cargo_buscado?: string;
     bio_breve?: string;
     redes?: Record<string, string>;
     notas?: string;
   };
   contexto_territorial?: string;
+  /** Otros aspirantes/competidores en la misma contienda. La IA evaluará fortalezas RELATIVAS. */
+  competidores?: { nombre: string; partido: string; bio_breve?: string }[];
 }
 
 const TOOLS = {
