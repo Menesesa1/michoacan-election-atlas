@@ -204,7 +204,10 @@ export default function Escenarios() {
         })}
       </div>
 
-      {/* PASO 1 */}
+      {/* Panel de estrategias guardadas */}
+      <EstrategiasGuardadas onLoad={cargarVersion} />
+
+
       {step === 1 && (
         <div className="space-y-4">
           <WizardAlcance
