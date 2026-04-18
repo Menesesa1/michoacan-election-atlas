@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Trash2, FileSearch, Twitter, Facebook, Instagram, Globe, Sparkles, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
+import { Trash2, FileSearch, Twitter, Facebook, Instagram, Globe, Sparkles, Loader2, CheckCircle2, AlertCircle, Pencil } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { Candidato, TipoAnalisis } from "@/lib/candidatos/types";
@@ -196,7 +196,15 @@ export function CandidatoCard({
           <Button size="sm" variant="default" onClick={onOpen}>
             <FileSearch className="w-3.5 h-3.5 mr-1" /> Ficha
           </Button>
-          <CandidatoForm candidato={candidato} onSaved={onChanged} />
+          <CandidatoForm
+            candidato={candidato}
+            onSaved={onChanged}
+            trigger={
+              <Button size="sm" variant="outline" title="Corregir datos del candidato (partido, fase, bio, etc.)">
+                <Pencil className="w-3.5 h-3.5 mr-1" /> Corregir
+              </Button>
+            }
+          />
         </div>
         <div className="flex gap-1.5">
           {onToggleSelect && (
