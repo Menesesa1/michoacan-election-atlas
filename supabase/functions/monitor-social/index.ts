@@ -47,6 +47,25 @@ const QUERIES_ESTATALES = [
   "Michoacán protesta manifestación",
 ];
 
+// Municipios principales de Michoacán para filtro geográfico de menciones.
+// Si una mención no incluye "michoacán" ni alguno de estos municipios, se descarta.
+const MUNICIPIOS_MICHOACAN = [
+  "morelia", "uruapan", "zamora", "lázaro cárdenas", "lazaro cardenas", "apatzingán", "apatzingan",
+  "hidalgo", "zitácuaro", "zitacuaro", "pátzcuaro", "patzcuaro", "la piedad", "sahuayo",
+  "jacona", "tacámbaro", "tacambaro", "ciudad hidalgo", "puruándiro", "puruandiro",
+  "los reyes", "maravatío", "maravatio", "paracho", "tepalcatepec", "huetamo", "tangancícuaro",
+  "tangancicuaro", "jiquilpan", "cotija", "yurécuaro", "yurecuaro", "nueva italia",
+  "buenavista", "múgica", "mugica", "tarímbaro", "tarimbaro", "indaparapeo", "charo",
+  "quiroga", "erongarícuaro", "erongaricuaro", "cherán", "cheran", "nahuatzen",
+  "coalcomán", "coalcoman", "aguililla", "tepalcatepec", "parácuaro", "paracuaro",
+  "michoacán", "michoacan", "michoacano", "michoacana",
+];
+
+function esMichoacan(texto: string): boolean {
+  const t = texto.toLowerCase();
+  return MUNICIPIOS_MICHOACAN.some((m) => t.includes(m));
+}
+
 async function firecrawlSearch(query: string, apiKey: string): Promise<SearchHit[]> {
   const res = await fetch(`${FIRECRAWL_V2}/search`, {
     method: "POST",
