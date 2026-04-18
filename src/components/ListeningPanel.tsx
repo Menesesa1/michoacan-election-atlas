@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
-import { TrendingUp, TrendingDown, Minus, RefreshCw, Loader2, Hash, Tag, ExternalLink } from "lucide-react";
+import { Link } from "react-router-dom";
+import { TrendingUp, TrendingDown, Minus, RefreshCw, Loader2, Hash, Tag, ExternalLink, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
