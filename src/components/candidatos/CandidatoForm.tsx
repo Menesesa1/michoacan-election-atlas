@@ -494,6 +494,27 @@ export function CandidatoForm({ candidato, onSaved, trigger }: Props) {
           </div>
         )}
 
+        {candidato && (
+          <div className="flex items-start gap-2 p-2.5 rounded-md bg-amber-500/5 border border-amber-500/30">
+            <input
+              id="regenerar-edicion"
+              type="checkbox"
+              checked={regenerarEdicion}
+              onChange={(e) => setRegenerarEdicion(e.target.checked)}
+              className="mt-0.5 accent-primary"
+            />
+            <label htmlFor="regenerar-edicion" className="text-xs cursor-pointer flex-1">
+              <span className="font-semibold flex items-center gap-1">
+                <Sparkles className="w-3 h-3 text-amber-500" />
+                Regenerar análisis IA si cambian datos clave (recomendado)
+              </span>
+              <span className="text-muted-foreground block">
+                Si modificas <strong>nombre, partido, nivel, territorio, fase, cargo o bio</strong>, los 3 análisis (perfil, OSINT, discurso) se borran y se regeneran para reflejar la corrección. Cambios menores (redes, notas, tags) no disparan regeneración.
+              </span>
+            </label>
+          </div>
+        )}
+
         <DialogFooter>
           <Button variant="ghost" onClick={() => setOpen(false)}>Cancelar</Button>
           <Button onClick={submit} disabled={saving || analizando !== null}>
