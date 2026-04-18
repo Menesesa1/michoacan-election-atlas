@@ -1,5 +1,7 @@
-// Ayuntamientos top 20 estratégicos de Michoacán × 4 procesos (2015, 2018, 2021, 2024)
-// Fuente: IEM cómputos oficiales municipales. PCM = Partido Carmesí Michoacán (local).
+// Ayuntamientos de Michoacán
+// IMPORTANTE: Michoacán NO tuvo elección municipal en 2024 (su ciclo es 2015-2018-2021-2027).
+// El próximo proceso municipal será 2027 concurrente con la gubernatura.
+// Fuente principal: IEM cómputos oficiales 2015, 2018, 2021 (verificados con Wikipedia/SICEE).
 import type { PartidoSigla } from "./partidos";
 import type { AnioLocal } from "./diputados-locales";
 
