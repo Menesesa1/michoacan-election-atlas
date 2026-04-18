@@ -216,45 +216,48 @@ export function CandidatoCard({
         )}
       </div>
 
-      <div className="flex items-center justify-between gap-2 mt-3">
-        <div className="flex gap-1.5">
-          <Button size="sm" variant="default" onClick={onOpen}>
+      <div className="flex items-center justify-between gap-2 mt-3 flex-wrap">
+        <div className="flex gap-1 flex-wrap">
+          <Button size="sm" variant="default" onClick={onOpen} className="h-8 px-2.5">
             <FileSearch className="w-3.5 h-3.5 mr-1" /> Ficha
           </Button>
           <CandidatoForm
             candidato={candidato}
             onSaved={onChanged}
             trigger={
-              <Button size="sm" variant="outline" title="Corregir datos del candidato (partido, fase, bio, etc.)">
+              <Button size="sm" variant="outline" className="h-8 px-2.5" title="Corregir datos del candidato">
                 <Pencil className="w-3.5 h-3.5 mr-1" /> Corregir
               </Button>
             }
           />
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={toggleEsPropio}
-            title={candidato.es_propio ? "Mover a Oposición" : "Marcar como Mi candidato"}
-            className={candidato.es_propio ? "text-primary hover:bg-primary/10" : "text-muted-foreground hover:text-primary"}
-          >
-            <Star className={cn("w-3.5 h-3.5 mr-1", candidato.es_propio && "fill-primary")} />
-            {candidato.es_propio ? "Mío" : "Marcar mío"}
-          </Button>
-        </div>
-        <div className="flex gap-1.5">
           {onToggleSelect && (
             <Button
               size="sm"
               variant={selected ? "default" : "outline"}
               onClick={onToggleSelect}
               disabled={sinAnalisis}
+              className="h-8 px-2.5"
               title={sinAnalisis ? "Genera análisis primero para poder comparar" : ""}
             >
               {selected ? "Seleccionado" : "Comparar"}
             </Button>
           )}
-          <Button size="sm" variant="ghost" onClick={onDelete} className="text-destructive hover:bg-destructive/10">
-            <Trash2 className="w-3.5 h-3.5" />
+        </div>
+        <div className="flex gap-0.5">
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={toggleEsPropio}
+            title={candidato.es_propio ? "Mover a Oposición" : "Marcar como Mi candidato"}
+            className={cn(
+              "h-8 w-8",
+              candidato.es_propio ? "text-primary hover:bg-primary/10" : "text-muted-foreground hover:text-primary"
+            )}
+          >
+            <Star className={cn("w-4 h-4", candidato.es_propio && "fill-primary")} />
+          </Button>
+          <Button size="icon" variant="ghost" onClick={onDelete} className="h-8 w-8 text-destructive hover:bg-destructive/10" title="Eliminar candidato">
+            <Trash2 className="w-4 h-4" />
           </Button>
         </div>
       </div>
