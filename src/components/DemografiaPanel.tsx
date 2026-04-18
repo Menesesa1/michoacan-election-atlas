@@ -4,6 +4,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, Legend
 import { parseDemographicCsv, type DemographicParseResult } from "@/lib/demographic-parser";
 import type { DemograficoDistrito } from "@/data/demographic-types";
 import { demograficosFederalesMock, demograficosLocalesMock } from "@/data/demographic-mock";
+import { loadPadronOficial, padronToDistritosFederales } from "@/lib/padron-loader";
 import { useElectoralData } from "@/context/DataContext";
 import { useToast } from "@/hooks/use-toast";
 
@@ -14,11 +15,27 @@ export function DemografiaPanel() {
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<DemographicParseResult | null>(null);
   const [selectedDist, setSelectedDist] = useState<number>(1);
+  const [padronFedOficial, setPadronFedOficial] = useState<DemograficoDistrito[] | null>(null);
+  const [fuenteOficial, setFuenteOficial] = useState<{ edad: string; sexo: string } | null>(null);
 
-  // Use imported data if available, otherwise use mock
+  // Carga automática del padrón oficial INE-DERFE Michoacán al montar
+  useEffect(() => {
+    loadPadronOficial()
+      .then((p) => {
+        setPadronFedOficial(padronToDistritosFederales(p));
+        setFuenteOficial({ edad: p.cortes.edad_rangos, sexo: p.cortes.sexo });
+      })
+      .catch(() => {
+        // Silenciosamente cae a mock si falla
+      });
+  }, []);
+
+  // Prioridad: CSV importado > padrón oficial precargado > mock
   const distritos = data
     ? (nivel === "federal" ? data.distritosFed : data.distritosLoc)
-    : (nivel === "federal" ? demograficosFederalesMock : demograficosLocalesMock);
+    : (nivel === "federal"
+        ? (padronFedOficial ?? demograficosFederalesMock)
+        : demograficosLocalesMock);
   const selected = distritos.find(d => d.distritoId === selectedDist) || distritos[0] || null;
 
   // Reset selection when nivel changes
