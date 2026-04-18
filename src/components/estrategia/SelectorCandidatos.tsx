@@ -65,6 +65,14 @@ export function SelectorCandidatos({
 
   const buildSnap = (c: Candidato): CandidatoSnapshot => {
     const a = analisis[c.id];
+    const wr = (c.war_room ?? []).slice(0, 8).map((m) => ({
+      nombre: m.nombre,
+      rol: m.rol,
+      tipo: m.tipo,
+      visible: m.visible,
+      trayectoria_breve: m.trayectoria_breve || undefined,
+      inconsistencias: m.inconsistencias?.length ? m.inconsistencias : undefined,
+    }));
     return {
       id: c.id,
       nombre: c.nombre,
@@ -75,6 +83,7 @@ export function SelectorCandidatos({
       ejes_narrativos: a?.discurso?.ejes_narrativos?.slice(0, 3),
       vulnerabilidades_argumentales: a?.discurso?.vulnerabilidades_argumentales?.slice(0, 3),
       score_competitividad: a?.perfil?.score_competitividad,
+      war_room: wr.length > 0 ? wr : undefined,
     };
   };
 

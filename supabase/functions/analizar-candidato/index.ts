@@ -9,6 +9,16 @@ const corsHeaders = {
 
 type Tipo = "perfil" | "osint" | "discurso";
 
+interface WarRoomMiembroInput {
+  nombre: string;
+  rol: string;
+  tipo: "persona" | "consultora";
+  visible: boolean;
+  trayectoria_breve?: string;
+  inconsistencias?: string[];
+  fuentes?: string[];
+}
+
 interface Input {
   tipo: Tipo;
   candidato: {
@@ -21,6 +31,7 @@ interface Input {
     bio_breve?: string;
     redes?: Record<string, string>;
     notas?: string;
+    war_room?: WarRoomMiembroInput[];
   };
   contexto_territorial?: string;
   /** Otros aspirantes/competidores en la misma contienda. La IA evaluará fortalezas RELATIVAS. */
@@ -93,6 +104,29 @@ const TOOLS = {
               required: ["fuente", "titular", "tono"],
               additionalProperties: false,
             },
+          },
+          war_room_resumen: {
+            type: "object",
+            description: "Análisis del War Room CAPTURADO POR EL CONSULTOR (no inventes miembros). Coherencia con narrativa pública y alertas reputacionales por miembro.",
+            properties: {
+              coherencia_con_narrativa: { type: "string" },
+              alertas_reputacionales: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    miembro: { type: "string" },
+                    alerta: { type: "string" },
+                    gravedad: { type: "string", enum: ["alta", "media", "baja"] },
+                  },
+                  required: ["miembro", "alerta", "gravedad"],
+                  additionalProperties: false,
+                },
+              },
+              observaciones: { type: "string" },
+            },
+            required: ["coherencia_con_narrativa", "alertas_reputacionales", "observaciones"],
+            additionalProperties: false,
           },
         },
         required: ["presencia_digital", "controversias", "aliados_clave", "temas_recurrentes", "menciones_recientes"],
@@ -193,6 +227,22 @@ Deno.serve(async (req) => {
 
     const contextoNivel = NIVEL_CONTEXTO[input.candidato.nivel] ?? "";
 
+    const warRoomBlock = (input.candidato.war_room ?? []).length > 0
+      ? `\nWAR ROOM CAPTURADO POR EL CONSULTOR (información verificada — NO inventes miembros, USA SOLO ESTOS):
+${(input.candidato.war_room ?? []).map((m, i) => {
+  const visibilidad = m.visible ? "OFICIAL" : "OPERADOR EN LA SOMBRA (no aparece en organigrama público)";
+  const inc = m.inconsistencias && m.inconsistencias.length > 0 ? `\n   Inconsistencias: ${m.inconsistencias.join("; ")}` : "";
+  const fuentes = m.fuentes && m.fuentes.length > 0 ? `\n   Fuentes: ${m.fuentes.join(", ")}` : "";
+  const tray = m.trayectoria_breve ? `\n   Trayectoria: ${m.trayectoria_breve}` : "";
+  return `${i + 1}. ${m.nombre} — ${m.rol} (${m.tipo}) — ${visibilidad}${tray}${inc}${fuentes}`;
+}).join("\n")}
+
+INSTRUCCIÓN: Considera el War Room como contexto OBLIGATORIO. NO inventes otros operadores.
+- En FODA: el equipo puede ser fortaleza (experiencia, redes) o amenaza (operadores cuestionados, consultoras con historial problemático).
+- En OSINT: rellena war_room_resumen analizando coherencia con la narrativa pública del candidato y alertas reputacionales por miembro (especialmente operadores en la sombra y miembros con inconsistencias documentadas).
+- En Discurso: evalúa si la narrativa pública del candidato refleja al equipo real o lo oculta.`
+      : `\nWAR ROOM: No se ha capturado equipo de campaña conocido. NO inventes miembros del equipo. Si tu análisis menciona asesores u operadores, marca explícitamente que no se han documentado.`;
+
     const userPrompt = `Analiza al siguiente candidato político:
 
 NOMBRE: ${input.candidato.nombre}
@@ -206,6 +256,7 @@ ${input.candidato.redes && Object.keys(input.candidato.redes).length > 0
   : ""}
 ${input.candidato.notas ? `NOTAS DEL CONSULTOR: ${input.candidato.notas}` : ""}
 ${input.contexto_territorial ? `\nCONTEXTO TERRITORIAL:\n${input.contexto_territorial}` : ""}
+${warRoomBlock}
 
 CONTEXTO DEL CARGO (OBLIGATORIO RESPETAR):
 ${contextoNivel}
