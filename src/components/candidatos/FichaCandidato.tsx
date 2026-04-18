@@ -177,6 +177,7 @@ function TrayectoriaTab({ candidato }: { candidato: Candidato }) {
   const { toast } = useToast();
   const [hitos, setHitos] = useState<TrayectoriaHito[]>(candidato.trayectoria ?? []);
   const [saving, setSaving] = useState(false);
+  const [precargaOpen, setPrecargaOpen] = useState(false);
 
   useEffect(() => {
     setHitos(candidato.trayectoria ?? []);
@@ -203,9 +204,25 @@ function TrayectoriaTab({ candidato }: { candidato: Candidato }) {
     }
   };
 
+  const aplicarPrecarga = async (parche: { trayectoria?: TrayectoriaHito[] }) => {
+    if (parche.trayectoria) await guardar(parche.trayectoria);
+  };
+
   return (
     <div className="space-y-3 pt-3">
+      <div className="flex justify-end">
+        <Button size="sm" variant="outline" onClick={() => setPrecargaOpen(true)} disabled={saving}>
+          <Sparkles className="w-3.5 h-3.5 mr-1.5 text-primary" />
+          Precargar con Firecrawl
+        </Button>
+      </div>
       <TrayectoriaEditor hitos={hitos} onChange={guardar} saving={saving} />
+      <PrecargaFirecrawl
+        candidato={{ ...candidato, trayectoria: hitos }}
+        open={precargaOpen}
+        onClose={() => setPrecargaOpen(false)}
+        onAplicado={aplicarPrecarga}
+      />
     </div>
   );
 }
@@ -214,6 +231,7 @@ function MetricasTab({ candidato }: { candidato: Candidato }) {
   const { toast } = useToast();
   const [metricas, setMetricas] = useState<MetricasRedes>(candidato.metricas_redes ?? {});
   const [saving, setSaving] = useState(false);
+  const [precargaOpen, setPrecargaOpen] = useState(false);
 
   useEffect(() => {
     setMetricas(candidato.metricas_redes ?? {});
@@ -240,9 +258,25 @@ function MetricasTab({ candidato }: { candidato: Candidato }) {
     }
   };
 
+  const aplicarPrecarga = async (parche: { metricas_redes?: MetricasRedes }) => {
+    if (parche.metricas_redes) await guardar(parche.metricas_redes);
+  };
+
   return (
     <div className="space-y-3 pt-3">
+      <div className="flex justify-end">
+        <Button size="sm" variant="outline" onClick={() => setPrecargaOpen(true)} disabled={saving}>
+          <Sparkles className="w-3.5 h-3.5 mr-1.5 text-primary" />
+          Precargar con Firecrawl
+        </Button>
+      </div>
       <MetricasRedesEditor metricas={metricas} onChange={guardar} saving={saving} />
+      <PrecargaFirecrawl
+        candidato={{ ...candidato, metricas_redes: metricas }}
+        open={precargaOpen}
+        onClose={() => setPrecargaOpen(false)}
+        onAplicado={aplicarPrecarga}
+      />
     </div>
   );
 }
