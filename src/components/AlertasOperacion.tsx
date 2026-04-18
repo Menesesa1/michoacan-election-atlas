@@ -29,6 +29,7 @@ interface RunMeta {
   duracion_ms: number | null;
   error: string | null;
   trigger: string;
+  batch_id: string | null;
 }
 
 const PRIORIDAD_STYLES: Record<PrioridadAlerta, { bg: string; text: string; border: string; icon: typeof AlertTriangle }> = {
