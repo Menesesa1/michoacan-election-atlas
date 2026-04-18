@@ -9,6 +9,7 @@ import { RequireAuth } from "@/components/RequireAuth";
 import { AppLayout } from "@/layouts/AppLayout";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
+import ResetPassword from "./pages/ResetPassword";
 import MandoCentral from "./pages/MandoCentral";
 import Distritos from "./pages/Distritos";
 import Demografia from "./pages/Demografia";
