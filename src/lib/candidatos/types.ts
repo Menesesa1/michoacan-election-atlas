@@ -13,6 +13,43 @@ export interface CandidatoRedes {
   youtube?: string;
 }
 
+export type WarRoomRol =
+  | "jefe_campana"
+  | "vocero"
+  | "consultor_estrategia"
+  | "consultor_digital"
+  | "consultor_imagen"
+  | "financista"
+  | "coordinador_territorial"
+  | "asesor_juridico"
+  | "operador_politico"
+  | "otro";
+
+export const WAR_ROOM_ROL_LABEL: Record<WarRoomRol, string> = {
+  jefe_campana: "Jefe de campaña",
+  vocero: "Vocero",
+  consultor_estrategia: "Consultor de estrategia",
+  consultor_digital: "Consultor digital",
+  consultor_imagen: "Consultor de imagen / comunicación",
+  financista: "Financista",
+  coordinador_territorial: "Coordinador territorial",
+  asesor_juridico: "Asesor jurídico",
+  operador_politico: "Operador político",
+  otro: "Otro",
+};
+
+export interface WarRoomMiembro {
+  id: string; // local uuid
+  nombre: string;
+  rol: WarRoomRol;
+  tipo: "persona" | "consultora";
+  visible: boolean; // true = oficial / público; false = operador en la sombra
+  trayectoria_breve?: string;
+  inconsistencias: string[];
+  fuentes: string[]; // URLs
+  notas_internas?: string;
+}
+
 export interface Candidato {
   id: string;
   user_id: string;
@@ -28,6 +65,7 @@ export interface Candidato {
   foto_url?: string | null;
   tags: string[];
   notas?: string | null;
+  war_room: WarRoomMiembro[];
   created_at: string;
   updated_at: string;
 }
@@ -51,6 +89,12 @@ export interface AnalisisOSINT {
   aliados_clave: string[];
   temas_recurrentes: string[];
   menciones_recientes: { fuente: string; titular: string; tono: "positivo" | "neutral" | "negativo" }[];
+  /** Análisis del War Room capturado por el consultor: coherencia con narrativa pública + alertas reputacionales por miembro. */
+  war_room_resumen?: {
+    coherencia_con_narrativa: string;
+    alertas_reputacionales: { miembro: string; alerta: string; gravedad: "alta" | "media" | "baja" }[];
+    observaciones: string;
+  };
 }
 
 export interface AnalisisDiscurso {
@@ -84,4 +128,12 @@ export interface CandidatoSnapshot {
   ejes_narrativos?: string[];
   vulnerabilidades_argumentales?: string[];
   score_competitividad?: number;
+  war_room?: {
+    nombre: string;
+    rol: WarRoomRol;
+    tipo: "persona" | "consultora";
+    visible: boolean;
+    trayectoria_breve?: string;
+    inconsistencias?: string[];
+  }[];
 }
