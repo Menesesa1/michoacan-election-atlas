@@ -144,11 +144,64 @@ export function CandidatoForm({ candidato, onSaved, trigger }: Props) {
       };
 
       if (candidato) {
+        // Detectar si cambiaron campos que invalidan los análisis previos
+        const camposClaveCambiaron =
+          candidato.nombre !== payload.nombre ||
+          candidato.partido !== payload.partido ||
+          candidato.nivel !== payload.nivel ||
+          candidato.territorio !== payload.territorio ||
+          candidato.fase !== payload.fase ||
+          (candidato.cargo_buscado ?? null) !== payload.cargo_buscado ||
+          (candidato.bio_breve ?? null) !== payload.bio_breve;
+
         const { error } = await supabase.from("candidatos").update(payload).eq("id", candidato.id);
         if (error) throw error;
-        toast({ title: "Candidato actualizado" });
+
+        const debeRegenerar = camposClaveCambiaron && regenerarEdicion;
+        toast({
+          title: "Candidato actualizado",
+          description: debeRegenerar ? "Regenerando análisis IA con los nuevos datos…" : undefined,
+        });
         setOpen(false);
         onSaved?.();
+
+        if (debeRegenerar) {
+          // Borra los análisis viejos y regenera los 3 en background
+          setAnalizando({ hechos: 0, total: TIPOS_ANALISIS.length, tipo: TIPOS_ANALISIS[0] });
+          await supabase.from("candidato_analisis").delete().eq("candidato_id", candidato.id);
+          const candidatoActualizado = {
+            ...candidato,
+            ...payload,
+            redes: (payload.redes ?? {}) as Record<string, string | undefined>,
+          };
+          void generarTodosLosAnalisis(
+            candidatoActualizado,
+            authData.user.id,
+            (p) => {
+              setAnalizando((prev) => prev && {
+                hechos: prev.hechos + 1,
+                total: prev.total,
+                tipo: p.tipo,
+              });
+            },
+          ).then((resultados) => {
+            const errores = resultados.filter((r) => r.estado === "error");
+            if (errores.length === 0) {
+              toast({
+                title: "Análisis regenerados ✓",
+                description: `${payload.nombre} ahora refleja los datos corregidos.`,
+              });
+            } else {
+              toast({
+                title: `Regeneración parcial (${resultados.length - errores.length}/${resultados.length})`,
+                description: `Falló: ${errores.map((e) => e.tipo).join(", ")}. Reintenta desde la tarjeta.`,
+                variant: "destructive",
+              });
+            }
+            setAnalizando(null);
+            onSaved?.();
+          });
+        }
       } else {
         const { data: inserted, error } = await supabase
           .from("candidatos")
