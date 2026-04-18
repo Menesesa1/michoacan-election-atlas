@@ -8,7 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Users, GitCompare, Search, Layers } from "lucide-react";
+import { Users, GitCompare, Search, Layers, Star, Swords } from "lucide-react";
 import { CandidatoCard } from "@/components/candidatos/CandidatoCard";
 import { CandidatoForm } from "@/components/candidatos/CandidatoForm";
 import { FichaCandidato } from "@/components/candidatos/FichaCandidato";
