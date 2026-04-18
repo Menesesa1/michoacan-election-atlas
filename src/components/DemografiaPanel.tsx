@@ -4,6 +4,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, Legend
 import { parseDemographicCsv, type DemographicParseResult } from "@/lib/demographic-parser";
 import type { DemograficoDistrito } from "@/data/demographic-types";
 import { demograficosFederalesMock, demograficosLocalesMock } from "@/data/demographic-mock";
+import { loadPadronOficial, padronToDistritosFederales } from "@/lib/padron-loader";
 import { useElectoralData } from "@/context/DataContext";
 import { useToast } from "@/hooks/use-toast";
 
@@ -14,11 +15,27 @@ export function DemografiaPanel() {
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<DemographicParseResult | null>(null);
   const [selectedDist, setSelectedDist] = useState<number>(1);
+  const [padronFedOficial, setPadronFedOficial] = useState<DemograficoDistrito[] | null>(null);
+  const [fuenteOficial, setFuenteOficial] = useState<{ edad: string; sexo: string } | null>(null);
 
-  // Use imported data if available, otherwise use mock
+  // Carga automática del padrón oficial INE-DERFE Michoacán al montar
+  useEffect(() => {
+    loadPadronOficial()
+      .then((p) => {
+        setPadronFedOficial(padronToDistritosFederales(p));
+        setFuenteOficial({ edad: p.cortes.edad_rangos, sexo: p.cortes.sexo });
+      })
+      .catch(() => {
+        // Silenciosamente cae a mock si falla
+      });
+  }, []);
+
+  // Prioridad: CSV importado > padrón oficial precargado > mock
   const distritos = data
     ? (nivel === "federal" ? data.distritosFed : data.distritosLoc)
-    : (nivel === "federal" ? demograficosFederalesMock : demograficosLocalesMock);
+    : (nivel === "federal"
+        ? (padronFedOficial ?? demograficosFederalesMock)
+        : demograficosLocalesMock);
   const selected = distritos.find(d => d.distritoId === selectedDist) || distritos[0] || null;
 
   // Reset selection when nivel changes
@@ -81,16 +98,20 @@ export function DemografiaPanel() {
 
       {/* CSV upload option */}
       <div className="p-3 rounded-md bg-primary/5 border border-primary/20 text-[11px]">
-        <div className="flex gap-2 items-center">
+        <div className="flex gap-2 items-center flex-wrap">
           <Info className="w-4 h-4 text-primary shrink-0" />
           <span className="text-muted-foreground">
-            {data ? "✅ Datos importados del INE" : "Usando datos estimados. Importa CSV del INE para datos reales:"}
+            {data
+              ? "✅ Datos importados del INE (sesión actual)"
+              : padronFedOficial && nivel === "federal"
+                ? `✅ Padrón oficial INE-DERFE Michoacán · cortes ${fuenteOficial?.edad ?? ""} (edad) y ${fuenteOficial?.sexo ?? ""} (sexo) — VALIDADO`
+                : "Usando datos estimados. Importa CSV del INE para datos reales:"}
           </span>
           {!data && (
             <div className="relative ml-auto">
-              <input ref={fileRef} type="file" accept=".csv" onChange={handleFile} className="absolute inset-0 opacity-0 cursor-pointer z-10 w-24" disabled={loading} />
+              <input ref={fileRef} type="file" accept=".csv" onChange={handleFile} className="absolute inset-0 opacity-0 cursor-pointer z-10 w-28" disabled={loading} />
               <span className="px-3 py-1 rounded bg-primary/20 text-primary text-[10px] font-mono cursor-pointer hover:bg-primary/30 transition-colors">
-                {loading ? "Procesando..." : "Subir CSV"}
+                {loading ? "Procesando..." : "Reemplazar CSV"}
               </span>
             </div>
           )}
