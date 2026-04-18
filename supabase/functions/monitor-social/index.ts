@@ -246,40 +246,55 @@ Deno.serve(async (req) => {
   const batchId = crypto.randomUUID();
 
   try {
-    // 1. Cargar candidatos propios del usuario (si se especifica)
-    let candidatosQuery = supabase.from("candidatos").select("id, nombre, partido, nivel, territorio").eq("es_propio", true);
+    // 1. Cargar TODOS los candidatos del usuario (propios y rivales registrados manualmente).
+    //    Ya no auto-detectamos rivales con IA: el usuario decide a quién monitorear desde /candidatos.
+    let candidatosQuery = supabase
+      .from("candidatos")
+      .select("id, nombre, partido, nivel, territorio, es_propio");
     if (userId) candidatosQuery = candidatosQuery.eq("user_id", userId);
-    const { data: propios } = await candidatosQuery.limit(10);
-    const candidatosPropios = propios ?? [];
+    const { data: candidatosBD } = await candidatosQuery.limit(50);
+    const candidatos = candidatosBD ?? [];
+    const candidatosPropios = candidatos.filter((c) => c.es_propio);
 
-    // 2. Detectar top 3 rivales (si hay propios)
-    const rivales = candidatosPropios.length > 0
-      ? await detectarTopRivales(candidatosPropios, FIRECRAWL_API_KEY, LOVABLE_API_KEY)
-      : [];
-
-    // 3. Construir lista de entidades
+    // 2. Construir lista de entidades — todas ancladas a Michoacán + territorio
     const entidades: EntidadObjetivo[] = [
       { tipo: "estatal", nombre: "Michoacán", candidato_id: null, queries: QUERIES_ESTATALES },
-      ...candidatosPropios.map((c) => ({
-        tipo: "candidato_propio" as const,
+      ...candidatos.map((c) => ({
+        tipo: (c.es_propio ? "candidato_propio" : "rival") as "candidato_propio" | "rival",
         nombre: c.nombre,
         candidato_id: c.id,
-        queries: [`${c.nombre} ${c.partido} Michoacán`, `${c.nombre} opinión pública`],
-      })),
-      ...rivales.map((nombre) => ({
-        tipo: "rival" as const,
-        nombre,
-        candidato_id: null,
-        queries: [`${nombre} Michoacán`, `${nombre} político`],
+        queries: [
+          `"${c.nombre}" Michoacán ${c.territorio}`,
+          `"${c.nombre}" ${c.partido} Michoacán`,
+          `"${c.nombre}" ${c.territorio}`,
+        ],
       })),
     ];
 
-    // 4. Procesar cada entidad: search → classify → persistir
+    // 3. Procesar cada entidad: search → classify → filtro Michoacán → persistir
     let totalMenciones = 0;
+    let totalDescartadas = 0;
     for (const ent of entidades) {
       const hitsArrays = await Promise.all(ent.queries.map((q) => firecrawlSearch(q, FIRECRAWL_API_KEY)));
-      const hits = hitsArrays.flat();
-      const menciones = await classifyMenciones(hits, ent.nombre, LOVABLE_API_KEY);
+      // Pre-filtro: solo hits cuyo título/descripción mencionen Michoacán o municipio
+      const hits = hitsArrays.flat().filter((h) => {
+        if (ent.tipo === "estatal") return true; // queries ya son estatales
+        const texto = `${h.title ?? ""} ${h.description ?? ""} ${h.url ?? ""}`;
+        return esMichoacan(texto);
+      });
+      if (hits.length === 0) continue;
+
+      const mencionesRaw = await classifyMenciones(hits, ent.nombre, LOVABLE_API_KEY);
+
+      // Post-filtro: descartar menciones cuyo fragmento+titulo no aluda a Michoacán
+      const menciones = ent.tipo === "estatal"
+        ? mencionesRaw
+        : mencionesRaw.filter((m) => {
+            const ok = esMichoacan(`${m.titulo} ${m.fragmento} ${m.url}`);
+            if (!ok) totalDescartadas += 1;
+            return ok;
+          });
+
       if (menciones.length === 0) continue;
 
       // Insertar menciones
@@ -342,8 +357,10 @@ Deno.serve(async (req) => {
         batch_id: batchId,
         entidades: entidades.length,
         total_menciones: totalMenciones,
+        descartadas_fuera_michoacan: totalDescartadas,
+        candidatos_monitoreados: candidatos.length,
         candidatos_propios: candidatosPropios.length,
-        rivales,
+        rivales_registrados: candidatos.length - candidatosPropios.length,
         duracion_ms: Date.now() - startedAt,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
