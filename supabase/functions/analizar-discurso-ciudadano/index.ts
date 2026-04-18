@@ -69,12 +69,10 @@ Deno.serve(async (req) => {
       .join("\n\n")
       .slice(0, 12000);
 
-    // 4. Pedir a la IA que sintetice el discurso ciudadano
-    const aiRes = await fetch(LOVABLE_AI_URL, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+    // 4. Pedir a la IA que sintetice el discurso ciudadano (con fallback de modelos)
+    const modelos = ["google/gemini-2.5-flash", "google/gemini-2.5-pro", "google/gemini-2.5-flash-lite"];
+    const buildBody = (model: string) => JSON.stringify({
+        model,
         messages: [
           {
             role: "system",
