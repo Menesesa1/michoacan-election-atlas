@@ -36,19 +36,21 @@ export const GOBERNADOR_RESULTADOS: ResultadoGobernador[] = [
     ],
   },
   {
+    // Cómputo distrital oficial IEM (jun 2021) — fuente: SICEE INE / IEM
+    // Coalición "Va por Michoacán" = PAN+PRI+PRD juntos
     anio: 2021,
     listaNominal: 3_534_641,
-    votosTotales: 1_881_000,
-    participacionPct: 53.2,
+    votosTotales: 1_750_000,
+    participacionPct: 49.5,
     ganador: "Alfredo Ramírez Bedolla",
-    margenPct: 8.4,
+    margenPct: 2.86,
     candidatos: [
-      { nombre: "Alfredo Ramírez Bedolla", coalicion: ["MORENA", "PT"], votos: 794_634, porcentaje: 42.2 },
-      { nombre: "Carlos Herrera Tello", coalicion: ["PRI", "PRD"], votos: 636_298, porcentaje: 33.8 },
-      { nombre: "Juan Antonio Magaña de la Mora", coalicion: ["PAN"], votos: 174_900, porcentaje: 9.3 },
-      { nombre: "Hipólito Mora", coalicion: ["FXM"], votos: 35_700, porcentaje: 1.9 },
-      { nombre: "Cristóbal Arias Solís", coalicion: ["MC"], votos: 154_300, porcentaje: 8.2 },
-      { nombre: "Otros / nulos", coalicion: ["OTRO"], votos: 85_168, porcentaje: 4.6 },
+      { nombre: "Alfredo Ramírez Bedolla", coalicion: ["MORENA", "PT"], votos: 729_904, porcentaje: 41.70 },
+      { nombre: "Carlos Herrera Tello", coalicion: ["PAN", "PRI", "PRD"], votos: 679_985, porcentaje: 38.84 },
+      { nombre: "Cristóbal Arias Solís", coalicion: ["MC"], votos: 105_400, porcentaje: 6.02 },
+      { nombre: "Juan Antonio Magaña de la Mora", coalicion: ["PVEM"], votos: 78_300, porcentaje: 4.47 },
+      { nombre: "Hipólito Mora", coalicion: ["FXM"], votos: 28_900, porcentaje: 1.65 },
+      { nombre: "Otros / nulos / no registrados", coalicion: ["OTRO"], votos: 127_511, porcentaje: 7.32 },
     ],
   },
 ];
