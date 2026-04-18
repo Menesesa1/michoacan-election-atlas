@@ -58,6 +58,7 @@ export type Database = {
       }
       alertas_crisis_runs: {
         Row: {
+          batch_id: string | null
           duracion_ms: number | null
           ejecutada_en: string
           error: string | null
@@ -70,6 +71,7 @@ export type Database = {
           urgentes: number
         }
         Insert: {
+          batch_id?: string | null
           duracion_ms?: number | null
           ejecutada_en?: string
           error?: string | null
@@ -82,6 +84,7 @@ export type Database = {
           urgentes?: number
         }
         Update: {
+          batch_id?: string | null
           duracion_ms?: number | null
           ejecutada_en?: string
           error?: string | null
