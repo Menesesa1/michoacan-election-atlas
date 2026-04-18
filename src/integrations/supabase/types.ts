@@ -61,6 +61,7 @@ export type Database = {
           fase: string
           foto_url: string | null
           id: string
+          metricas_redes: Json
           nivel: string
           nombre: string
           notas: string | null
@@ -68,6 +69,7 @@ export type Database = {
           redes: Json | null
           tags: string[] | null
           territorio: string
+          trayectoria: Json
           updated_at: string
           user_id: string
           war_room: Json
@@ -80,6 +82,7 @@ export type Database = {
           fase?: string
           foto_url?: string | null
           id?: string
+          metricas_redes?: Json
           nivel: string
           nombre: string
           notas?: string | null
@@ -87,6 +90,7 @@ export type Database = {
           redes?: Json | null
           tags?: string[] | null
           territorio: string
+          trayectoria?: Json
           updated_at?: string
           user_id: string
           war_room?: Json
@@ -99,6 +103,7 @@ export type Database = {
           fase?: string
           foto_url?: string | null
           id?: string
+          metricas_redes?: Json
           nivel?: string
           nombre?: string
           notas?: string | null
@@ -106,6 +111,7 @@ export type Database = {
           redes?: Json | null
           tags?: string[] | null
           territorio?: string
+          trayectoria?: Json
           updated_at?: string
           user_id?: string
           war_room?: Json
