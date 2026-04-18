@@ -74,10 +74,10 @@ export default function Candidatos() {
         partido: "PAN",
         nivel: "ayuntamientos",
         territorio: "Morelia",
-        cargo_buscado: "Reelección Presidencia Municipal de Morelia",
-        bio_breve: "Presidente municipal de Morelia (Movimiento Ciudadano y luego PAN). Diputado local previo. Base electoral en zona urbana de Morelia.",
+        cargo_buscado: "Presidencia Municipal de Morelia",
+        bio_breve: "Presidente municipal de Morelia. Ganó la alcaldía en 2015 como candidato INDEPENDIENTE (primer alcalde independiente de la capital michoacana), y reelecto en 2021 por el PAN. Diputado local previo.",
         redes: { twitter: "@AlfonsoMtzAl", facebook: "AlfonsoMartinezAlcazar" },
-        notas: "Perfil técnico-administrativo. Cercanía con clase media urbana de Morelia.",
+        notas: "Trayectoria atípica: independiente en 2015 → PAN en 2021. Perfil técnico-administrativo, cercanía con clase media urbana de Morelia.",
       },
       {
         user_id: authData.user.id,
