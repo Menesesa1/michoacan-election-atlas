@@ -132,6 +132,25 @@ Riesgo alternancia: ${body.competitividad.riesgo_alternancia ?? "n/d"}` : "Sin d
 ### Alertas activas
 ${body.alertas_activas?.length ? body.alertas_activas.map((a) => `- ${a}`).join("\n") : "Sin alertas reportadas"}
 
+### META DE VICTORIA (cálculo determinístico — usa estas cifras tal cual, NO las inventes)
+${body.meta_victoria ? `Lista nominal del territorio: ${body.meta_victoria.lista_nominal.toLocaleString()}
+Participación supuesta: ${body.meta_victoria.participacion_supuesta_pct}%
+Umbral de victoria: ${body.meta_victoria.umbral_victoria_pct}% (sobre votos emitidos)
+**VOTOS REQUERIDOS PARA GANAR: ${body.meta_victoria.votos_requeridos_estimado.toLocaleString()}**
+Secciones totales: ${body.meta_victoria.secciones_totales}
+Promedio lista nominal por sección: ${body.meta_victoria.promedio_lista_por_seccion.toLocaleString()}
+**Secciones mínimas a movilizar: ${body.meta_victoria.secciones_minimas_a_movilizar}** (de ${body.meta_victoria.secciones_totales})
+
+Municipios pivote (top por aportación de secciones):
+${body.meta_victoria.municipios_pivote.map((m) => `- ${m.nombre} (clave INEGI ${m.clave}): ${m.secciones} secciones (${m.peso_pct_total}% del territorio)`).join("\n")}
+
+Secciones clave priorizables (urbanas/mixtas con mayor densidad):
+${body.meta_victoria.secciones_clave_top.map((s) => `- Sec ${s.sec} · ${s.municipio} · ${s.tipo}`).join("\n")}` : "Cálculo no disponible (catálogo INE no cargado). Usa razonamiento cualitativo."}
+
+### Candidatos en disputa
+${body.candidatos?.propio ? `**Candidato propio:** ${JSON.stringify(body.candidatos.propio).slice(0, 600)}` : ""}
+${body.candidatos?.adversarios?.length ? `**Adversarios:**\n${body.candidatos.adversarios.slice(0, 4).map((a) => `- ${JSON.stringify(a).slice(0, 400)}`).join("\n")}` : ""}
+
 ### Supuestos del usuario
 ${body.supuestos_usuario ? `Participación esperada: ${body.supuestos_usuario.participacion_esperada_pct ?? "n/d"}%
 Voto duro estimado: ${body.supuestos_usuario.voto_duro_pct ?? "n/d"}%
@@ -139,8 +158,14 @@ Presupuesto total: ${body.supuestos_usuario.presupuesto_total_mxn ? `$${body.sup
 
 ## Entregables (todos obligatorios)
 
-Genera un brief ejecutivo 360 con las 10 secciones del schema. Cada item debe ser específico,
-medible, accionable y citar contexto real del snapshot.`;
+Genera un brief ejecutivo 360 con TODAS las secciones del schema. Cada item debe ser específico,
+medible, accionable y citar contexto real del snapshot.
+
+REGLAS DURAS:
+1. En **meta_victoria** usa LITERALMENTE los números ya calculados (votos_requeridos, municipios_pivote, secciones_clave). Tu trabajo es NARRAR y JUSTIFICAR, no recalcular.
+2. En **estrategia_digital_comunicacion** sintetiza el sentimiento a partir de alertas_activas + adversarios. Si no hay datos, declara tono "neutro" y no inventes hostilidad.
+3. Voceros deben mapearse a War Room del candidato propio si se proporcionó.
+4. NO repitas información — cada sección aporta una capa distinta.`;
 
     const response = await fetch(
       "https://ai.gateway.lovable.dev/v1/chat/completions",
