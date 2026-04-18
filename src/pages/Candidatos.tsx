@@ -16,6 +16,7 @@ import { ComparadorCandidatos } from "@/components/candidatos/ComparadorCandidat
 import type { Candidato, TipoAnalisis } from "@/lib/candidatos/types";
 import { obtenerTiposExistentes, generarTodosLosAnalisis } from "@/lib/candidatos/auto-analisis";
 import { FASES_CANDIDATURA, FASE_LABEL, contiendaKey, contiendaLabel, type FaseCandidatura, type ContiendaKey as ContiendaKeyT } from "@/lib/candidatos/fase";
+import { cn } from "@/lib/utils";
 
 export default function Candidatos() {
   const { toast } = useToast();
