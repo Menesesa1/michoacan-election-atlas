@@ -250,6 +250,7 @@ export type Database = {
           fuente: string | null
           hashtags: string[] | null
           id: string
+          municipio: string | null
           publicada_en: string | null
           sentimiento: number
           tema: string | null
@@ -267,6 +268,7 @@ export type Database = {
           fuente?: string | null
           hashtags?: string[] | null
           id?: string
+          municipio?: string | null
           publicada_en?: string | null
           sentimiento: number
           tema?: string | null
@@ -284,6 +286,7 @@ export type Database = {
           fuente?: string | null
           hashtags?: string[] | null
           id?: string
+          municipio?: string | null
           publicada_en?: string | null
           sentimiento?: number
           tema?: string | null
