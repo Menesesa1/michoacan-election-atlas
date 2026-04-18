@@ -121,21 +121,18 @@ export function CandidatoCard({
       selected && "ring-2 ring-primary",
       candidato.es_propio ? "border-primary/50" : "border-l-2 border-l-muted-foreground/30",
     )}>
-      <div className="absolute top-2 right-2">
-        {candidato.es_propio ? (
-          <Badge className="text-[9px] font-mono uppercase tracking-widest bg-primary/15 text-primary border-primary/40 hover:bg-primary/25">
-            <Star className="w-2.5 h-2.5 mr-1 fill-primary" /> Mi candidato
-          </Badge>
-        ) : (
-          <Badge variant="outline" className="text-[9px] font-mono uppercase tracking-widest text-muted-foreground border-muted-foreground/30">
-            <Swords className="w-2.5 h-2.5 mr-1" /> Oposición
-          </Badge>
-        )}
-      </div>
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
           <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground flex items-center gap-1.5 flex-wrap">
-            <span>{NIVEL_LABEL[candidato.nivel]} · {candidato.territorio}</span>
+            {candidato.es_propio ? (
+              <Badge className="text-[9px] px-1.5 py-0 h-4 font-mono uppercase tracking-widest bg-primary/15 text-primary border border-primary/40 hover:bg-primary/25">
+                <Star className="w-2.5 h-2.5 mr-1 fill-primary" /> Mío
+              </Badge>
+            ) : (
+              <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 font-mono uppercase tracking-widest text-muted-foreground border-muted-foreground/30">
+                <Swords className="w-2.5 h-2.5 mr-1" /> Oposición
+              </Badge>
+            )}
             <Badge
               variant="outline"
               className={cn(
@@ -148,6 +145,9 @@ export function CandidatoCard({
             >
               {FASE_LABEL_CORTO[candidato.fase ?? "precampana"]}
             </Badge>
+          </div>
+          <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mt-1 truncate">
+            {NIVEL_LABEL[candidato.nivel]} · {candidato.territorio}
           </div>
           <h3 className="text-base font-bold text-foreground truncate mt-0.5">{candidato.nombre}</h3>
           {candidato.cargo_buscado && (
@@ -216,45 +216,48 @@ export function CandidatoCard({
         )}
       </div>
 
-      <div className="flex items-center justify-between gap-2 mt-3">
-        <div className="flex gap-1.5">
-          <Button size="sm" variant="default" onClick={onOpen}>
+      <div className="flex items-center justify-between gap-2 mt-3 flex-wrap">
+        <div className="flex gap-1 flex-wrap">
+          <Button size="sm" variant="default" onClick={onOpen} className="h-8 px-2.5">
             <FileSearch className="w-3.5 h-3.5 mr-1" /> Ficha
           </Button>
           <CandidatoForm
             candidato={candidato}
             onSaved={onChanged}
             trigger={
-              <Button size="sm" variant="outline" title="Corregir datos del candidato (partido, fase, bio, etc.)">
+              <Button size="sm" variant="outline" className="h-8 px-2.5" title="Corregir datos del candidato">
                 <Pencil className="w-3.5 h-3.5 mr-1" /> Corregir
               </Button>
             }
           />
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={toggleEsPropio}
-            title={candidato.es_propio ? "Mover a Oposición" : "Marcar como Mi candidato"}
-            className={candidato.es_propio ? "text-primary hover:bg-primary/10" : "text-muted-foreground hover:text-primary"}
-          >
-            <Star className={cn("w-3.5 h-3.5 mr-1", candidato.es_propio && "fill-primary")} />
-            {candidato.es_propio ? "Mío" : "Marcar mío"}
-          </Button>
-        </div>
-        <div className="flex gap-1.5">
           {onToggleSelect && (
             <Button
               size="sm"
               variant={selected ? "default" : "outline"}
               onClick={onToggleSelect}
               disabled={sinAnalisis}
+              className="h-8 px-2.5"
               title={sinAnalisis ? "Genera análisis primero para poder comparar" : ""}
             >
               {selected ? "Seleccionado" : "Comparar"}
             </Button>
           )}
-          <Button size="sm" variant="ghost" onClick={onDelete} className="text-destructive hover:bg-destructive/10">
-            <Trash2 className="w-3.5 h-3.5" />
+        </div>
+        <div className="flex gap-0.5">
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={toggleEsPropio}
+            title={candidato.es_propio ? "Mover a Oposición" : "Marcar como Mi candidato"}
+            className={cn(
+              "h-8 w-8",
+              candidato.es_propio ? "text-primary hover:bg-primary/10" : "text-muted-foreground hover:text-primary"
+            )}
+          >
+            <Star className={cn("w-4 h-4", candidato.es_propio && "fill-primary")} />
+          </Button>
+          <Button size="icon" variant="ghost" onClick={onDelete} className="h-8 w-8 text-destructive hover:bg-destructive/10" title="Eliminar candidato">
+            <Trash2 className="w-4 h-4" />
           </Button>
         </div>
       </div>
