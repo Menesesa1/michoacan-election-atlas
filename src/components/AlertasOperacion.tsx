@@ -1,10 +1,35 @@
-import { useMemo, useState } from "react";
-import { AlertTriangle, ShieldAlert, Info, RefreshCw, Clock, MapPin, Filter } from "lucide-react";
+import { useEffect, useMemo, useState, useCallback } from "react";
+import { AlertTriangle, ShieldAlert, Info, RefreshCw, Clock, MapPin, ExternalLink, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { alertasMock, type Alerta, type PrioridadAlerta } from "@/data/alertas-mock";
-import { useRemoteData } from "@/lib/data-source";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
+
+type PrioridadAlerta = "Urgente" | "Preventivo" | "Informativo";
+
+interface Alerta {
+  id: string;
+  prioridad: PrioridadAlerta;
+  titulo: string;
+  descripcion: string;
+  distrito: string;
+  fuente: string;
+  url_fuente: string | null;
+  timestamp: string;
+  detectada_en: string;
+  batch_id: string;
+}
+
+interface RunMeta {
+  ejecutada_en: string;
+  total_alertas: number;
+  urgentes: number;
+  preventivas: number;
+  informativas: number;
+  duracion_ms: number | null;
+  error: string | null;
+  trigger: string;
+}
 
 const PRIORIDAD_STYLES: Record<PrioridadAlerta, { bg: string; text: string; border: string; icon: typeof AlertTriangle }> = {
   Urgente: { bg: "bg-destructive/15", text: "text-destructive", border: "border-destructive/50", icon: AlertTriangle },
@@ -19,25 +44,95 @@ function timeAgo(iso: string): string {
   if (m < 60) return `hace ${m}m`;
   const h = Math.floor(m / 60);
   if (h < 24) return `hace ${h}h`;
-  const d = Math.floor(h / 24);
-  return `hace ${d}d`;
+  return `hace ${Math.floor(h / 24)}d`;
 }
 
-function isAlertaArray(d: unknown): d is Alerta[] {
-  return Array.isArray(d) && d.every((x) => x && typeof x === "object" && "prioridad" in x);
+function formatExact(iso: string): string {
+  return new Date(iso).toLocaleString("es-MX", {
+    dateStyle: "medium",
+    timeStyle: "short",
+    timeZone: "America/Mexico_City",
+  });
 }
 
 export function AlertasOperacion() {
-  const [remoteUrl, setRemoteUrl] = useState<string>("");
-  const [pendingUrl, setPendingUrl] = useState<string>("");
+  const [alertas, setAlertas] = useState<Alerta[]>([]);
+  const [lastRun, setLastRun] = useState<RunMeta | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [filtro, setFiltro] = useState<PrioridadAlerta | "Todas">("Todas");
 
-  const { data, loading, error, reload } = useRemoteData<Alerta>(remoteUrl || null, { refreshMs: 60_000 });
+  const loadLatest = useCallback(async () => {
+    // Última corrida exitosa → batch_id
+    const { data: run } = await supabase
+      .from("alertas_crisis_runs")
+      .select("*")
+      .is("error", null)
+      .gt("total_alertas", 0)
+      .order("ejecutada_en", { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
-  const alertas: Alerta[] = useMemo(() => {
-    if (remoteUrl && isAlertaArray(data)) return data;
-    return alertasMock;
-  }, [remoteUrl, data]);
+    setLastRun(run as RunMeta | null);
+
+    if (!run) {
+      setAlertas([]);
+      return;
+    }
+
+    // Alertas detectadas en/después de esa corrida
+    const { data: rows } = await supabase
+      .from("alertas_crisis")
+      .select("*")
+      .gte("detectada_en", run.ejecutada_en)
+      .order("prioridad", { ascending: true })
+      .order("detectada_en", { ascending: false })
+      .limit(50);
+
+    setAlertas((rows as Alerta[]) ?? []);
+  }, []);
+
+  useEffect(() => {
+    loadLatest().finally(() => setLoading(false));
+  }, [loadLatest]);
+
+  // Realtime: nuevas inserciones
+  useEffect(() => {
+    const channel = supabase
+      .channel("alertas-crisis-changes")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "alertas_crisis_runs" }, () => {
+        loadLatest();
+      })
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [loadLatest]);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    toast({ title: "Monitoreando…", description: "Buscando noticias y clasificando alertas (~30-60s)" });
+    try {
+      const { data, error } = await supabase.functions.invoke("monitor-crisis", {
+        body: { trigger: "manual" },
+      });
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error ?? "Falló el monitor");
+      toast({
+        title: `${data.total} alertas generadas`,
+        description: `${data.urgentes} urgentes · ${data.preventivas} preventivas · ${data.informativas} informativas`,
+      });
+      await loadLatest();
+    } catch (err) {
+      toast({
+        title: "Error al actualizar",
+        description: err instanceof Error ? err.message : "Error desconocido",
+        variant: "destructive",
+      });
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const filtered = filtro === "Todas" ? alertas : alertas.filter((a) => a.prioridad === filtro);
 
@@ -55,16 +150,18 @@ export function AlertasOperacion() {
           <div>
             <div className="flex items-center gap-2 text-primary text-[10px] font-mono uppercase tracking-widest mb-1">
               <ShieldAlert className="w-3 h-3" />
-              Módulo de Crisis · Tiempo real
+              Módulo de Crisis · Monitoreo IA en vivo
             </div>
             <h2 className="text-2xl font-bold text-foreground">Alertas de Operación</h2>
             <p className="text-sm text-muted-foreground mt-1">
-              Feed de inteligencia operativa · {alertas.length} alertas activas
+              {alertas.length > 0
+                ? `${alertas.length} alertas activas · Último monitoreo: ${lastRun ? formatExact(lastRun.ejecutada_en) : "—"}`
+                : "Sin alertas. Ejecuta un monitoreo para comenzar."}
             </p>
           </div>
-          <Button onClick={reload} variant="outline" size="sm" className="gap-2">
-            <RefreshCw className="w-3.5 h-3.5" />
-            Actualizar
+          <Button onClick={handleRefresh} disabled={refreshing} size="sm" className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90">
+            {refreshing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
+            {refreshing ? "Monitoreando…" : "Actualizar ahora"}
           </Button>
         </div>
 
@@ -88,46 +185,25 @@ export function AlertasOperacion() {
             );
           })}
         </div>
-      </div>
 
-      {/* Remote source */}
-      <div className="executive-panel p-4">
-        <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-2">
-          <Filter className="w-3 h-3" />
-          Fuente de datos remota (Google Sheets CSV o JSON)
-        </div>
-        <div className="flex flex-col sm:flex-row gap-2">
-          <Input
-            placeholder="https://docs.google.com/.../pub?output=csv"
-            value={pendingUrl}
-            onChange={(e) => setPendingUrl(e.target.value)}
-            className="flex-1 bg-background/40 text-xs"
-          />
-          <Button
-            size="sm"
-            onClick={() => setRemoteUrl(pendingUrl.trim())}
-            disabled={!pendingUrl.trim()}
-            className="bg-primary text-primary-foreground hover:bg-primary/90"
-          >
-            Conectar
-          </Button>
-          {remoteUrl && (
-            <Button size="sm" variant="outline" onClick={() => { setRemoteUrl(""); setPendingUrl(""); }}>
-              Usar mock
-            </Button>
-          )}
-        </div>
-        {error && <p className="text-[11px] text-destructive mt-2">⚠ {error} · Mostrando datos locales.</p>}
-        {remoteUrl && !error && !loading && <p className="text-[11px] text-primary mt-2">● Auto-refresh cada 60s</p>}
+        {lastRun && (
+          <div className="mt-3 text-[10px] font-mono text-muted-foreground/80 flex flex-wrap gap-x-4 gap-y-1">
+            <span>● Pipeline: Firecrawl Search → Lovable AI (Gemini Flash)</span>
+            {lastRun.duracion_ms && <span>· {(lastRun.duracion_ms / 1000).toFixed(1)}s</span>}
+            <span>· trigger: {lastRun.trigger}</span>
+          </div>
+        )}
       </div>
 
       {/* Feed */}
       <div className="space-y-3">
-        {loading && remoteUrl ? (
-          Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-24 w-full" />)
+        {loading ? (
+          Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-24 w-full" />)
         ) : filtered.length === 0 ? (
           <div className="executive-panel p-8 text-center text-sm text-muted-foreground">
-            No hay alertas con el filtro actual.
+            {alertas.length === 0
+              ? "No hay alertas todavía. Pulsa «Actualizar ahora» para ejecutar el monitor."
+              : "No hay alertas con el filtro actual."}
           </div>
         ) : (
           filtered.map((a) => {
@@ -155,6 +231,11 @@ export function AlertasOperacion() {
                       <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{a.distrito}</span>
                       <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{timeAgo(a.timestamp)}</span>
                       <span className="opacity-70">· {a.fuente}</span>
+                      {a.url_fuente && (
+                        <a href={a.url_fuente} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-primary hover:underline">
+                          <ExternalLink className="w-3 h-3" />Fuente
+                        </a>
+                      )}
                     </div>
                   </div>
                 </div>
