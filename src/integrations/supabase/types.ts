@@ -14,6 +14,87 @@ export type Database = {
   }
   public: {
     Tables: {
+      alertas_crisis: {
+        Row: {
+          batch_id: string
+          created_at: string
+          descripcion: string
+          detectada_en: string
+          distrito: string
+          fuente: string
+          id: string
+          prioridad: string
+          timestamp: string
+          titulo: string
+          url_fuente: string | null
+        }
+        Insert: {
+          batch_id: string
+          created_at?: string
+          descripcion: string
+          detectada_en?: string
+          distrito?: string
+          fuente: string
+          id?: string
+          prioridad: string
+          timestamp?: string
+          titulo: string
+          url_fuente?: string | null
+        }
+        Update: {
+          batch_id?: string
+          created_at?: string
+          descripcion?: string
+          detectada_en?: string
+          distrito?: string
+          fuente?: string
+          id?: string
+          prioridad?: string
+          timestamp?: string
+          titulo?: string
+          url_fuente?: string | null
+        }
+        Relationships: []
+      }
+      alertas_crisis_runs: {
+        Row: {
+          duracion_ms: number | null
+          ejecutada_en: string
+          error: string | null
+          fuentes_consultadas: number
+          id: string
+          informativas: number
+          preventivas: number
+          total_alertas: number
+          trigger: string
+          urgentes: number
+        }
+        Insert: {
+          duracion_ms?: number | null
+          ejecutada_en?: string
+          error?: string | null
+          fuentes_consultadas?: number
+          id?: string
+          informativas?: number
+          preventivas?: number
+          total_alertas?: number
+          trigger?: string
+          urgentes?: number
+        }
+        Update: {
+          duracion_ms?: number | null
+          ejecutada_en?: string
+          error?: string | null
+          fuentes_consultadas?: number
+          id?: string
+          informativas?: number
+          preventivas?: number
+          total_alertas?: number
+          trigger?: string
+          urgentes?: number
+        }
+        Relationships: []
+      }
       candidato_analisis: {
         Row: {
           candidato_id: string
