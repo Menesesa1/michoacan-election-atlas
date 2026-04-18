@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
-import { AlertTriangle, ShieldAlert, Info, RefreshCw, Clock, MapPin, ExternalLink, Loader2 } from "lucide-react";
+import { AlertTriangle, ShieldAlert, Info, RefreshCw, Clock, MapPin, ExternalLink, Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { RapidResponseDialog, type RapidResponseInput } from "@/components/RapidResponseDialog";
 
 type PrioridadAlerta = "Urgente" | "Preventivo" | "Informativo";
 
@@ -62,6 +63,21 @@ export function AlertasOperacion() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [filtro, setFiltro] = useState<PrioridadAlerta | "Todas">("Todas");
+  const [rrOpen, setRrOpen] = useState(false);
+  const [rrInput, setRrInput] = useState<RapidResponseInput | null>(null);
+
+  const openRapidResponse = (a: Alerta) => {
+    setRrInput({
+      tipo: "alerta",
+      titulo: a.titulo,
+      descripcion: a.descripcion,
+      fuente: a.fuente,
+      url: a.url_fuente,
+      distrito_o_entidad: a.distrito,
+      prioridad: a.prioridad,
+    });
+    setRrOpen(true);
+  };
 
   const loadLatest = useCallback(async () => {
     // Última corrida exitosa → batch_id
@@ -240,6 +256,15 @@ export function AlertasOperacion() {
                           <ExternalLink className="w-3 h-3" />Fuente
                         </a>
                       )}
+                      {(a.prioridad === "Urgente" || a.prioridad === "Preventivo") && (
+                        <button
+                          type="button"
+                          onClick={() => openRapidResponse(a)}
+                          className="ml-auto inline-flex items-center gap-1 px-2 py-0.5 rounded border border-primary/40 bg-primary/10 text-primary hover:bg-primary/20 transition"
+                        >
+                          <Sparkles className="w-3 h-3" />Rapid Response
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -248,6 +273,7 @@ export function AlertasOperacion() {
           })
         )}
       </div>
+      <RapidResponseDialog open={rrOpen} onOpenChange={setRrOpen} input={rrInput} />
     </div>
   );
 }
