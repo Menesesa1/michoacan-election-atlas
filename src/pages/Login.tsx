@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/context/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { EmeLogo } from "@/components/EmeLogo";
 
 const schema = z.object({
@@ -23,6 +24,28 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
+  const [resetting, setResetting] = useState(false);
+
+  const onForgotPassword = async () => {
+    setError(null);
+    setResetSent(false);
+    const email = username.trim().toLowerCase();
+    if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
+      setError("Escribe tu correo arriba para enviarte el enlace de recuperación.");
+      return;
+    }
+    setResetting(true);
+    const { error: resetErr } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setResetting(false);
+    if (resetErr) {
+      setError(resetErr.message);
+      return;
+    }
+    setResetSent(true);
+  };
 
   if (isAuthenticated) {
     navigate(from, { replace: true });
