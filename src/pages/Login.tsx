@@ -156,6 +156,12 @@ export default function Login() {
               </div>
             )}
 
+            {resetSent && (
+              <div className="text-xs text-primary bg-primary/10 border border-primary/30 rounded-md px-3 py-2">
+                Te enviamos un enlace de recuperación a tu correo. Revisa también tu carpeta de spam.
+              </div>
+            )}
+
             <Button
               type="submit"
               disabled={submitting}
@@ -163,6 +169,15 @@ export default function Login() {
             >
               {submitting ? "Verificando…" : "Acceder al sistema"}
             </Button>
+
+            <button
+              type="button"
+              onClick={onForgotPassword}
+              disabled={resetting}
+              className="w-full text-xs text-muted-foreground hover:text-primary transition-colors underline-offset-4 hover:underline disabled:opacity-50"
+            >
+              {resetting ? "Enviando enlace…" : "¿Olvidaste tu contraseña?"}
+            </button>
 
             <div className="text-[10px] text-muted-foreground font-mono text-center pt-2 border-t border-border/50 leading-relaxed">
               Si es tu primera vez, se creará la cuenta automáticamente.
