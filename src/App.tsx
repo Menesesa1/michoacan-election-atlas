@@ -19,6 +19,7 @@ import Crisis from "./pages/Crisis";
 import ListeningEstatal from "./pages/ListeningEstatal";
 import ListeningCandidatos from "./pages/ListeningCandidatos";
 import ComparadorPropioVsRival from "./pages/ComparadorPropioVsRival";
+import MapaCalor from "./pages/MapaCalor";
 import Fuentes from "./pages/Fuentes";
 import Socioeconomico from "./pages/Socioeconomico";
 import Gobernador from "./pages/Gobernador";
@@ -64,6 +65,7 @@ const App = () => (
                   <Route path="listening-estatal" element={<ListeningEstatal />} />
                   <Route path="listening-candidatos" element={<ListeningCandidatos />} />
                   <Route path="comparador" element={<ComparadorPropioVsRival />} />
+                  <Route path="mapa-calor" element={<MapaCalor />} />
                 </Route>
                 <Route path="/escenarios" element={<Escenarios />} />
                 <Route path="/operacion" element={<Operacion />} />
