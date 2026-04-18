@@ -8,7 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Users, GitCompare, Search, Layers } from "lucide-react";
+import { Users, GitCompare, Search, Layers, Star, Swords } from "lucide-react";
 import { CandidatoCard } from "@/components/candidatos/CandidatoCard";
 import { CandidatoForm } from "@/components/candidatos/CandidatoForm";
 import { FichaCandidato } from "@/components/candidatos/FichaCandidato";
@@ -16,6 +16,7 @@ import { ComparadorCandidatos } from "@/components/candidatos/ComparadorCandidat
 import type { Candidato, TipoAnalisis } from "@/lib/candidatos/types";
 import { obtenerTiposExistentes, generarTodosLosAnalisis } from "@/lib/candidatos/auto-analisis";
 import { FASES_CANDIDATURA, FASE_LABEL, contiendaKey, contiendaLabel, type FaseCandidatura, type ContiendaKey as ContiendaKeyT } from "@/lib/candidatos/fase";
+import { cn } from "@/lib/utils";
 
 export default function Candidatos() {
   const { toast } = useToast();
@@ -24,6 +25,7 @@ export default function Candidatos() {
   const [filtroNivel, setFiltroNivel] = useState<string>("all");
   const [filtroPartido, setFiltroPartido] = useState<string>("all");
   const [filtroFase, setFiltroFase] = useState<string>("all");
+  const [filtroEquipo, setFiltroEquipo] = useState<"all" | "propios" | "oposicion">("all");
   const [busqueda, setBusqueda] = useState("");
   const [seleccionados, setSeleccionados] = useState<string[]>([]);
   const [comparando, setComparando] = useState(false);
@@ -169,10 +171,17 @@ export default function Candidatos() {
       if (filtroNivel !== "all" && c.nivel !== filtroNivel) return false;
       if (filtroPartido !== "all" && c.partido !== filtroPartido) return false;
       if (filtroFase !== "all" && (c.fase ?? "precampana") !== filtroFase) return false;
+      if (filtroEquipo === "propios" && !c.es_propio) return false;
+      if (filtroEquipo === "oposicion" && c.es_propio) return false;
       if (busqueda && !`${c.nombre} ${c.partido} ${c.territorio}`.toLowerCase().includes(busqueda.toLowerCase())) return false;
       return true;
     });
-  }, [candidatos, filtroNivel, filtroPartido, filtroFase, busqueda]);
+  }, [candidatos, filtroNivel, filtroPartido, filtroFase, filtroEquipo, busqueda]);
+
+  const conteoEquipo = useMemo(() => ({
+    propios: candidatos.filter((c) => c.es_propio).length,
+    oposicion: candidatos.filter((c) => !c.es_propio).length,
+  }), [candidatos]);
 
   // Lista de partidos únicos detectados (para el selector de filtro)
   const partidosDisponibles = useMemo(() => {
@@ -235,6 +244,38 @@ export default function Candidatos() {
       </div>
 
       <div className="flex flex-col gap-2">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mr-1">Equipo:</span>
+          {([
+            { value: "all", label: "Todos", icon: null, count: candidatos.length },
+            { value: "propios", label: "Mis candidatos", icon: Star, count: conteoEquipo.propios },
+            { value: "oposicion", label: "Oposición", icon: Swords, count: conteoEquipo.oposicion },
+          ] as const).map((opt) => {
+            const active = filtroEquipo === opt.value;
+            const Icon = opt.icon;
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setFiltroEquipo(opt.value)}
+                className={cn(
+                  "px-2.5 py-1 rounded-md text-xs border font-medium transition-colors flex items-center gap-1.5",
+                  active
+                    ? opt.value === "propios"
+                      ? "bg-primary/15 border-primary/50 text-primary"
+                      : opt.value === "oposicion"
+                      ? "bg-muted/50 border-muted-foreground/40 text-foreground"
+                      : "bg-secondary border-border text-foreground"
+                    : "bg-card/40 border-border text-muted-foreground hover:text-foreground hover:border-primary/30"
+                )}
+              >
+                {Icon && <Icon className={cn("w-3 h-3", active && opt.value === "propios" && "fill-primary")} />}
+                {opt.label}
+                <span className="text-[10px] font-mono opacity-70">{opt.count}</span>
+              </button>
+            );
+          })}
+        </div>
         <div className="flex flex-col md:flex-row gap-2">
           <div className="relative flex-1">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
