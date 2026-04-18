@@ -170,10 +170,17 @@ export default function Candidatos() {
       if (filtroNivel !== "all" && c.nivel !== filtroNivel) return false;
       if (filtroPartido !== "all" && c.partido !== filtroPartido) return false;
       if (filtroFase !== "all" && (c.fase ?? "precampana") !== filtroFase) return false;
+      if (filtroEquipo === "propios" && !c.es_propio) return false;
+      if (filtroEquipo === "oposicion" && c.es_propio) return false;
       if (busqueda && !`${c.nombre} ${c.partido} ${c.territorio}`.toLowerCase().includes(busqueda.toLowerCase())) return false;
       return true;
     });
-  }, [candidatos, filtroNivel, filtroPartido, filtroFase, busqueda]);
+  }, [candidatos, filtroNivel, filtroPartido, filtroFase, filtroEquipo, busqueda]);
+
+  const conteoEquipo = useMemo(() => ({
+    propios: candidatos.filter((c) => c.es_propio).length,
+    oposicion: candidatos.filter((c) => !c.es_propio).length,
+  }), [candidatos]);
 
   // Lista de partidos únicos detectados (para el selector de filtro)
   const partidosDisponibles = useMemo(() => {
