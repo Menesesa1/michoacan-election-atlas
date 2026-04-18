@@ -352,6 +352,30 @@ function OsintView({ data }: { data: AnalisisOSINT }) {
           ))}
         </ul>
       </Card>
+      {data.war_room_resumen && (
+        <Card className="p-3 bg-card/60 border-amber-500/40">
+          <div className="text-xs font-mono uppercase tracking-widest mb-2 flex items-center gap-1.5">
+            <Users2 className="w-3.5 h-3.5" /> Análisis del War Room
+          </div>
+          <p className="text-sm mb-2"><strong>Coherencia con narrativa:</strong> <span className="text-muted-foreground">{data.war_room_resumen.coherencia_con_narrativa}</span></p>
+          {data.war_room_resumen.alertas_reputacionales.length > 0 && (
+            <div className="space-y-1.5 mb-2">
+              <div className="text-[10px] font-mono uppercase text-rose-300">Alertas reputacionales</div>
+              <ul className="space-y-1 text-sm">
+                {data.war_room_resumen.alertas_reputacionales.map((a, i) => (
+                  <li key={i} className="flex gap-2">
+                    <Badge variant="outline" className="text-[10px] border-rose-500/40 text-rose-300">{a.gravedad}</Badge>
+                    <span><strong>{a.miembro}:</strong> <span className="text-muted-foreground">{a.alerta}</span></span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {data.war_room_resumen.observaciones && (
+            <p className="text-xs text-muted-foreground italic border-t border-border/40 pt-2">{data.war_room_resumen.observaciones}</p>
+          )}
+        </Card>
+      )}
     </div>
   );
 }
