@@ -30,6 +30,7 @@ interface MencionClasificada {
   sentimiento: number; // -1 to 1
   tema: string;
   hashtags: string[];
+  municipio?: string | null; // Municipio de Michoacán al que se refiere (o null si es estatal)
 }
 
 interface EntidadObjetivo {
@@ -64,6 +65,42 @@ const MUNICIPIOS_MICHOACAN = [
 function esMichoacan(texto: string): boolean {
   const t = texto.toLowerCase();
   return MUNICIPIOS_MICHOACAN.some((m) => t.includes(m));
+}
+
+// Whitelist oficial de los 113 municipios de Michoacán (INEGI).
+// Para validar el `municipio` que devuelve la IA y evitar inventos.
+const MUNICIPIOS_OFICIALES: string[] = [
+  "Acuitzio","Aguililla","Álvaro Obregón","Angamacutiro","Angangueo","Apatzingán","Aporo","Aquila","Ario","Arteaga",
+  "Briseñas","Buenavista","Carácuaro","Charapan","Charo","Chavinda","Cherán","Chilchota","Chinicuila","Chucándiro",
+  "Coahuayana","Coalcomán de Vázquez Pallares","Coeneo","Cojumatlán de Régules","Contepec","Copándaro","Cotija",
+  "Cuitzeo","Ecuandureo","Epitacio Huerta","Erongarícuaro","Gabriel Zamora","Hidalgo","Huandacareo","Huaniqueo",
+  "Huetamo","Huiramba","Indaparapeo","Irimbo","Ixtlán","Jacona","Jiménez","Jiquilpan","José Sixto Verduzco","Juárez",
+  "Jungapeo","Lagunillas","Lázaro Cárdenas","Los Reyes","Madero","Maravatío","Marcos Castellanos","Morelia","Morelos",
+  "Múgica","Nahuatzen","Nocupétaro","Nuevo Parangaricutiro","Nuevo Urecho","Numarán","Ocampo","Pajacuarán","Panindícuaro",
+  "Parácuaro","Paracho","Pátzcuaro","Penjamillo","Peribán","La Piedad","Purépero","Puruándiro","Queréndaro","Quiroga",
+  "Sahuayo","Salvador Escalante","San Lucas","Santa Ana Maya","Senguio","Susupuato","Tacámbaro","Tancítaro",
+  "Tangamandapio","Tangancícuaro","Tanhuato","Taretan","Tarímbaro","Tepalcatepec","Tingambato","Tingüindín",
+  "Tiquicheo de Nicolás Romero","Tlalpujahua","Tlazazalca","Tocumbo","Tumbiscatío","Turicato","Tuxpan","Tuzantla",
+  "Tzintzuntzan","Tzitzio","Uruapan","Venustiano Carranza","Villamar","Vista Hermosa","Yurécuaro","Zacapu","Zamora",
+  "Zináparo","Zinapécuaro","Ziracuaretiro","Zitácuaro",
+];
+
+function strip(s: string): string {
+  return s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+}
+
+const MUNICIPIOS_INDEX = new Map(MUNICIPIOS_OFICIALES.map((m) => [strip(m), m]));
+
+function normalizarMunicipio(input: string | null | undefined): string | null {
+  if (!input) return null;
+  const key = strip(input);
+  // Match exacto
+  if (MUNICIPIOS_INDEX.has(key)) return MUNICIPIOS_INDEX.get(key)!;
+  // Match por contención (ej: "Hidalgo (Cd. Hidalgo)" → "Hidalgo")
+  for (const [k, oficial] of MUNICIPIOS_INDEX) {
+    if (key.includes(k) || k.includes(key)) return oficial;
+  }
+  return null;
 }
 
 async function firecrawlSearch(query: string, apiKey: string): Promise<SearchHit[]> {
@@ -101,7 +138,7 @@ async function classifyMenciones(
       messages: [
         {
           role: "system",
-          content: `Eres un analista de social listening político en Michoacán. Para cada noticia/mención sobre "${entidadNombre}", extrae: sentimiento (-1 muy negativo, 0 neutro, +1 muy positivo), tema principal (1-3 palabras: seguridad, economía, gobernanza, escándalo, agenda, etc.) y hashtags relevantes inferidos. Sé conciso y objetivo.`,
+          content: `Eres un analista de social listening político en Michoacán. Para cada noticia/mención sobre "${entidadNombre}", extrae: sentimiento (-1 muy negativo, 0 neutro, +1 muy positivo), tema principal (1-3 palabras: seguridad, economía, gobernanza, escándalo, agenda, etc.), hashtags relevantes inferidos y MUNICIPIO al que se refiere la mención. El municipio DEBE ser uno de los 113 municipios de Michoacán (ej: Morelia, Uruapan, Zamora, Lázaro Cárdenas, Apatzingán, Pátzcuaro, Zitácuaro, etc.) escrito con el nombre oficial INEGI. Si la mención es estatal/genérica de Michoacán sin municipio claro, devuelve null. NO inventes municipios fuera de Michoacán.`,
         },
         { role: "user", content: `Menciones sobre ${entidadNombre}:\n\n${corpus}\n\nClasifica cada una.` },
       ],
@@ -126,8 +163,9 @@ async function classifyMenciones(
                       sentimiento: { type: "number", minimum: -1, maximum: 1 },
                       tema: { type: "string" },
                       hashtags: { type: "array", items: { type: "string" }, maxItems: 5 },
+                      municipio: { type: ["string", "null"], description: "Municipio oficial de Michoacán o null si es estatal/no claro" },
                     },
-                    required: ["titulo", "fragmento", "url", "fuente", "sentimiento", "tema", "hashtags"],
+                    required: ["titulo", "fragmento", "url", "fuente", "sentimiento", "tema", "hashtags", "municipio"],
                   },
                 },
               },
@@ -247,7 +285,7 @@ Deno.serve(async (req) => {
 
       if (menciones.length === 0) continue;
 
-      // Insertar menciones
+      // Insertar menciones (validando municipio contra whitelist oficial)
       const rows = menciones.map((m) => ({
         batch_id: batchId,
         entidad_tipo: ent.tipo,
@@ -260,6 +298,7 @@ Deno.serve(async (req) => {
         sentimiento: Math.max(-1, Math.min(1, m.sentimiento)),
         tema: m.tema,
         hashtags: m.hashtags,
+        municipio: normalizarMunicipio(m.municipio),
       }));
       const { error: insErr } = await supabase.from("social_menciones").insert(rows);
       if (insErr) {
