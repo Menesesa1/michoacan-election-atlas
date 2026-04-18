@@ -96,17 +96,42 @@ export function CandidatoCard({
     }
   };
 
+  const toggleEsPropio = async () => {
+    const nuevo = !candidato.es_propio;
+    const { error } = await supabase
+      .from("candidatos")
+      .update({ es_propio: nuevo })
+      .eq("id", candidato.id);
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({
+      title: nuevo ? "Marcado como Mi candidato ⭐" : "Movido a Oposición",
+      description: nuevo
+        ? "Aparecerá destacado en Mando Central y se monitoreará en /inteligencia."
+        : "Ya no se monitoreará como candidato propio.",
+    });
+    onChanged();
+  };
+
   return (
     <Card className={cn(
       "p-4 bg-card/60 backdrop-blur border-border hover:border-primary/40 transition-all relative",
       selected && "ring-2 ring-primary",
-      candidato.es_propio && "border-primary/50",
+      candidato.es_propio ? "border-primary/50" : "border-l-2 border-l-muted-foreground/30",
     )}>
-      {candidato.es_propio && (
-        <div className="absolute top-2 right-2 flex items-center gap-1 text-[9px] font-mono uppercase tracking-widest text-primary bg-primary/10 px-1.5 py-0.5 rounded">
-          ★ Mi candidato
-        </div>
-      )}
+      <div className="absolute top-2 right-2">
+        {candidato.es_propio ? (
+          <Badge className="text-[9px] font-mono uppercase tracking-widest bg-primary/15 text-primary border-primary/40 hover:bg-primary/25">
+            <Star className="w-2.5 h-2.5 mr-1 fill-primary" /> Mi candidato
+          </Badge>
+        ) : (
+          <Badge variant="outline" className="text-[9px] font-mono uppercase tracking-widest text-muted-foreground border-muted-foreground/30">
+            <Swords className="w-2.5 h-2.5 mr-1" /> Oposición
+          </Badge>
+        )}
+      </div>
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
           <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground flex items-center gap-1.5 flex-wrap">
