@@ -67,6 +67,42 @@ function esMichoacan(texto: string): boolean {
   return MUNICIPIOS_MICHOACAN.some((m) => t.includes(m));
 }
 
+// Whitelist oficial de los 113 municipios de Michoacán (INEGI).
+// Para validar el `municipio` que devuelve la IA y evitar inventos.
+const MUNICIPIOS_OFICIALES: string[] = [
+  "Acuitzio","Aguililla","Álvaro Obregón","Angamacutiro","Angangueo","Apatzingán","Aporo","Aquila","Ario","Arteaga",
+  "Briseñas","Buenavista","Carácuaro","Charapan","Charo","Chavinda","Cherán","Chilchota","Chinicuila","Chucándiro",
+  "Coahuayana","Coalcomán de Vázquez Pallares","Coeneo","Cojumatlán de Régules","Contepec","Copándaro","Cotija",
+  "Cuitzeo","Ecuandureo","Epitacio Huerta","Erongarícuaro","Gabriel Zamora","Hidalgo","Huandacareo","Huaniqueo",
+  "Huetamo","Huiramba","Indaparapeo","Irimbo","Ixtlán","Jacona","Jiménez","Jiquilpan","José Sixto Verduzco","Juárez",
+  "Jungapeo","Lagunillas","Lázaro Cárdenas","Los Reyes","Madero","Maravatío","Marcos Castellanos","Morelia","Morelos",
+  "Múgica","Nahuatzen","Nocupétaro","Nuevo Parangaricutiro","Nuevo Urecho","Numarán","Ocampo","Pajacuarán","Panindícuaro",
+  "Parácuaro","Paracho","Pátzcuaro","Penjamillo","Peribán","La Piedad","Purépero","Puruándiro","Queréndaro","Quiroga",
+  "Sahuayo","Salvador Escalante","San Lucas","Santa Ana Maya","Senguio","Susupuato","Tacámbaro","Tancítaro",
+  "Tangamandapio","Tangancícuaro","Tanhuato","Taretan","Tarímbaro","Tepalcatepec","Tingambato","Tingüindín",
+  "Tiquicheo de Nicolás Romero","Tlalpujahua","Tlazazalca","Tocumbo","Tumbiscatío","Turicato","Tuxpan","Tuzantla",
+  "Tzintzuntzan","Tzitzio","Uruapan","Venustiano Carranza","Villamar","Vista Hermosa","Yurécuaro","Zacapu","Zamora",
+  "Zináparo","Zinapécuaro","Ziracuaretiro","Zitácuaro",
+];
+
+function strip(s: string): string {
+  return s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+}
+
+const MUNICIPIOS_INDEX = new Map(MUNICIPIOS_OFICIALES.map((m) => [strip(m), m]));
+
+function normalizarMunicipio(input: string | null | undefined): string | null {
+  if (!input) return null;
+  const key = strip(input);
+  // Match exacto
+  if (MUNICIPIOS_INDEX.has(key)) return MUNICIPIOS_INDEX.get(key)!;
+  // Match por contención (ej: "Hidalgo (Cd. Hidalgo)" → "Hidalgo")
+  for (const [k, oficial] of MUNICIPIOS_INDEX) {
+    if (key.includes(k) || k.includes(key)) return oficial;
+  }
+  return null;
+}
+
 async function firecrawlSearch(query: string, apiKey: string): Promise<SearchHit[]> {
   const res = await fetch(`${FIRECRAWL_V2}/search`, {
     method: "POST",
