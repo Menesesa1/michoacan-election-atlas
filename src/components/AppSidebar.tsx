@@ -18,6 +18,7 @@ import {
   Landmark,
   ChevronDown,
   Sparkles,
+  Zap,
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useState } from "react";
@@ -46,6 +47,7 @@ const locales = [
   { title: "Demografía", url: "/demografia", icon: Users },
   { title: "Tendencias", url: "/tendencias", icon: TrendingUp },
   { title: "Estrategia 360", url: "/escenarios", icon: Sparkles },
+  { title: "Operación 360", url: "/operacion", icon: Zap },
   { title: "Candidatos", url: "/candidatos", icon: Users },
   { title: "Inteligencia", url: "/inteligencia", icon: ShieldAlert },
   { title: "Fuentes", url: "/fuentes", icon: Database },
