@@ -25,6 +25,7 @@ import DiputadosLocales from "./pages/DiputadosLocales";
 import Ayuntamientos from "./pages/Ayuntamientos";
 import Escenarios from "./pages/Escenarios";
 import Candidatos from "./pages/Candidatos";
+import Operacion from "./pages/Operacion";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -63,6 +64,7 @@ const App = () => (
                   <Route path="listening-candidatos" element={<ListeningCandidatos />} />
                 </Route>
                 <Route path="/escenarios" element={<Escenarios />} />
+                <Route path="/operacion" element={<Operacion />} />
                 <Route path="/candidatos" element={<Candidatos />} />
                 <Route path="/distritos" element={<Distritos />} />
                 <Route path="/fuentes" element={<Fuentes />} />
