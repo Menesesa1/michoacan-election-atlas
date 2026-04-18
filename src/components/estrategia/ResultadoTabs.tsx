@@ -98,18 +98,29 @@ const DIAS = ["lunes", "martes", "miercoles", "jueves", "viernes", "sabado", "do
 export function ResultadoTabs({ data }: { data: EstrategiaOutput }) {
   return (
     <Tabs defaultValue="resumen" className="w-full">
-      <TabsList className="grid grid-cols-3 md:grid-cols-11 w-full h-auto">
-        <TabsTrigger value="resumen" className="text-[10px] md:text-xs"><FileText className="w-3 h-3 mr-1" />Resumen</TabsTrigger>
-        <TabsTrigger value="victoria" className="text-[10px] md:text-xs"><Trophy className="w-3 h-3 mr-1" />Victoria</TabsTrigger>
-        <TabsTrigger value="comunicacion" className="text-[10px] md:text-xs"><Megaphone className="w-3 h-3 mr-1" />Com 360</TabsTrigger>
-        <TabsTrigger value="foda" className="text-[10px] md:text-xs"><ShieldAlert className="w-3 h-3 mr-1" />FODA</TabsTrigger>
-        <TabsTrigger value="escenarios" className="text-[10px] md:text-xs"><TrendingUp className="w-3 h-3 mr-1" />Escenarios</TabsTrigger>
-        <TabsTrigger value="segmentos" className="text-[10px] md:text-xs"><Users className="w-3 h-3 mr-1" />Segmentos</TabsTrigger>
-        <TabsTrigger value="territorio" className="text-[10px] md:text-xs"><MapPin className="w-3 h-3 mr-1" />Territorio</TabsTrigger>
-        <TabsTrigger value="calendario" className="text-[10px] md:text-xs"><Calendar className="w-3 h-3 mr-1" />Calendario</TabsTrigger>
-        <TabsTrigger value="presupuesto" className="text-[10px] md:text-xs"><DollarSign className="w-3 h-3 mr-1" />Presup.</TabsTrigger>
-        <TabsTrigger value="riesgos" className="text-[10px] md:text-xs"><AlertTriangle className="w-3 h-3 mr-1" />Riesgos</TabsTrigger>
-        <TabsTrigger value="kpis" className="text-[10px] md:text-xs"><Activity className="w-3 h-3 mr-1" />KPIs</TabsTrigger>
+      <TabsList className="flex flex-wrap h-auto w-full gap-1 p-1 justify-start">
+        {[
+          { v: "resumen", icon: FileText, label: "Resumen" },
+          { v: "victoria", icon: Trophy, label: "Victoria" },
+          { v: "comunicacion", icon: Megaphone, label: "Com 360" },
+          { v: "foda", icon: ShieldAlert, label: "FODA" },
+          { v: "escenarios", icon: TrendingUp, label: "Escenarios" },
+          { v: "segmentos", icon: Users, label: "Segmentos" },
+          { v: "territorio", icon: MapPin, label: "Territorio" },
+          { v: "calendario", icon: Calendar, label: "Calendario" },
+          { v: "presupuesto", icon: DollarSign, label: "Presup." },
+          { v: "riesgos", icon: AlertTriangle, label: "Riesgos" },
+          { v: "kpis", icon: Activity, label: "KPIs" },
+        ].map(({ v, icon: Icon, label }) => (
+          <TabsTrigger
+            key={v}
+            value={v}
+            className="text-[11px] px-2.5 py-1.5 h-8 flex items-center gap-1.5 shrink-0"
+          >
+            <Icon className="w-3 h-3" />
+            <span>{label}</span>
+          </TabsTrigger>
+        ))}
       </TabsList>
 
       {/* RESUMEN */}
