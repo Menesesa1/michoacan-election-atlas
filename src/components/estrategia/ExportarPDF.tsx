@@ -152,6 +152,68 @@ export function ExportarPDF({ snapshot, data }: Props) {
       y += 2;
     });
 
+    // CAMINO A LA VICTORIA
+    if (data.meta_victoria) {
+      heading("Camino a la victoria");
+      para(`Votos objetivo: ${data.meta_victoria.votos_objetivo.toLocaleString()} · Participación supuesta: ${data.meta_victoria.participacion_supuesta_pct}% · Umbral: ${data.meta_victoria.umbral_pct}%`, { bold: true });
+      para(data.meta_victoria.narrativa_camino);
+      y += 4;
+      para("Municipios pivote:", { bold: true, color: [80, 50, 140] });
+      data.meta_victoria.municipios_pivote.forEach((m) => {
+        bullet(`${m.nombre} — ${m.secciones} sec (${m.peso_pct_total}%) → ${m.accion_clave}`);
+      });
+      y += 3;
+      para("Secciones clave:", { bold: true, color: [80, 50, 140] });
+      data.meta_victoria.secciones_clave.forEach((s) => {
+        bullet(`${s.municipio} [${s.tipo_seccion}] — ${s.num_secciones} sec · +${s.votos_aporte_estimado.toLocaleString()} votos: ${s.justificacion}`);
+      });
+    }
+
+    // COMUNICACIÓN 360
+    if (data.estrategia_digital_comunicacion) {
+      const ec = data.estrategia_digital_comunicacion;
+      heading("Estrategia de comunicación 360");
+      para(`Tono actual detectado: ${ec.diagnostico_sentimiento.tono_actual.toUpperCase()}`, { bold: true });
+      para(ec.diagnostico_sentimiento.sintesis);
+      if (ec.diagnostico_sentimiento.temas_calientes.length) {
+        para(`Temas calientes: ${ec.diagnostico_sentimiento.temas_calientes.join(", ")}`);
+      }
+      if (ec.diagnostico_sentimiento.adversarios_dominantes_en_red.length) {
+        para(`Adversarios dominantes en red: ${ec.diagnostico_sentimiento.adversarios_dominantes_en_red.join(", ")}`);
+      }
+      y += 3;
+      para("Arquitectura de mensaje:", { bold: true, color: [80, 50, 140] });
+      para(`Eje emocional: ${ec.arquitectura_mensaje.eje_emocional}`);
+      para(`Eje racional: ${ec.arquitectura_mensaje.eje_racional}`);
+      ec.arquitectura_mensaje.frases_paraguas.forEach((f, i) => bullet(`Frase ${i + 1}: "${f}"`));
+      if (ec.arquitectura_mensaje.tabues.length) {
+        para(`Tabúes: ${ec.arquitectura_mensaje.tabues.join(", ")}`, { color: [180, 60, 80] });
+      }
+      y += 3;
+      para("Plataformas:", { bold: true, color: [80, 50, 140] });
+      ec.plataformas.forEach((p) => {
+        bullet(`${p.red} [${p.prioridad}] — ${p.formato_dominante}, ${p.frecuencia_semanal} · KPI: ${p.kpi_principal}`);
+      });
+      y += 3;
+      para("Voceros:", { bold: true, color: [80, 50, 140] });
+      ec.voceros.forEach((v) => bullet(`${v.perfil} → ${v.funcion}`));
+      y += 3;
+      para("Calendario semanal:", { bold: true, color: [80, 50, 140] });
+      (["lunes","martes","miercoles","jueves","viernes","sabado","domingo"] as const).forEach((d) => {
+        bullet(`${d.toUpperCase()}: ${ec.calendario_contenido_semanal[d]}`);
+      });
+      y += 3;
+      para("Contraataque y crisis:", { bold: true, color: [180, 60, 80] });
+      ec.contraataque_y_crisis.triggers.forEach((t) => bullet(`Trigger: ${t}`));
+      para(`Protocolo 24h: ${ec.contraataque_y_crisis.protocolo_24h}`);
+      ec.contraataque_y_crisis.mensajes_pre_aprobados.forEach((m) => bullet(`Mensaje listo: "${m}"`));
+      if (ec.aliados_influencia.length) {
+        y += 3;
+        para("Aliados de influencia:", { bold: true, color: [80, 50, 140] });
+        ec.aliados_influencia.forEach((a) => bullet(`${a.perfil} (${a.region}) — ${a.tipo.replace(/_/g, " ")}`));
+      }
+    }
+
     // Footer en última página
     doc.setFontSize(8);
     doc.setTextColor(120, 120, 130);

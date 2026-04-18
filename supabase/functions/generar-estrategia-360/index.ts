@@ -42,6 +42,21 @@ interface SnapshotInput {
     riesgo_alternancia?: "alto" | "medio" | "bajo";
   };
   alertas_activas?: string[];
+  meta_victoria?: {
+    lista_nominal: number;
+    participacion_supuesta_pct: number;
+    umbral_victoria_pct: number;
+    votos_requeridos_estimado: number;
+    secciones_totales: number;
+    promedio_lista_por_seccion: number;
+    secciones_minimas_a_movilizar: number;
+    municipios_pivote: { clave: number; nombre: string; secciones: number; peso_pct_total: number }[];
+    secciones_clave_top: { sec: number; municipio: string; tipo: string }[];
+  };
+  candidatos?: {
+    propio?: Record<string, unknown>;
+    adversarios?: Record<string, unknown>[];
+  };
   supuestos_usuario?: {
     participacion_esperada_pct?: number;
     voto_duro_pct?: number;
@@ -117,6 +132,25 @@ Riesgo alternancia: ${body.competitividad.riesgo_alternancia ?? "n/d"}` : "Sin d
 ### Alertas activas
 ${body.alertas_activas?.length ? body.alertas_activas.map((a) => `- ${a}`).join("\n") : "Sin alertas reportadas"}
 
+### META DE VICTORIA (cálculo determinístico — usa estas cifras tal cual, NO las inventes)
+${body.meta_victoria ? `Lista nominal del territorio: ${body.meta_victoria.lista_nominal.toLocaleString()}
+Participación supuesta: ${body.meta_victoria.participacion_supuesta_pct}%
+Umbral de victoria: ${body.meta_victoria.umbral_victoria_pct}% (sobre votos emitidos)
+**VOTOS REQUERIDOS PARA GANAR: ${body.meta_victoria.votos_requeridos_estimado.toLocaleString()}**
+Secciones totales: ${body.meta_victoria.secciones_totales}
+Promedio lista nominal por sección: ${body.meta_victoria.promedio_lista_por_seccion.toLocaleString()}
+**Secciones mínimas a movilizar: ${body.meta_victoria.secciones_minimas_a_movilizar}** (de ${body.meta_victoria.secciones_totales})
+
+Municipios pivote (top por aportación de secciones):
+${body.meta_victoria.municipios_pivote.map((m) => `- ${m.nombre} (clave INEGI ${m.clave}): ${m.secciones} secciones (${m.peso_pct_total}% del territorio)`).join("\n")}
+
+Secciones clave priorizables (urbanas/mixtas con mayor densidad):
+${body.meta_victoria.secciones_clave_top.map((s) => `- Sec ${s.sec} · ${s.municipio} · ${s.tipo}`).join("\n")}` : "Cálculo no disponible (catálogo INE no cargado). Usa razonamiento cualitativo."}
+
+### Candidatos en disputa
+${body.candidatos?.propio ? `**Candidato propio:** ${JSON.stringify(body.candidatos.propio).slice(0, 600)}` : ""}
+${body.candidatos?.adversarios?.length ? `**Adversarios:**\n${body.candidatos.adversarios.slice(0, 4).map((a) => `- ${JSON.stringify(a).slice(0, 400)}`).join("\n")}` : ""}
+
 ### Supuestos del usuario
 ${body.supuestos_usuario ? `Participación esperada: ${body.supuestos_usuario.participacion_esperada_pct ?? "n/d"}%
 Voto duro estimado: ${body.supuestos_usuario.voto_duro_pct ?? "n/d"}%
@@ -124,8 +158,14 @@ Presupuesto total: ${body.supuestos_usuario.presupuesto_total_mxn ? `$${body.sup
 
 ## Entregables (todos obligatorios)
 
-Genera un brief ejecutivo 360 con las 10 secciones del schema. Cada item debe ser específico,
-medible, accionable y citar contexto real del snapshot.`;
+Genera un brief ejecutivo 360 con TODAS las secciones del schema. Cada item debe ser específico,
+medible, accionable y citar contexto real del snapshot.
+
+REGLAS DURAS:
+1. En **meta_victoria** usa LITERALMENTE los números ya calculados (votos_requeridos, municipios_pivote, secciones_clave). Tu trabajo es NARRAR y JUSTIFICAR, no recalcular.
+2. En **estrategia_digital_comunicacion** sintetiza el sentimiento a partir de alertas_activas + adversarios. Si no hay datos, declara tono "neutro" y no inventes hostilidad.
+3. Voceros deben mapearse a War Room del candidato propio si se proporcionó.
+4. NO repitas información — cada sección aporta una capa distinta.`;
 
     const response = await fetch(
       "https://ai.gateway.lovable.dev/v1/chat/completions",
@@ -290,6 +330,145 @@ medible, accionable y citar contexto real del snapshot.`;
                         additionalProperties: false,
                       },
                     },
+                    meta_victoria: {
+                      type: "object",
+                      description: "Camino territorial a la victoria. USA los números calculados, narra y justifica.",
+                      properties: {
+                        votos_objetivo: { type: "number", description: "Repite el votos_requeridos_estimado del snapshot" },
+                        participacion_supuesta_pct: { type: "number" },
+                        umbral_pct: { type: "number" },
+                        narrativa_camino: { type: "string", description: "2-3 frases tipo 'Para ganar X necesitas Y votos en Z secciones de...'" },
+                        municipios_pivote: {
+                          type: "array",
+                          items: {
+                            type: "object",
+                            properties: {
+                              nombre: { type: "string" },
+                              peso_pct_total: { type: "number" },
+                              secciones: { type: "number" },
+                              accion_clave: { type: "string", description: "Acción concreta para ese municipio" },
+                            },
+                            required: ["nombre", "peso_pct_total", "secciones", "accion_clave"],
+                            additionalProperties: false,
+                          },
+                        },
+                        secciones_clave: {
+                          type: "array",
+                          description: "6-12 secciones priorizadas con justificación",
+                          items: {
+                            type: "object",
+                            properties: {
+                              municipio: { type: "string" },
+                              num_secciones: { type: "number" },
+                              votos_aporte_estimado: { type: "number" },
+                              tipo_seccion: { type: "string", enum: ["urbana", "mixta", "rural"] },
+                              justificacion: { type: "string" },
+                            },
+                            required: ["municipio", "num_secciones", "votos_aporte_estimado", "tipo_seccion", "justificacion"],
+                            additionalProperties: false,
+                          },
+                        },
+                      },
+                      required: ["votos_objetivo", "participacion_supuesta_pct", "umbral_pct", "narrativa_camino", "municipios_pivote", "secciones_clave"],
+                      additionalProperties: false,
+                    },
+                    estrategia_digital_comunicacion: {
+                      type: "object",
+                      description: "Plan integral de comunicación política y digital.",
+                      properties: {
+                        diagnostico_sentimiento: {
+                          type: "object",
+                          properties: {
+                            tono_actual: { type: "string", enum: ["hostil", "neutro", "favorable", "polarizado"] },
+                            temas_calientes: { type: "array", items: { type: "string" } },
+                            adversarios_dominantes_en_red: { type: "array", items: { type: "string" } },
+                            sintesis: { type: "string" },
+                          },
+                          required: ["tono_actual", "temas_calientes", "adversarios_dominantes_en_red", "sintesis"],
+                          additionalProperties: false,
+                        },
+                        arquitectura_mensaje: {
+                          type: "object",
+                          properties: {
+                            eje_emocional: { type: "string" },
+                            eje_racional: { type: "string" },
+                            frases_paraguas: { type: "array", items: { type: "string" }, description: "Exactamente 3" },
+                            tabues: { type: "array", items: { type: "string" } },
+                          },
+                          required: ["eje_emocional", "eje_racional", "frases_paraguas", "tabues"],
+                          additionalProperties: false,
+                        },
+                        plataformas: {
+                          type: "array",
+                          description: "5-6 plataformas (FB/IG/TikTok/X/YouTube/WhatsApp)",
+                          items: {
+                            type: "object",
+                            properties: {
+                              red: { type: "string", enum: ["Facebook", "Instagram", "TikTok", "X", "YouTube", "WhatsApp"] },
+                              prioridad: { type: "string", enum: ["alta", "media", "baja"] },
+                              formato_dominante: { type: "string" },
+                              frecuencia_semanal: { type: "string" },
+                              kpi_principal: { type: "string" },
+                              justificacion_audiencia: { type: "string" },
+                            },
+                            required: ["red", "prioridad", "formato_dominante", "frecuencia_semanal", "kpi_principal", "justificacion_audiencia"],
+                            additionalProperties: false,
+                          },
+                        },
+                        voceros: {
+                          type: "array",
+                          items: {
+                            type: "object",
+                            properties: {
+                              perfil: { type: "string" },
+                              funcion: { type: "string", enum: ["ataque", "empatia", "propuesta", "territorio"] },
+                            },
+                            required: ["perfil", "funcion"],
+                            additionalProperties: false,
+                          },
+                        },
+                        calendario_contenido_semanal: {
+                          type: "object",
+                          properties: {
+                            lunes: { type: "string" },
+                            martes: { type: "string" },
+                            miercoles: { type: "string" },
+                            jueves: { type: "string" },
+                            viernes: { type: "string" },
+                            sabado: { type: "string" },
+                            domingo: { type: "string" },
+                          },
+                          required: ["lunes", "martes", "miercoles", "jueves", "viernes", "sabado", "domingo"],
+                          additionalProperties: false,
+                        },
+                        contraataque_y_crisis: {
+                          type: "object",
+                          properties: {
+                            triggers: { type: "array", items: { type: "string" } },
+                            protocolo_24h: { type: "string" },
+                            mensajes_pre_aprobados: { type: "array", items: { type: "string" } },
+                          },
+                          required: ["triggers", "protocolo_24h", "mensajes_pre_aprobados"],
+                          additionalProperties: false,
+                        },
+                        aliados_influencia: {
+                          type: "array",
+                          description: "Micro-influencers, medios y voces locales por región",
+                          items: {
+                            type: "object",
+                            properties: {
+                              perfil: { type: "string" },
+                              region: { type: "string" },
+                              tipo: { type: "string", enum: ["micro_influencer", "medio_local", "lider_opinion", "colectivo"] },
+                            },
+                            required: ["perfil", "region", "tipo"],
+                            additionalProperties: false,
+                          },
+                        },
+                      },
+                      required: ["diagnostico_sentimiento", "arquitectura_mensaje", "plataformas", "voceros", "calendario_contenido_semanal", "contraataque_y_crisis", "aliados_influencia"],
+                      additionalProperties: false,
+                    },
                   },
                   required: [
                     "resumen_ejecutivo",
@@ -303,6 +482,8 @@ medible, accionable y citar contexto real del snapshot.`;
                     "estructura",
                     "riesgos",
                     "kpis",
+                    "meta_victoria",
+                    "estrategia_digital_comunicacion",
                   ],
                   additionalProperties: false,
                 },
