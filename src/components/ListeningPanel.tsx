@@ -328,20 +328,24 @@ export function ListeningPanel({ scope }: ListeningPanelProps) {
             <div className="space-y-2">
               <h3 className="text-sm font-bold text-foreground mt-4 mb-2">Menciones recientes</h3>
               {menciones.slice(0, 20).map((m) => {
-                const Icon = sentimientoIcon(m.sentimiento);
-                const color = sentimientoColor(m.sentimiento);
+                const st = styleFor(m.sentimiento);
+                const Icon = st.icon;
                 return (
-                  <article key={m.id} className="executive-panel p-3 flex items-start gap-3">
-                    <div className={`shrink-0 ${color}`}>
+                  <article
+                    key={m.id}
+                    className={`executive-panel p-3 flex items-start gap-3 border-l-4 ${st.border}`}
+                  >
+                    <div className={`shrink-0 w-8 h-8 rounded-md flex items-center justify-center ${st.bg} ${st.text}`}>
                       <Icon className="w-4 h-4" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2 flex-wrap">
                         <h4 className="text-sm font-medium text-foreground leading-snug">{m.titulo}</h4>
-                        <div className="flex items-center gap-2 shrink-0">
+                        <div className="flex items-center gap-1.5 shrink-0">
                           <Badge variant="outline" className="text-[9px]">{m.entidad_nombre}</Badge>
-                          <span className={`text-[10px] font-mono font-bold ${color}`}>
-                            {sentimientoLabel(m.sentimiento)} {m.sentimiento.toFixed(2)}
+                          <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded border text-[10px] font-mono font-bold ${st.bg} ${st.border} ${st.text}`}>
+                            {st.label}
+                            <span className="opacity-70">{m.sentimiento.toFixed(2)}</span>
                           </span>
                         </div>
                       </div>
