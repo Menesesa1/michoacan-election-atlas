@@ -18,6 +18,7 @@ import { PartidoBadges } from "./PartidoBadges";
 import { WarRoomEditor } from "./WarRoomEditor";
 import { TrayectoriaEditor } from "./TrayectoriaEditor";
 import { MetricasRedesEditor } from "./MetricasRedesEditor";
+import { PrecargaFirecrawl } from "./PrecargaFirecrawl";
 import { generarTodosLosAnalisis } from "@/lib/candidatos/auto-analisis";
 
 interface Props {
