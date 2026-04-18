@@ -121,21 +121,18 @@ export function CandidatoCard({
       selected && "ring-2 ring-primary",
       candidato.es_propio ? "border-primary/50" : "border-l-2 border-l-muted-foreground/30",
     )}>
-      <div className="absolute top-2 right-2">
-        {candidato.es_propio ? (
-          <Badge className="text-[9px] font-mono uppercase tracking-widest bg-primary/15 text-primary border-primary/40 hover:bg-primary/25">
-            <Star className="w-2.5 h-2.5 mr-1 fill-primary" /> Mi candidato
-          </Badge>
-        ) : (
-          <Badge variant="outline" className="text-[9px] font-mono uppercase tracking-widest text-muted-foreground border-muted-foreground/30">
-            <Swords className="w-2.5 h-2.5 mr-1" /> Oposición
-          </Badge>
-        )}
-      </div>
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
           <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground flex items-center gap-1.5 flex-wrap">
-            <span>{NIVEL_LABEL[candidato.nivel]} · {candidato.territorio}</span>
+            {candidato.es_propio ? (
+              <Badge className="text-[9px] px-1.5 py-0 h-4 font-mono uppercase tracking-widest bg-primary/15 text-primary border border-primary/40 hover:bg-primary/25">
+                <Star className="w-2.5 h-2.5 mr-1 fill-primary" /> Mío
+              </Badge>
+            ) : (
+              <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 font-mono uppercase tracking-widest text-muted-foreground border-muted-foreground/30">
+                <Swords className="w-2.5 h-2.5 mr-1" /> Oposición
+              </Badge>
+            )}
             <Badge
               variant="outline"
               className={cn(
@@ -148,6 +145,9 @@ export function CandidatoCard({
             >
               {FASE_LABEL_CORTO[candidato.fase ?? "precampana"]}
             </Badge>
+          </div>
+          <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mt-1 truncate">
+            {NIVEL_LABEL[candidato.nivel]} · {candidato.territorio}
           </div>
           <h3 className="text-base font-bold text-foreground truncate mt-0.5">{candidato.nombre}</h3>
           {candidato.cargo_buscado && (
