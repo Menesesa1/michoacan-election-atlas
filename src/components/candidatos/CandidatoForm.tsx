@@ -59,8 +59,9 @@ export function CandidatoForm({ candidato, onSaved, trigger }: Props) {
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [analizando, setAnalizando] = useState<null | { hechos: number; total: number; tipo: string }>(null);
-  // Sólo aplica auto-análisis cuando es candidato nuevo (no en edición).
+  // En alta: genera análisis al guardar. En edición: regenera si cambian campos clave.
   const [autoAnalizar, setAutoAnalizar] = useState(true);
+  const [regenerarEdicion, setRegenerarEdicion] = useState(true);
 
   const [tipo, setTipo] = useState<TipoCandidatura>("partido");
   const [partidos, setPartidos] = useState<PartidoSigla[]>(["MORENA"]);
@@ -143,11 +144,64 @@ export function CandidatoForm({ candidato, onSaved, trigger }: Props) {
       };
 
       if (candidato) {
+        // Detectar si cambiaron campos que invalidan los análisis previos
+        const camposClaveCambiaron =
+          candidato.nombre !== payload.nombre ||
+          candidato.partido !== payload.partido ||
+          candidato.nivel !== payload.nivel ||
+          candidato.territorio !== payload.territorio ||
+          candidato.fase !== payload.fase ||
+          (candidato.cargo_buscado ?? null) !== payload.cargo_buscado ||
+          (candidato.bio_breve ?? null) !== payload.bio_breve;
+
         const { error } = await supabase.from("candidatos").update(payload).eq("id", candidato.id);
         if (error) throw error;
-        toast({ title: "Candidato actualizado" });
+
+        const debeRegenerar = camposClaveCambiaron && regenerarEdicion;
+        toast({
+          title: "Candidato actualizado",
+          description: debeRegenerar ? "Regenerando análisis IA con los nuevos datos…" : undefined,
+        });
         setOpen(false);
         onSaved?.();
+
+        if (debeRegenerar) {
+          // Borra los análisis viejos y regenera los 3 en background
+          setAnalizando({ hechos: 0, total: TIPOS_ANALISIS.length, tipo: TIPOS_ANALISIS[0] });
+          await supabase.from("candidato_analisis").delete().eq("candidato_id", candidato.id);
+          const candidatoActualizado = {
+            ...candidato,
+            ...payload,
+            redes: (payload.redes ?? {}) as Record<string, string | undefined>,
+          };
+          void generarTodosLosAnalisis(
+            candidatoActualizado,
+            authData.user.id,
+            (p) => {
+              setAnalizando((prev) => prev && {
+                hechos: prev.hechos + 1,
+                total: prev.total,
+                tipo: p.tipo,
+              });
+            },
+          ).then((resultados) => {
+            const errores = resultados.filter((r) => r.estado === "error");
+            if (errores.length === 0) {
+              toast({
+                title: "Análisis regenerados ✓",
+                description: `${payload.nombre} ahora refleja los datos corregidos.`,
+              });
+            } else {
+              toast({
+                title: `Regeneración parcial (${resultados.length - errores.length}/${resultados.length})`,
+                description: `Falló: ${errores.map((e) => e.tipo).join(", ")}. Reintenta desde la tarjeta.`,
+                variant: "destructive",
+              });
+            }
+            setAnalizando(null);
+            onSaved?.();
+          });
+        }
       } else {
         const { data: inserted, error } = await supabase
           .from("candidatos")
@@ -435,6 +489,27 @@ export function CandidatoForm({ candidato, onSaved, trigger }: Props) {
               </span>
               <span className="text-muted-foreground">
                 Crea automáticamente perfil FODA, OSINT y análisis discursivo. Necesario para que el candidato aparezca con score en el comparador. Tarda ~30-60s en background.
+              </span>
+            </label>
+          </div>
+        )}
+
+        {candidato && (
+          <div className="flex items-start gap-2 p-2.5 rounded-md bg-amber-500/5 border border-amber-500/30">
+            <input
+              id="regenerar-edicion"
+              type="checkbox"
+              checked={regenerarEdicion}
+              onChange={(e) => setRegenerarEdicion(e.target.checked)}
+              className="mt-0.5 accent-primary"
+            />
+            <label htmlFor="regenerar-edicion" className="text-xs cursor-pointer flex-1">
+              <span className="font-semibold flex items-center gap-1">
+                <Sparkles className="w-3 h-3 text-amber-500" />
+                Regenerar análisis IA si cambian datos clave (recomendado)
+              </span>
+              <span className="text-muted-foreground block">
+                Si modificas <strong>nombre, partido, nivel, territorio, fase, cargo o bio</strong>, los 3 análisis (perfil, OSINT, discurso) se borran y se regeneran para reflejar la corrección. Cambios menores (redes, notas, tags) no disparan regeneración.
               </span>
             </label>
           </div>
