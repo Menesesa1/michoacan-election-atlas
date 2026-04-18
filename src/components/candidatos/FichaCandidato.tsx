@@ -9,11 +9,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
-import { Loader2, Sparkles, AlertTriangle, RotateCcw, Search, MessageSquare, User } from "lucide-react";
+import { Sparkles, AlertTriangle, RotateCcw, Search, MessageSquare, User, Users2 } from "lucide-react";
 import type {
   Candidato, TipoAnalisis, AnalisisPerfil, AnalisisOSINT, AnalisisDiscurso,
+  WarRoomMiembro,
 } from "@/lib/candidatos/types";
 import { PartidoBadges } from "./PartidoBadges";
+import { WarRoomEditor } from "./WarRoomEditor";
+import { generarTodosLosAnalisis } from "@/lib/candidatos/auto-analisis";
 
 interface Props {
   candidato: Candidato | null;
