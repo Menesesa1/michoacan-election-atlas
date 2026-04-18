@@ -69,12 +69,10 @@ Deno.serve(async (req) => {
       .join("\n\n")
       .slice(0, 12000);
 
-    // 4. Pedir a la IA que sintetice el discurso ciudadano
-    const aiRes = await fetch(LOVABLE_AI_URL, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+    // 4. Pedir a la IA que sintetice el discurso ciudadano (con fallback de modelos)
+    const modelos = ["google/gemini-2.5-flash", "google/gemini-2.5-pro", "google/gemini-2.5-flash-lite"];
+    const buildBody = (model: string) => JSON.stringify({
+        model,
         messages: [
           {
             role: "system",
@@ -161,34 +159,50 @@ Deno.serve(async (req) => {
           },
         ],
         tool_choice: { type: "function", function: { name: "emit_discurso_ciudadano" } },
-      }),
-    });
-
-    if (!aiRes.ok) {
-      if (aiRes.status === 429) {
-        return new Response(JSON.stringify({ error: "Rate limit del modelo, intenta en unos minutos" }), {
-          status: 429,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      if (aiRes.status === 402) {
-        return new Response(JSON.stringify({ error: "Sin créditos de Lovable AI" }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      const t = await aiRes.text();
-      console.error("AI error:", aiRes.status, t);
-      return new Response(JSON.stringify({ error: "Falló la síntesis con IA" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+
+    let aiRes: Response | null = null;
+    let lastErrTxt = "";
+    let lastStatus = 0;
+    for (const model of modelos) {
+      try {
+        const r = await fetch(LOVABLE_AI_URL, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
+          body: buildBody(model),
+        });
+        if (r.ok) { aiRes = r; break; }
+        lastStatus = r.status;
+        lastErrTxt = await r.text();
+        console.error(`AI ${model} status ${r.status}:`, lastErrTxt.slice(0, 300));
+        if (r.status === 429 || r.status === 402) break;
+      } catch (e) {
+        lastErrTxt = e instanceof Error ? e.message : String(e);
+        console.error(`AI ${model} threw:`, lastErrTxt);
+      }
+    }
+
+    if (!aiRes) {
+      if (lastStatus === 429) {
+        return new Response(JSON.stringify({ error: "Rate limit del modelo, intenta en unos minutos" }), {
+          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (lastStatus === 402) {
+        return new Response(JSON.stringify({ error: "Sin créditos de Lovable AI" }), {
+          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      return new Response(
+        JSON.stringify({ error: "Modelos de IA temporalmente sobrecargados. Intenta de nuevo en 1-2 minutos.", detalle: lastErrTxt.slice(0, 200) }),
+        { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
     }
 
     const aiJson = await aiRes.json();
     const toolCall = aiJson.choices?.[0]?.message?.tool_calls?.[0];
     if (!toolCall) {
-      return new Response(JSON.stringify({ error: "La IA no devolvió análisis" }), {
+      return new Response(JSON.stringify({ error: "La IA no devolvió análisis estructurado" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
