@@ -2,6 +2,27 @@
 import type { NivelEstrategia, Posicion } from "@/data/estrategia-templates";
 import type { CandidatoSnapshot } from "@/lib/candidatos/types";
 
+export interface MetaVictoriaCalc {
+  lista_nominal: number;
+  participacion_supuesta_pct: number;
+  umbral_victoria_pct: number;
+  votos_requeridos_estimado: number;
+  secciones_totales: number;
+  promedio_lista_por_seccion: number;
+  secciones_minimas_a_movilizar: number;
+  municipios_pivote: {
+    clave: number;
+    nombre: string;
+    secciones: number;
+    peso_pct_total: number;
+  }[];
+  secciones_clave_top: {
+    sec: number;
+    municipio: string;
+    tipo: "Urbana" | "Mixta" | "Rural";
+  }[];
+}
+
 export interface SnapshotPayload {
   nivel: NivelEstrategia;
   nivelLabel: string;
@@ -36,6 +57,7 @@ export interface SnapshotPayload {
     margen_ultimo_pct: number;
     riesgo_alternancia?: "alto" | "medio" | "bajo";
   };
+  meta_victoria?: MetaVictoriaCalc;
   alertas_activas?: string[];
   candidatos?: {
     propio?: CandidatoSnapshot;

@@ -42,6 +42,21 @@ interface SnapshotInput {
     riesgo_alternancia?: "alto" | "medio" | "bajo";
   };
   alertas_activas?: string[];
+  meta_victoria?: {
+    lista_nominal: number;
+    participacion_supuesta_pct: number;
+    umbral_victoria_pct: number;
+    votos_requeridos_estimado: number;
+    secciones_totales: number;
+    promedio_lista_por_seccion: number;
+    secciones_minimas_a_movilizar: number;
+    municipios_pivote: { clave: number; nombre: string; secciones: number; peso_pct_total: number }[];
+    secciones_clave_top: { sec: number; municipio: string; tipo: string }[];
+  };
+  candidatos?: {
+    propio?: Record<string, unknown>;
+    adversarios?: Record<string, unknown>[];
+  };
   supuestos_usuario?: {
     participacion_esperada_pct?: number;
     voto_duro_pct?: number;
