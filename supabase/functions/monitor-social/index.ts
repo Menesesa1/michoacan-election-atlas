@@ -249,7 +249,7 @@ Deno.serve(async (req) => {
 
       if (menciones.length === 0) continue;
 
-      // Insertar menciones
+      // Insertar menciones (validando municipio contra whitelist oficial)
       const rows = menciones.map((m) => ({
         batch_id: batchId,
         entidad_tipo: ent.tipo,
@@ -262,6 +262,7 @@ Deno.serve(async (req) => {
         sentimiento: Math.max(-1, Math.min(1, m.sentimiento)),
         tema: m.tema,
         hashtags: m.hashtags,
+        municipio: normalizarMunicipio(m.municipio),
       }));
       const { error: insErr } = await supabase.from("social_menciones").insert(rows);
       if (insErr) {
