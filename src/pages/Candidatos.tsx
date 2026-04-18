@@ -243,6 +243,38 @@ export default function Candidatos() {
       </div>
 
       <div className="flex flex-col gap-2">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mr-1">Equipo:</span>
+          {([
+            { value: "all", label: "Todos", icon: null, count: candidatos.length },
+            { value: "propios", label: "Mis candidatos", icon: Star, count: conteoEquipo.propios },
+            { value: "oposicion", label: "Oposición", icon: Swords, count: conteoEquipo.oposicion },
+          ] as const).map((opt) => {
+            const active = filtroEquipo === opt.value;
+            const Icon = opt.icon;
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setFiltroEquipo(opt.value)}
+                className={cn(
+                  "px-2.5 py-1 rounded-md text-xs border font-medium transition-colors flex items-center gap-1.5",
+                  active
+                    ? opt.value === "propios"
+                      ? "bg-primary/15 border-primary/50 text-primary"
+                      : opt.value === "oposicion"
+                      ? "bg-muted/50 border-muted-foreground/40 text-foreground"
+                      : "bg-secondary border-border text-foreground"
+                    : "bg-card/40 border-border text-muted-foreground hover:text-foreground hover:border-primary/30"
+                )}
+              >
+                {Icon && <Icon className={cn("w-3 h-3", active && opt.value === "propios" && "fill-primary")} />}
+                {opt.label}
+                <span className="text-[10px] font-mono opacity-70">{opt.count}</span>
+              </button>
+            );
+          })}
+        </div>
         <div className="flex flex-col md:flex-row gap-2">
           <div className="relative flex-1">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
