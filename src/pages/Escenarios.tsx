@@ -230,6 +230,18 @@ export default function Escenarios() {
         })}
       </div>
 
+      {/* Banner v1 muestra · datasets pendientes */}
+      <div className="rounded-md border border-primary/30 bg-primary/5 px-3 py-2 text-[11px] text-foreground/80 flex items-start gap-2">
+        <Sparkles className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
+        <div>
+          <span className="font-mono text-primary uppercase tracking-widest">v1 muestra</span>
+          <span className="ml-2 text-muted-foreground">
+            Algunos datasets aún no están cargados (padrón completo, sentimiento social en vivo, encuestas privadas).
+            La IA usa lo disponible y los huecos quedan abiertos para reemplazarlos cuando subas los archivos.
+          </span>
+        </div>
+      </div>
+
       {/* Panel de estrategias guardadas */}
       <EstrategiasGuardadas onLoad={cargarVersion} />
 
