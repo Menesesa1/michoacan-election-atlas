@@ -156,59 +156,9 @@ async function classifyMenciones(
   }
 }
 
-async function detectarTopRivales(
-  candidatosPropios: { nombre: string; nivel: string; territorio: string; partido: string }[],
-  apiKey: string,
-  lovableKey: string,
-): Promise<string[]> {
-  if (candidatosPropios.length === 0) return [];
-  // Buscar competencia: para cada propio, buscar "candidatos {nivel} {territorio}" y agregar
-  const queries = candidatosPropios.slice(0, 3).map(
-    (c) => `candidatos ${c.nivel} ${c.territorio} 2027 -${c.nombre}`,
-  );
-  const results = await Promise.all(queries.map((q) => firecrawlSearch(q, apiKey)));
-  const corpus = results.flat().slice(0, 30).map((h, i) => `[${i + 1}] ${h.title}\n${h.description ?? ""}`).join("\n\n");
-  if (!corpus) return [];
+// (Removido) detectarTopRivales: ahora los rivales se gestionan manualmente desde /candidatos
+// para garantizar que el monitor solo procese candidatos relevantes para el usuario en Michoacán.
 
-  const res = await fetch(LOVABLE_AI_URL, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${lovableKey}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: "google/gemini-2.5-flash",
-      messages: [
-        {
-          role: "system",
-          content: `Identifica nombres de políticos rivales mencionados en Michoacán que NO sean: ${candidatosPropios.map((c) => c.nombre).join(", ")}. Devuelve solo los 3 más mencionados.`,
-        },
-        { role: "user", content: corpus },
-      ],
-      tools: [
-        {
-          type: "function",
-          function: {
-            name: "emit_rivales",
-            parameters: {
-              type: "object",
-              properties: {
-                rivales: { type: "array", items: { type: "string" }, maxItems: 3 },
-              },
-              required: ["rivales"],
-            },
-          },
-        },
-      ],
-      tool_choice: { type: "function", function: { name: "emit_rivales" } },
-    }),
-  });
-  if (!res.ok) return [];
-  const json = await res.json();
-  try {
-    const args = JSON.parse(json.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments ?? "{}");
-    return (args.rivales ?? []).slice(0, 3);
-  } catch {
-    return [];
-  }
-}
 
 function topN<T>(items: T[], keyFn: (x: T) => string, n: number): { value: string; count: number }[] {
   const map = new Map<string, number>();
