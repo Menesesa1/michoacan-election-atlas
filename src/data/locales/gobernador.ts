@@ -20,19 +20,22 @@ export interface ResultadoGobernador {
 
 export const GOBERNADOR_RESULTADOS: ResultadoGobernador[] = [
   {
+    // Cómputo oficial IEM 2015 — fuente: SICEE INE / IEM Michoacán
+    // Coalición "Un Nuevo Comienzo" = PRD+PT+PANAL+PES
     anio: 2015,
-    listaNominal: 3_369_000,
-    votosTotales: 1_837_000,
-    participacionPct: 54.5,
+    listaNominal: 3_233_433,
+    votosTotales: 1_762_426,
+    participacionPct: 54.02,
     ganador: "Silvano Aureoles Conejo",
-    margenPct: 5.4,
+    margenPct: 8.34,
     candidatos: [
-      { nombre: "Silvano Aureoles Conejo", coalicion: ["PRD"], votos: 615_695, porcentaje: 33.5 },
-      { nombre: "Ascensión Orihuela Bárcenas", coalicion: ["PRI", "PVEM", "PANAL"], votos: 516_297, porcentaje: 28.1 },
-      { nombre: "Luisa María Calderón Hinojosa", coalicion: ["PAN"], votos: 348_953, porcentaje: 19.0 },
-      { nombre: "José Manuel Mireles (independiente)", coalicion: ["OTRO"], votos: 124_916, porcentaje: 6.8 },
-      { nombre: "Salvador Jara (Morena)", coalicion: ["MORENA"], votos: 100_968, porcentaje: 5.5 },
-      { nombre: "Otros", coalicion: ["OTRO"], votos: 130_171, porcentaje: 7.1 },
+      { nombre: "Silvano Aureoles Conejo", coalicion: ["PRD", "PT", "PANAL"], votos: 637_505, porcentaje: 36.17 },
+      { nombre: "Ascensión Orihuela Bárcenas", coalicion: ["PRI", "PVEM"], votos: 490_459, porcentaje: 27.83 },
+      { nombre: "Luisa María Calderón Hinojosa", coalicion: ["PAN"], votos: 420_177, porcentaje: 23.84 },
+      { nombre: "María de la Luz Núñez Ramos", coalicion: ["MORENA"], votos: 67_427, porcentaje: 3.83 },
+      { nombre: "Manuel Antúnez Oviedo", coalicion: ["MC"], votos: 57_615, porcentaje: 3.27 },
+      { nombre: "Gerardo Dueñas Bedolla", coalicion: ["OTRO"], votos: 20_816, porcentaje: 1.18 },
+      { nombre: "Nulos / no registrados", coalicion: ["OTRO"], votos: 68_427, porcentaje: 3.88 },
     ],
   },
   {
