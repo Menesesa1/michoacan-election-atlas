@@ -236,7 +236,8 @@ export default function Escenarios() {
         <div>
           <span className="font-mono text-primary uppercase tracking-widest">v1 muestra</span>
           <span className="ml-2 text-muted-foreground">
-            Algunos datasets aún no están cargados (padrón completo, sentimiento social en vivo, encuestas privadas).
+            Algunos datasets aún no están cargados (padrón completo, encuestas privadas, Google Trends ingestado).
+            Las métricas de redes se actualizan bajo demanda con Firecrawl desde la ficha de cada candidato.
             La IA usa lo disponible y los huecos quedan abiertos para reemplazarlos cuando subas los archivos.
           </span>
         </div>

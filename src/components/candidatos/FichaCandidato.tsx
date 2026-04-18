@@ -232,6 +232,7 @@ function MetricasTab({ candidato }: { candidato: Candidato }) {
   const [metricas, setMetricas] = useState<MetricasRedes>(candidato.metricas_redes ?? {});
   const [saving, setSaving] = useState(false);
   const [precargaOpen, setPrecargaOpen] = useState(false);
+  const [refrescando, setRefrescando] = useState(false);
 
   useEffect(() => {
     setMetricas(candidato.metricas_redes ?? {});
@@ -262,12 +263,85 @@ function MetricasTab({ candidato }: { candidato: Candidato }) {
     if (parche.metricas_redes) await guardar(parche.metricas_redes);
   };
 
+  // Refresh rápido: llama Firecrawl, aplica métricas de confianza alta automáticamente.
+  const refrescarRapido = async () => {
+    const tieneRedes = Object.values(candidato.redes ?? {}).some((v) => typeof v === "string" && v.length > 0);
+    if (!tieneRedes) {
+      toast({
+        title: "Faltan URLs de redes",
+        description: "Captura al menos una URL (Facebook, X, IG, TikTok, YouTube) en el perfil para refrescar.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setRefrescando(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("firecrawl-precarga-candidato", {
+        body: {
+          nombre: candidato.nombre,
+          partido: candidato.partido,
+          territorio: candidato.territorio,
+          cargo_buscado: candidato.cargo_buscado ?? undefined,
+          nivel: candidato.nivel,
+          redes: candidato.redes ?? {},
+        },
+      });
+      if (error) throw error;
+      const payload = data as {
+        metricas_propuesta?: Array<{
+          plataforma: keyof MetricasRedes;
+          seguidores?: number;
+          engagement_rate?: number;
+          fuente_url: string;
+          confianza: "alta" | "media" | "baja";
+        }>;
+        error?: string;
+      };
+      if (payload?.error) throw new Error(payload.error);
+
+      const altas = (payload.metricas_propuesta ?? []).filter((m) => m.confianza === "alta" && m.seguidores);
+      if (altas.length === 0) {
+        toast({
+          title: "Sin actualizaciones automáticas",
+          description: "Firecrawl no obtuvo métricas con alta confianza. Abre 'Precargar con Firecrawl' para revisar propuestas manualmente.",
+        });
+        return;
+      }
+      const nuevas: MetricasRedes = { ...metricas };
+      altas.forEach((m) => {
+        nuevas[m.plataforma] = {
+          seguidores: m.seguidores,
+          engagement_rate: m.engagement_rate,
+          ultima_actualizacion: new Date().toISOString(),
+          notas: `Auto-actualizado vía Firecrawl · ${m.fuente_url}`,
+        };
+      });
+      await guardar(nuevas);
+      toast({
+        title: `${altas.length} plataforma(s) actualizadas`,
+        description: "Aplicadas solo propuestas de confianza alta. Revisa el detalle abajo.",
+      });
+    } catch (err) {
+      toast({
+        title: "Error actualizando",
+        description: err instanceof Error ? err.message : "Reintenta",
+        variant: "destructive",
+      });
+    } finally {
+      setRefrescando(false);
+    }
+  };
+
   return (
     <div className="space-y-3 pt-3">
-      <div className="flex justify-end">
-        <Button size="sm" variant="outline" onClick={() => setPrecargaOpen(true)} disabled={saving}>
+      <div className="flex flex-wrap justify-end gap-2">
+        <Button size="sm" onClick={refrescarRapido} disabled={refrescando || saving}>
+          <RotateCcw className={`w-3.5 h-3.5 mr-1.5 ${refrescando ? "animate-spin" : ""}`} />
+          {refrescando ? "Actualizando…" : "Actualizar ahora"}
+        </Button>
+        <Button size="sm" variant="outline" onClick={() => setPrecargaOpen(true)} disabled={saving || refrescando}>
           <Sparkles className="w-3.5 h-3.5 mr-1.5 text-primary" />
-          Precargar con Firecrawl
+          Revisar propuestas (Firecrawl)
         </Button>
       </div>
       <MetricasRedesEditor metricas={metricas} onChange={guardar} saving={saving} />
