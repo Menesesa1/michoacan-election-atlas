@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { DiscursoCiudadano } from "@/components/DiscursoCiudadano";
 
 interface ResumenRow {
   id: string;
@@ -212,6 +213,8 @@ export function ListeningPanel({ scope }: ListeningPanelProps) {
           </div>
         )}
       </div>
+
+      {scope === "estatal" && <DiscursoCiudadano />}
 
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
