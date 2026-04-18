@@ -238,6 +238,160 @@ export type Database = {
         }
         Relationships: []
       }
+      social_menciones: {
+        Row: {
+          batch_id: string
+          candidato_id: string | null
+          created_at: string
+          detectada_en: string
+          entidad_nombre: string
+          entidad_tipo: Database["public"]["Enums"]["social_entidad_tipo"]
+          fragmento: string | null
+          fuente: string | null
+          hashtags: string[] | null
+          id: string
+          publicada_en: string | null
+          sentimiento: number
+          tema: string | null
+          titulo: string
+          url: string | null
+        }
+        Insert: {
+          batch_id: string
+          candidato_id?: string | null
+          created_at?: string
+          detectada_en?: string
+          entidad_nombre: string
+          entidad_tipo: Database["public"]["Enums"]["social_entidad_tipo"]
+          fragmento?: string | null
+          fuente?: string | null
+          hashtags?: string[] | null
+          id?: string
+          publicada_en?: string | null
+          sentimiento: number
+          tema?: string | null
+          titulo: string
+          url?: string | null
+        }
+        Update: {
+          batch_id?: string
+          candidato_id?: string | null
+          created_at?: string
+          detectada_en?: string
+          entidad_nombre?: string
+          entidad_tipo?: Database["public"]["Enums"]["social_entidad_tipo"]
+          fragmento?: string | null
+          fuente?: string | null
+          hashtags?: string[] | null
+          id?: string
+          publicada_en?: string | null
+          sentimiento?: number
+          tema?: string | null
+          titulo?: string
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_menciones_candidato_id_fkey"
+            columns: ["candidato_id"]
+            isOneToOne: false
+            referencedRelation: "candidatos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      social_resumen: {
+        Row: {
+          batch_id: string
+          candidato_id: string | null
+          entidad_nombre: string
+          entidad_tipo: Database["public"]["Enums"]["social_entidad_tipo"]
+          generado_en: string
+          id: string
+          pct_negativo: number | null
+          pct_neutro: number | null
+          pct_positivo: number | null
+          sentimiento_promedio: number | null
+          top_hashtags: Json | null
+          top_temas: Json | null
+          total_menciones: number
+        }
+        Insert: {
+          batch_id: string
+          candidato_id?: string | null
+          entidad_nombre: string
+          entidad_tipo: Database["public"]["Enums"]["social_entidad_tipo"]
+          generado_en?: string
+          id?: string
+          pct_negativo?: number | null
+          pct_neutro?: number | null
+          pct_positivo?: number | null
+          sentimiento_promedio?: number | null
+          top_hashtags?: Json | null
+          top_temas?: Json | null
+          total_menciones?: number
+        }
+        Update: {
+          batch_id?: string
+          candidato_id?: string | null
+          entidad_nombre?: string
+          entidad_tipo?: Database["public"]["Enums"]["social_entidad_tipo"]
+          generado_en?: string
+          id?: string
+          pct_negativo?: number | null
+          pct_neutro?: number | null
+          pct_positivo?: number | null
+          sentimiento_promedio?: number | null
+          top_hashtags?: Json | null
+          top_temas?: Json | null
+          total_menciones?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_resumen_candidato_id_fkey"
+            columns: ["candidato_id"]
+            isOneToOne: false
+            referencedRelation: "candidatos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      social_runs: {
+        Row: {
+          batch_id: string
+          duracion_ms: number | null
+          ejecutada_en: string
+          entidades_procesadas: number
+          error: string | null
+          id: string
+          total_menciones: number
+          trigger: string
+          user_id: string | null
+        }
+        Insert: {
+          batch_id: string
+          duracion_ms?: number | null
+          ejecutada_en?: string
+          entidades_procesadas?: number
+          error?: string | null
+          id?: string
+          total_menciones?: number
+          trigger?: string
+          user_id?: string | null
+        }
+        Update: {
+          batch_id?: string
+          duracion_ms?: number | null
+          ejecutada_en?: string
+          entidades_procesadas?: number
+          error?: string | null
+          id?: string
+          total_menciones?: number
+          trigger?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -246,7 +400,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      social_entidad_tipo: "estatal" | "candidato_propio" | "rival"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -373,6 +527,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      social_entidad_tipo: ["estatal", "candidato_propio", "rival"],
+    },
   },
 } as const
