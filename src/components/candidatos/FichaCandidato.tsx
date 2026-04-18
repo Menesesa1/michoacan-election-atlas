@@ -34,7 +34,7 @@ export function FichaCandidato({ candidato, open, onClose }: Props) {
   const { toast } = useToast();
   const [analisis, setAnalisis] = useState<AnalisisState>({});
   const [loadingTipo, setLoadingTipo] = useState<TipoAnalisis | null>(null);
-  const [tab, setTab] = useState<TipoAnalisis>("perfil");
+  const [tab, setTab] = useState<TabKey>("perfil");
 
   useEffect(() => {
     if (!candidato || !open) return;
@@ -147,13 +147,7 @@ export function FichaCandidato({ candidato, open, onClose }: Props) {
           ))}
 
           <TabsContent value="war_room">
-            <WarRoomTab
-              candidato={candidato}
-              onUpdated={(nextWR) => {
-                // notifica al padre y refresca análisis si el usuario optó por regenerar
-                onWarRoomChanged?.(candidato.id, nextWR);
-              }}
-            />
+            <WarRoomTab candidato={candidato} />
           </TabsContent>
         </Tabs>
       </DialogContent>
@@ -165,10 +159,8 @@ type TabKey = TipoAnalisis | "war_room";
 
 function WarRoomTab({
   candidato,
-  onUpdated,
 }: {
   candidato: Candidato;
-  onUpdated?: (next: WarRoomMiembro[]) => void;
 }) {
   const { toast } = useToast();
   const [miembros, setMiembros] = useState<WarRoomMiembro[]>(candidato.war_room ?? []);
@@ -188,7 +180,6 @@ function WarRoomTab({
         .eq("id", candidato.id);
       if (error) throw error;
       setMiembros(next);
-      onUpdated?.(next);
       toast({ title: "War Room actualizado", description: "Los próximos análisis IA usarán esta información como contexto." });
     } catch (err) {
       toast({
