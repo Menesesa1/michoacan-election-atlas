@@ -24,6 +24,7 @@ interface CandidatoAnalizable {
   bio_breve?: string | null;
   redes?: Record<string, string | undefined> | null;
   notas?: string | null;
+  war_room?: import("./types").WarRoomMiembro[] | null;
 }
 
 /** Genera UN tipo de análisis y lo guarda. Devuelve true si tuvo éxito. */
@@ -45,6 +46,7 @@ export async function generarYGuardarAnalisis(
           bio_breve: candidato.bio_breve ?? undefined,
           redes: candidato.redes ?? undefined,
           notas: candidato.notas ?? undefined,
+          war_room: candidato.war_room ?? undefined,
         },
       },
     });

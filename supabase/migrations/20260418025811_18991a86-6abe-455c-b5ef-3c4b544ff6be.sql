@@ -1,0 +1,1 @@
+ALTER TABLE public.candidatos ADD COLUMN IF NOT EXISTS war_room jsonb NOT NULL DEFAULT '[]'::jsonb;

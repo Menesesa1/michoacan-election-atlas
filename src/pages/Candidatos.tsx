@@ -78,6 +78,30 @@ export default function Candidatos() {
         bio_breve: "Presidente municipal de Morelia. Ganó la alcaldía en 2015 como candidato INDEPENDIENTE (primer alcalde independiente de la capital michoacana), y reelecto en 2021 por el PAN. Diputado local previo.",
         redes: { twitter: "@AlfonsoMtzAl", facebook: "AlfonsoMartinezAlcazar" },
         notas: "Trayectoria atípica: independiente en 2015 → PAN en 2021. Perfil técnico-administrativo, cercanía con clase media urbana de Morelia.",
+        war_room: [
+          {
+            id: crypto.randomUUID(),
+            nombre: "Goberna",
+            rol: "consultor_estrategia",
+            tipo: "consultora",
+            visible: true,
+            trayectoria_breve: "Consultora política asociada a estrategia de campaña de Alfonso Martínez (referencia pública del entorno).",
+            inconsistencias: [],
+            fuentes: [],
+            notas_internas: "Borrador inicial — completar fuentes antes de usar en estrategia.",
+          },
+          {
+            id: crypto.randomUUID(),
+            nombre: "EME Comunicación",
+            rol: "consultor_imagen",
+            tipo: "consultora",
+            visible: true,
+            trayectoria_breve: "Consultora de comunicación e imagen pública asociada al entorno de campaña.",
+            inconsistencias: [],
+            fuentes: [],
+            notas_internas: "Borrador inicial — completar fuentes antes de usar en estrategia.",
+          },
+        ],
       },
       {
         user_id: authData.user.id,
@@ -89,6 +113,19 @@ export default function Candidatos() {
         bio_breve: "Ex presidente municipal de Morelia (2018-2021), ex senador. Figura histórica de la izquierda morelense.",
         redes: { twitter: "@raulmoronoficial", facebook: "raulmoronoficial" },
         notas: "Liderazgo morenista con base en colonias populares y zona rural del municipio.",
+        war_room: [
+          {
+            id: crypto.randomUUID(),
+            nombre: "Humberto Moreno",
+            rol: "operador_politico",
+            tipo: "persona",
+            visible: false,
+            trayectoria_breve: "Operador político vinculado al entorno de Raúl Morón. Mencionado en reportes locales como articulador detrás de movimientos clave.",
+            inconsistencias: ["Por documentar con fuentes verificables"],
+            fuentes: [],
+            notas_internas: "Borrador inicial — completar fuentes antes de usar en estrategia.",
+          },
+        ],
       },
     ];
     const { data: insertados, error } = await supabase.from("candidatos").insert(seed).select();
