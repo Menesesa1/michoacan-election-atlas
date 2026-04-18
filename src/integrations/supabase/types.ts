@@ -70,6 +70,7 @@ export type Database = {
           territorio: string
           updated_at: string
           user_id: string
+          war_room: Json
         }
         Insert: {
           bio_breve?: string | null
@@ -88,6 +89,7 @@ export type Database = {
           territorio: string
           updated_at?: string
           user_id: string
+          war_room?: Json
         }
         Update: {
           bio_breve?: string | null
@@ -106,6 +108,7 @@ export type Database = {
           territorio?: string
           updated_at?: string
           user_id?: string
+          war_room?: Json
         }
         Relationships: []
       }
