@@ -1,11 +1,12 @@
 import { NavLink, Outlet, useLocation, Navigate } from "react-router-dom";
-import { ShieldAlert, Activity, Users } from "lucide-react";
+import { ShieldAlert, Activity, Users, Swords } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const tabs = [
   { to: "/inteligencia/alertas", label: "Alertas", icon: ShieldAlert },
   { to: "/inteligencia/listening-estatal", label: "Sentimiento Estatal", icon: Activity },
   { to: "/inteligencia/listening-candidatos", label: "Por Candidato", icon: Users },
+  { to: "/inteligencia/comparador", label: "Propio vs Rival", icon: Swords },
 ];
 
 export default function Inteligencia() {
