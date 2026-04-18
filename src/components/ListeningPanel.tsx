@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
-import { TrendingUp, TrendingDown, Minus, RefreshCw, Loader2, Hash, Tag, ExternalLink, UserPlus } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, RefreshCw, Loader2, Hash, Tag, ExternalLink, UserPlus, Flame, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -46,25 +46,39 @@ interface RunMeta {
   error: string | null;
 }
 
-function sentimientoColor(s: number | null): string {
-  if (s === null) return "text-muted-foreground";
-  if (s > 0.2) return "text-emerald-400";
-  if (s < -0.2) return "text-destructive";
-  return "text-blue-300";
+// 5 niveles de sentimiento: muy_neg < -0.6, neg [-0.6,-0.2), neutro [-0.2,0.2], pos (0.2,0.6], muy_pos >0.6
+type NivelSent = "muy_pos" | "pos" | "neutro" | "neg" | "muy_neg" | "na";
+
+function nivelSentimiento(s: number | null): NivelSent {
+  if (s === null || Number.isNaN(s)) return "na";
+  if (s > 0.6) return "muy_pos";
+  if (s > 0.2) return "pos";
+  if (s >= -0.2) return "neutro";
+  if (s >= -0.6) return "neg";
+  return "muy_neg";
 }
 
-function sentimientoIcon(s: number | null) {
-  if (s === null) return Minus;
-  if (s > 0.2) return TrendingUp;
-  if (s < -0.2) return TrendingDown;
-  return Minus;
+interface SentStyle {
+  label: string;
+  short: string;
+  text: string;
+  bg: string;
+  border: string;
+  bar: string;
+  icon: typeof TrendingUp;
 }
 
-function sentimientoLabel(s: number | null): string {
-  if (s === null) return "—";
-  if (s > 0.2) return "Positivo";
-  if (s < -0.2) return "Negativo";
-  return "Neutro";
+const SENT_STYLES: Record<NivelSent, SentStyle> = {
+  muy_pos: { label: "Muy positivo", short: "++", text: "text-emerald-300", bg: "bg-emerald-500/15", border: "border-emerald-400/50", bar: "bg-emerald-400",   icon: Flame },
+  pos:     { label: "Positivo",     short: "+",  text: "text-emerald-400", bg: "bg-emerald-500/10", border: "border-emerald-500/30", bar: "bg-emerald-500/80", icon: TrendingUp },
+  neutro:  { label: "Neutro",       short: "○",  text: "text-slate-300",   bg: "bg-slate-500/10",   border: "border-slate-400/30",   bar: "bg-slate-400/70",   icon: Minus },
+  neg:     { label: "Negativo",     short: "-",  text: "text-orange-400",  bg: "bg-orange-500/10",  border: "border-orange-500/30",  bar: "bg-orange-500/80",  icon: TrendingDown },
+  muy_neg: { label: "Muy negativo", short: "--", text: "text-red-400",     bg: "bg-red-500/15",     border: "border-red-500/50",     bar: "bg-red-500",        icon: AlertTriangle },
+  na:      { label: "Sin dato",     short: "—",  text: "text-muted-foreground", bg: "bg-muted/20",  border: "border-border",         bar: "bg-muted",          icon: Minus },
+};
+
+function styleFor(s: number | null): SentStyle {
+  return SENT_STYLES[nivelSentimiento(s)];
 }
 
 function formatExact(iso: string): string {
@@ -211,13 +225,31 @@ export function ListeningPanel({ scope }: ListeningPanelProps) {
         </div>
       ) : (
         <>
+          {/* Leyenda de niveles */}
+          <div className="executive-panel px-3 py-2 flex items-center gap-3 flex-wrap text-[10px] font-mono">
+            <span className="text-muted-foreground uppercase tracking-widest">Escala</span>
+            {(["muy_pos", "pos", "neutro", "neg", "muy_neg"] as NivelSent[]).map((n) => {
+              const st = SENT_STYLES[n];
+              const Ic = st.icon;
+              return (
+                <span key={n} className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border ${st.bg} ${st.border} ${st.text}`}>
+                  <Ic className="w-3 h-3" />
+                  {st.label}
+                </span>
+              );
+            })}
+          </div>
+
           {/* Cards de resumen por entidad */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {resumenes.map((r) => {
-              const Icon = sentimientoIcon(r.sentimiento_promedio);
-              const color = sentimientoColor(r.sentimiento_promedio);
+              const st = styleFor(r.sentimiento_promedio);
+              const Icon = st.icon;
+              const pPos = r.pct_positivo ?? 0;
+              const pNeu = r.pct_neutro ?? 0;
+              const pNeg = r.pct_negativo ?? 0;
               return (
-                <article key={r.id} className="executive-panel p-4 space-y-3">
+                <article key={r.id} className={`executive-panel p-4 space-y-3 border-l-4 ${st.border}`}>
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <h3 className="text-sm font-bold text-foreground truncate">{r.entidad_nombre}</h3>
@@ -225,9 +257,11 @@ export function ListeningPanel({ scope }: ListeningPanelProps) {
                         {r.entidad_tipo === "candidato_propio" ? "Propio" : r.entidad_tipo === "rival" ? "Rival" : "Estatal"}
                       </Badge>
                     </div>
-                    <div className={`flex items-center gap-1 ${color}`}>
-                      <Icon className="w-4 h-4" />
-                      <span className="text-xs font-mono font-bold">
+                    {/* Badge dominante de sentimiento */}
+                    <div className={`flex items-center gap-1.5 px-2 py-1 rounded-md border ${st.bg} ${st.border} ${st.text}`}>
+                      <Icon className="w-3.5 h-3.5" />
+                      <span className="text-[10px] font-bold uppercase tracking-wide">{st.label}</span>
+                      <span className="text-[10px] font-mono opacity-70">
                         {r.sentimiento_promedio !== null ? r.sentimiento_promedio.toFixed(2) : "—"}
                       </span>
                     </div>
@@ -237,17 +271,23 @@ export function ListeningPanel({ scope }: ListeningPanelProps) {
                     {r.total_menciones} <span className="text-xs font-normal text-muted-foreground">menciones</span>
                   </div>
 
-                  {/* Barras de sentimiento */}
-                  <div className="space-y-1">
-                    <div className="flex h-1.5 rounded-full overflow-hidden bg-muted/30">
-                      <div className="bg-emerald-400" style={{ width: `${r.pct_positivo ?? 0}%` }} />
-                      <div className="bg-blue-300" style={{ width: `${r.pct_neutro ?? 0}%` }} />
-                      <div className="bg-destructive" style={{ width: `${r.pct_negativo ?? 0}%` }} />
+                  {/* Barra apilada con etiquetas en cada segmento */}
+                  <div className="space-y-1.5">
+                    <div className="flex h-2.5 rounded-full overflow-hidden bg-muted/30 ring-1 ring-border">
+                      <div className={SENT_STYLES.pos.bar} style={{ width: `${pPos}%` }} title={`Positivo ${pPos.toFixed(0)}%`} />
+                      <div className={SENT_STYLES.neutro.bar} style={{ width: `${pNeu}%` }} title={`Neutro ${pNeu.toFixed(0)}%`} />
+                      <div className={SENT_STYLES.neg.bar} style={{ width: `${pNeg}%` }} title={`Negativo ${pNeg.toFixed(0)}%`} />
                     </div>
-                    <div className="flex justify-between text-[9px] font-mono text-muted-foreground">
-                      <span className="text-emerald-400">+{(r.pct_positivo ?? 0).toFixed(0)}%</span>
-                      <span className="text-blue-300">○{(r.pct_neutro ?? 0).toFixed(0)}%</span>
-                      <span className="text-destructive">-{(r.pct_negativo ?? 0).toFixed(0)}%</span>
+                    <div className="grid grid-cols-3 gap-1 text-[10px] font-mono">
+                      <span className={`flex items-center gap-1 ${SENT_STYLES.pos.text}`}>
+                        <TrendingUp className="w-2.5 h-2.5" /> {pPos.toFixed(0)}% pos
+                      </span>
+                      <span className={`flex items-center gap-1 justify-center ${SENT_STYLES.neutro.text}`}>
+                        <Minus className="w-2.5 h-2.5" /> {pNeu.toFixed(0)}% neu
+                      </span>
+                      <span className={`flex items-center gap-1 justify-end ${SENT_STYLES.neg.text}`}>
+                        <TrendingDown className="w-2.5 h-2.5" /> {pNeg.toFixed(0)}% neg
+                      </span>
                     </div>
                   </div>
 
@@ -288,20 +328,24 @@ export function ListeningPanel({ scope }: ListeningPanelProps) {
             <div className="space-y-2">
               <h3 className="text-sm font-bold text-foreground mt-4 mb-2">Menciones recientes</h3>
               {menciones.slice(0, 20).map((m) => {
-                const Icon = sentimientoIcon(m.sentimiento);
-                const color = sentimientoColor(m.sentimiento);
+                const st = styleFor(m.sentimiento);
+                const Icon = st.icon;
                 return (
-                  <article key={m.id} className="executive-panel p-3 flex items-start gap-3">
-                    <div className={`shrink-0 ${color}`}>
+                  <article
+                    key={m.id}
+                    className={`executive-panel p-3 flex items-start gap-3 border-l-4 ${st.border}`}
+                  >
+                    <div className={`shrink-0 w-8 h-8 rounded-md flex items-center justify-center ${st.bg} ${st.text}`}>
                       <Icon className="w-4 h-4" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2 flex-wrap">
                         <h4 className="text-sm font-medium text-foreground leading-snug">{m.titulo}</h4>
-                        <div className="flex items-center gap-2 shrink-0">
+                        <div className="flex items-center gap-1.5 shrink-0">
                           <Badge variant="outline" className="text-[9px]">{m.entidad_nombre}</Badge>
-                          <span className={`text-[10px] font-mono font-bold ${color}`}>
-                            {sentimientoLabel(m.sentimiento)} {m.sentimiento.toFixed(2)}
+                          <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded border text-[10px] font-mono font-bold ${st.bg} ${st.border} ${st.text}`}>
+                            {st.label}
+                            <span className="opacity-70">{m.sentimiento.toFixed(2)}</span>
                           </span>
                         </div>
                       </div>
