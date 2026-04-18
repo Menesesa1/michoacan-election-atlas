@@ -25,6 +25,8 @@ interface CandidatoAnalizable {
   redes?: Record<string, string | undefined> | null;
   notas?: string | null;
   war_room?: import("./types").WarRoomMiembro[] | null;
+  trayectoria?: import("./types").TrayectoriaHito[] | null;
+  metricas_redes?: import("./types").MetricasRedes | null;
 }
 
 /** Genera UN tipo de análisis y lo guarda. Devuelve true si tuvo éxito. */
@@ -47,6 +49,8 @@ export async function generarYGuardarAnalisis(
           redes: candidato.redes ?? undefined,
           notas: candidato.notas ?? undefined,
           war_room: candidato.war_room ?? undefined,
+          trayectoria: candidato.trayectoria ?? undefined,
+          metricas_redes: candidato.metricas_redes ?? undefined,
         },
       },
     });

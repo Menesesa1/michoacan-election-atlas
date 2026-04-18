@@ -19,6 +19,24 @@ interface WarRoomMiembroInput {
   fuentes?: string[];
 }
 
+interface TrayectoriaHitoInput {
+  anio: number;
+  cargo: string;
+  partido?: string;
+  tipo: string; // electo | designado | candidatura | cambio_partido | dirigencia | otro
+  descripcion?: string;
+  fuentes?: string[];
+}
+
+interface MetricaRedInput {
+  seguidores?: number;
+  engagement_rate?: number;
+  ultima_actualizacion?: string;
+  notas?: string;
+}
+
+type MetricasRedesInput = Partial<Record<"facebook" | "twitter" | "instagram" | "tiktok" | "youtube", MetricaRedInput>>;
+
 interface Input {
   tipo: Tipo;
   candidato: {
@@ -32,6 +50,8 @@ interface Input {
     redes?: Record<string, string>;
     notas?: string;
     war_room?: WarRoomMiembroInput[];
+    trayectoria?: TrayectoriaHitoInput[];
+    metricas_redes?: MetricasRedesInput;
   };
   contexto_territorial?: string;
   /** Otros aspirantes/competidores en la misma contienda. La IA evaluará fortalezas RELATIVAS. */
@@ -187,15 +207,24 @@ NO confundas con cargo legislativo ni estatal.`,
 
 const SYSTEM_PROMPT = `Eres un consultor político senior especializado en Michoacán, México.
 Analizas candidatos a cargos de elección popular (gobernatura, diputaciones locales, ayuntamientos).
-Tu análisis se basa SOLO en información pública conocida (medios, redes públicas, declaraciones públicas).
-NO inventas datos privados, financieros internos ni acusaciones sin sustento público.
-Cuando no tengas información específica, sé explícito al respecto en lugar de inventar.
 
-CRÍTICO: TODO el análisis (FODA, OSINT, discurso) debe ser COHERENTE con el NIVEL del cargo:
+JERARQUÍA DE EVIDENCIA (respétala estrictamente):
+1. DATOS VERIFICADOS POR EL CONSULTOR (trayectoria, métricas de redes, war room) → son la BASE DURA.
+   Cita estos datos por año/cifra concreta cuando construyas FODA, OSINT y discurso.
+2. Información pública conocida por el modelo → úsala SOLO para complementar y siempre marca incertidumbre.
+3. NO inventes cargos, años, partidos, cifras de seguidores, engagement, miembros del equipo ni controversias.
+   Si la información verificada está vacía o es insuficiente, dilo explícitamente en el campo correspondiente.
+
+CRÍTICO: TODO el análisis debe ser COHERENTE con el NIVEL del cargo:
 - Gobernatura → escala estatal (24 distritos, 113 municipios, coaliciones estatales).
 - Diputado Local → escala distrital (1 de 24 distritos, agenda legislativa local).
 - Ayuntamiento → escala municipal (gestión local, cabildo, servicios).
-NO mezcles escalas. Las fortalezas/oportunidades/amenazas deben aplicar al cargo específico que busca.
+NO mezcles escalas.
+
+REGLAS ESPECÍFICAS:
+- Trayectoria: si hay cambios de partido, considéralos en FODA (lealtad/ductilidad), OSINT (narrativa) y discurso (consistencia ideológica). Si NO hay hitos verificados, NO afirmes trayectorias.
+- Métricas de redes: si hay datos verificados, úsalos para definir 'presencia_digital.nivel' (referencia: <10K seguidores=baja, 10K-100K=media, >100K=alta para nivel estatal; ajustar para municipal). Si NO hay métricas, marca nivel como "baja" con observación "sin métricas verificadas capturadas".
+- War Room: usa SOLO los miembros capturados, NO inventes operadores.
 
 Responde SIEMPRE invocando la herramienta correspondiente con JSON estructurado.
 Idioma: español de México, profesional y neutral.`;
@@ -243,6 +272,40 @@ INSTRUCCIÓN: Considera el War Room como contexto OBLIGATORIO. NO inventes otros
 - En Discurso: evalúa si la narrativa pública del candidato refleja al equipo real o lo oculta.`
       : `\nWAR ROOM: No se ha capturado equipo de campaña conocido. NO inventes miembros del equipo. Si tu análisis menciona asesores u operadores, marca explícitamente que no se han documentado.`;
 
+    const trayectoriaArr = [...(input.candidato.trayectoria ?? [])].sort((a, b) => b.anio - a.anio);
+    const trayectoriaBlock = trayectoriaArr.length > 0
+      ? `\nTRAYECTORIA POLÍTICA VERIFICADA POR EL CONSULTOR (cronológica, más reciente primero — USA SOLO ESTOS HITOS):
+${trayectoriaArr.map((h, i) => {
+  const fuentes = h.fuentes && h.fuentes.length > 0 ? ` [Fuentes: ${h.fuentes.join(", ")}]` : " [⚠ sin fuentes]";
+  const partido = h.partido ? ` — ${h.partido}` : "";
+  const desc = h.descripcion ? ` · ${h.descripcion}` : "";
+  return `${i + 1}. ${h.anio} · ${h.tipo.toUpperCase()} · ${h.cargo}${partido}${desc}${fuentes}`;
+}).join("\n")}
+
+INSTRUCCIÓN: Esta trayectoria es la BASE DURA. Cita años/cargos exactos en FODA y discurso.
+Si hay cambios de partido (tipo "cambio_partido"), evalúa coherencia ideológica y riesgo narrativo.
+NO menciones cargos que no estén en esta lista. Si el modelo "cree saber" otros cargos, descártalos.`
+      : `\nTRAYECTORIA: No se ha capturado trayectoria política verificada. NO inventes cargos previos.
+Si necesitas mencionar trayectoria, marca explícitamente "sin historial verificado capturado en el expediente".`;
+
+    const metricasArr = Object.entries(input.candidato.metricas_redes ?? {})
+      .filter(([, v]) => v && (v.seguidores !== undefined || v.engagement_rate !== undefined));
+    const metricasBlock = metricasArr.length > 0
+      ? `\nMÉTRICAS DE REDES VERIFICADAS POR EL CONSULTOR (medidas manualmente — USA ESTAS CIFRAS, NO INVENTES OTRAS):
+${metricasArr.map(([plat, m]) => {
+  const seg = m?.seguidores !== undefined ? `${m.seguidores.toLocaleString("es-MX")} seguidores` : "sin seguidores capturados";
+  const eng = m?.engagement_rate !== undefined ? `, engagement ${m.engagement_rate}%` : "";
+  const fecha = m?.ultima_actualizacion ? ` (medido el ${m.ultima_actualizacion.slice(0, 10)})` : "";
+  const notas = m?.notas ? ` · ${m.notas}` : "";
+  return `- ${plat.toUpperCase()}: ${seg}${eng}${fecha}${notas}`;
+}).join("\n")}
+
+INSTRUCCIÓN: Usa ESTAS cifras para determinar 'presencia_digital.nivel' y 'plataformas_fuertes' en OSINT.
+NO inventes números de seguidores ni engagement. Si una plataforma no está en la lista, NO la menciones como fuerte.
+En FODA, si la presencia digital es baja vs el cargo que busca, márcalo como debilidad/amenaza concreta.`
+      : `\nMÉTRICAS DE REDES: No se han capturado métricas verificadas. Marca presencia_digital.nivel como "baja" con observación "sin métricas verificadas capturadas en el expediente".
+NO inventes cifras de seguidores ni engagement.`;
+
     const userPrompt = `Analiza al siguiente candidato político:
 
 NOMBRE: ${input.candidato.nombre}
@@ -252,10 +315,12 @@ TERRITORIO: ${input.candidato.territorio}
 ${input.candidato.cargo_buscado ? `CARGO BUSCADO: ${input.candidato.cargo_buscado}` : ""}
 ${input.candidato.bio_breve ? `BIO: ${input.candidato.bio_breve}` : ""}
 ${input.candidato.redes && Object.keys(input.candidato.redes).length > 0
-  ? `REDES: ${JSON.stringify(input.candidato.redes)}`
+  ? `HANDLES DE REDES: ${JSON.stringify(input.candidato.redes)}`
   : ""}
 ${input.candidato.notas ? `NOTAS DEL CONSULTOR: ${input.candidato.notas}` : ""}
 ${input.contexto_territorial ? `\nCONTEXTO TERRITORIAL:\n${input.contexto_territorial}` : ""}
+${trayectoriaBlock}
+${metricasBlock}
 ${warRoomBlock}
 
 CONTEXTO DEL CARGO (OBLIGATORIO RESPETAR):
@@ -263,6 +328,7 @@ ${contextoNivel}
 
 Tipo de análisis solicitado: ${input.tipo.toUpperCase()}.
 Todo el análisis debe estar acotado al cargo y territorio anteriores.
+RECUERDA: trayectoria + métricas + war room son la BASE DURA. No las contradigas ni inventes alternativas.
 Devuelve la herramienta con todos los campos requeridos.`;
 
     const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
