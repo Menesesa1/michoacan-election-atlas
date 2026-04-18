@@ -47,6 +47,25 @@ const QUERIES_ESTATALES = [
   "Michoacán protesta manifestación",
 ];
 
+// Municipios principales de Michoacán para filtro geográfico de menciones.
+// Si una mención no incluye "michoacán" ni alguno de estos municipios, se descarta.
+const MUNICIPIOS_MICHOACAN = [
+  "morelia", "uruapan", "zamora", "lázaro cárdenas", "lazaro cardenas", "apatzingán", "apatzingan",
+  "hidalgo", "zitácuaro", "zitacuaro", "pátzcuaro", "patzcuaro", "la piedad", "sahuayo",
+  "jacona", "tacámbaro", "tacambaro", "ciudad hidalgo", "puruándiro", "puruandiro",
+  "los reyes", "maravatío", "maravatio", "paracho", "tepalcatepec", "huetamo", "tangancícuaro",
+  "tangancicuaro", "jiquilpan", "cotija", "yurécuaro", "yurecuaro", "nueva italia",
+  "buenavista", "múgica", "mugica", "tarímbaro", "tarimbaro", "indaparapeo", "charo",
+  "quiroga", "erongarícuaro", "erongaricuaro", "cherán", "cheran", "nahuatzen",
+  "coalcomán", "coalcoman", "aguililla", "tepalcatepec", "parácuaro", "paracuaro",
+  "michoacán", "michoacan", "michoacano", "michoacana",
+];
+
+function esMichoacan(texto: string): boolean {
+  const t = texto.toLowerCase();
+  return MUNICIPIOS_MICHOACAN.some((m) => t.includes(m));
+}
+
 async function firecrawlSearch(query: string, apiKey: string): Promise<SearchHit[]> {
   const res = await fetch(`${FIRECRAWL_V2}/search`, {
     method: "POST",
@@ -137,59 +156,9 @@ async function classifyMenciones(
   }
 }
 
-async function detectarTopRivales(
-  candidatosPropios: { nombre: string; nivel: string; territorio: string; partido: string }[],
-  apiKey: string,
-  lovableKey: string,
-): Promise<string[]> {
-  if (candidatosPropios.length === 0) return [];
-  // Buscar competencia: para cada propio, buscar "candidatos {nivel} {territorio}" y agregar
-  const queries = candidatosPropios.slice(0, 3).map(
-    (c) => `candidatos ${c.nivel} ${c.territorio} 2027 -${c.nombre}`,
-  );
-  const results = await Promise.all(queries.map((q) => firecrawlSearch(q, apiKey)));
-  const corpus = results.flat().slice(0, 30).map((h, i) => `[${i + 1}] ${h.title}\n${h.description ?? ""}`).join("\n\n");
-  if (!corpus) return [];
+// (Removido) detectarTopRivales: ahora los rivales se gestionan manualmente desde /candidatos
+// para garantizar que el monitor solo procese candidatos relevantes para el usuario en Michoacán.
 
-  const res = await fetch(LOVABLE_AI_URL, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${lovableKey}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: "google/gemini-2.5-flash",
-      messages: [
-        {
-          role: "system",
-          content: `Identifica nombres de políticos rivales mencionados en Michoacán que NO sean: ${candidatosPropios.map((c) => c.nombre).join(", ")}. Devuelve solo los 3 más mencionados.`,
-        },
-        { role: "user", content: corpus },
-      ],
-      tools: [
-        {
-          type: "function",
-          function: {
-            name: "emit_rivales",
-            parameters: {
-              type: "object",
-              properties: {
-                rivales: { type: "array", items: { type: "string" }, maxItems: 3 },
-              },
-              required: ["rivales"],
-            },
-          },
-        },
-      ],
-      tool_choice: { type: "function", function: { name: "emit_rivales" } },
-    }),
-  });
-  if (!res.ok) return [];
-  const json = await res.json();
-  try {
-    const args = JSON.parse(json.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments ?? "{}");
-    return (args.rivales ?? []).slice(0, 3);
-  } catch {
-    return [];
-  }
-}
 
 function topN<T>(items: T[], keyFn: (x: T) => string, n: number): { value: string; count: number }[] {
   const map = new Map<string, number>();
@@ -227,40 +196,55 @@ Deno.serve(async (req) => {
   const batchId = crypto.randomUUID();
 
   try {
-    // 1. Cargar candidatos propios del usuario (si se especifica)
-    let candidatosQuery = supabase.from("candidatos").select("id, nombre, partido, nivel, territorio").eq("es_propio", true);
+    // 1. Cargar TODOS los candidatos del usuario (propios y rivales registrados manualmente).
+    //    Ya no auto-detectamos rivales con IA: el usuario decide a quién monitorear desde /candidatos.
+    let candidatosQuery = supabase
+      .from("candidatos")
+      .select("id, nombre, partido, nivel, territorio, es_propio");
     if (userId) candidatosQuery = candidatosQuery.eq("user_id", userId);
-    const { data: propios } = await candidatosQuery.limit(10);
-    const candidatosPropios = propios ?? [];
+    const { data: candidatosBD } = await candidatosQuery.limit(50);
+    const candidatos = candidatosBD ?? [];
+    const candidatosPropios = candidatos.filter((c) => c.es_propio);
 
-    // 2. Detectar top 3 rivales (si hay propios)
-    const rivales = candidatosPropios.length > 0
-      ? await detectarTopRivales(candidatosPropios, FIRECRAWL_API_KEY, LOVABLE_API_KEY)
-      : [];
-
-    // 3. Construir lista de entidades
+    // 2. Construir lista de entidades — todas ancladas a Michoacán + territorio
     const entidades: EntidadObjetivo[] = [
       { tipo: "estatal", nombre: "Michoacán", candidato_id: null, queries: QUERIES_ESTATALES },
-      ...candidatosPropios.map((c) => ({
-        tipo: "candidato_propio" as const,
+      ...candidatos.map((c) => ({
+        tipo: (c.es_propio ? "candidato_propio" : "rival") as "candidato_propio" | "rival",
         nombre: c.nombre,
         candidato_id: c.id,
-        queries: [`${c.nombre} ${c.partido} Michoacán`, `${c.nombre} opinión pública`],
-      })),
-      ...rivales.map((nombre) => ({
-        tipo: "rival" as const,
-        nombre,
-        candidato_id: null,
-        queries: [`${nombre} Michoacán`, `${nombre} político`],
+        queries: [
+          `"${c.nombre}" Michoacán ${c.territorio}`,
+          `"${c.nombre}" ${c.partido} Michoacán`,
+          `"${c.nombre}" ${c.territorio}`,
+        ],
       })),
     ];
 
-    // 4. Procesar cada entidad: search → classify → persistir
+    // 3. Procesar cada entidad: search → classify → filtro Michoacán → persistir
     let totalMenciones = 0;
+    let totalDescartadas = 0;
     for (const ent of entidades) {
       const hitsArrays = await Promise.all(ent.queries.map((q) => firecrawlSearch(q, FIRECRAWL_API_KEY)));
-      const hits = hitsArrays.flat();
-      const menciones = await classifyMenciones(hits, ent.nombre, LOVABLE_API_KEY);
+      // Pre-filtro: solo hits cuyo título/descripción mencionen Michoacán o municipio
+      const hits = hitsArrays.flat().filter((h) => {
+        if (ent.tipo === "estatal") return true; // queries ya son estatales
+        const texto = `${h.title ?? ""} ${h.description ?? ""} ${h.url ?? ""}`;
+        return esMichoacan(texto);
+      });
+      if (hits.length === 0) continue;
+
+      const mencionesRaw = await classifyMenciones(hits, ent.nombre, LOVABLE_API_KEY);
+
+      // Post-filtro: descartar menciones cuyo fragmento+titulo no aluda a Michoacán
+      const menciones = ent.tipo === "estatal"
+        ? mencionesRaw
+        : mencionesRaw.filter((m) => {
+            const ok = esMichoacan(`${m.titulo} ${m.fragmento} ${m.url}`);
+            if (!ok) totalDescartadas += 1;
+            return ok;
+          });
+
       if (menciones.length === 0) continue;
 
       // Insertar menciones
@@ -323,8 +307,10 @@ Deno.serve(async (req) => {
         batch_id: batchId,
         entidades: entidades.length,
         total_menciones: totalMenciones,
+        descartadas_fuera_michoacan: totalDescartadas,
+        candidatos_monitoreados: candidatos.length,
         candidatos_propios: candidatosPropios.length,
-        rivales,
+        rivales_registrados: candidatos.length - candidatosPropios.length,
         duracion_ms: Date.now() - startedAt,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
