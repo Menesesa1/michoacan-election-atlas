@@ -173,6 +173,7 @@ export function CandidatoForm({ candidato, onSaved, trigger }: Props) {
             ...candidato,
             ...payload,
             redes: (payload.redes ?? {}) as Record<string, string | undefined>,
+            war_room: (candidato.war_room ?? []) as import("@/lib/candidatos/types").WarRoomMiembro[],
           };
           void generarTodosLosAnalisis(
             candidatoActualizado,
@@ -221,7 +222,11 @@ export function CandidatoForm({ candidato, onSaved, trigger }: Props) {
             description: `Perfil, OSINT y discurso para ${inserted.nombre}. Tarda ~30-60s.`,
           });
           void generarTodosLosAnalisis(
-            { ...inserted, redes: (inserted.redes ?? {}) as Record<string, string | undefined> },
+            {
+              ...inserted,
+              redes: (inserted.redes ?? {}) as Record<string, string | undefined>,
+              war_room: (inserted.war_room ?? []) as import("@/lib/candidatos/types").WarRoomMiembro[],
+            },
             authData.user.id,
             (p) => {
               setAnalizando((prev) => prev && {
