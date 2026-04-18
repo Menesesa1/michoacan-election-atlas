@@ -230,6 +230,16 @@ export function CandidatoCard({
               </Button>
             }
           />
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={toggleEsPropio}
+            title={candidato.es_propio ? "Mover a Oposición" : "Marcar como Mi candidato"}
+            className={candidato.es_propio ? "text-primary hover:bg-primary/10" : "text-muted-foreground hover:text-primary"}
+          >
+            <Star className={cn("w-3.5 h-3.5 mr-1", candidato.es_propio && "fill-primary")} />
+            {candidato.es_propio ? "Mío" : "Marcar mío"}
+          </Button>
         </div>
         <div className="flex gap-1.5">
           {onToggleSelect && (
