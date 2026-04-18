@@ -9,13 +9,15 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
-import { Sparkles, AlertTriangle, RotateCcw, Search, MessageSquare, User, Users2 } from "lucide-react";
+import { Sparkles, AlertTriangle, RotateCcw, Search, MessageSquare, User, Users2, History, BarChart3 } from "lucide-react";
 import type {
   Candidato, TipoAnalisis, AnalisisPerfil, AnalisisOSINT, AnalisisDiscurso,
-  WarRoomMiembro,
+  WarRoomMiembro, TrayectoriaHito, MetricasRedes,
 } from "@/lib/candidatos/types";
 import { PartidoBadges } from "./PartidoBadges";
 import { WarRoomEditor } from "./WarRoomEditor";
+import { TrayectoriaEditor } from "./TrayectoriaEditor";
+import { MetricasRedesEditor } from "./MetricasRedesEditor";
 import { generarTodosLosAnalisis } from "@/lib/candidatos/auto-analisis";
 
 interface Props {
@@ -128,11 +130,13 @@ export function FichaCandidato({ candidato, open, onClose }: Props) {
         </div>
 
         <Tabs value={tab} onValueChange={(v) => setTab(v as TabKey)}>
-          <TabsList className="grid grid-cols-4 w-full">
+          <TabsList className="grid grid-cols-3 md:grid-cols-6 w-full h-auto">
             <TabsTrigger value="perfil"><User className="w-3.5 h-3.5 mr-1.5" />Perfil</TabsTrigger>
             <TabsTrigger value="osint"><Search className="w-3.5 h-3.5 mr-1.5" />OSINT</TabsTrigger>
-            <TabsTrigger value="war_room"><Users2 className="w-3.5 h-3.5 mr-1.5" />War Room</TabsTrigger>
             <TabsTrigger value="discurso"><MessageSquare className="w-3.5 h-3.5 mr-1.5" />Discurso</TabsTrigger>
+            <TabsTrigger value="trayectoria"><History className="w-3.5 h-3.5 mr-1.5" />Trayectoria</TabsTrigger>
+            <TabsTrigger value="metricas"><BarChart3 className="w-3.5 h-3.5 mr-1.5" />Métricas</TabsTrigger>
+            <TabsTrigger value="war_room"><Users2 className="w-3.5 h-3.5 mr-1.5" />War Room</TabsTrigger>
           </TabsList>
 
           {(["perfil", "osint", "discurso"] as TipoAnalisis[]).map((t) => (
@@ -146,6 +150,14 @@ export function FichaCandidato({ candidato, open, onClose }: Props) {
             </TabsContent>
           ))}
 
+          <TabsContent value="trayectoria">
+            <TrayectoriaTab candidato={candidato} />
+          </TabsContent>
+
+          <TabsContent value="metricas">
+            <MetricasTab candidato={candidato} />
+          </TabsContent>
+
           <TabsContent value="war_room">
             <WarRoomTab candidato={candidato} />
           </TabsContent>
@@ -155,7 +167,81 @@ export function FichaCandidato({ candidato, open, onClose }: Props) {
   );
 }
 
-type TabKey = TipoAnalisis | "war_room";
+type TabKey = TipoAnalisis | "war_room" | "trayectoria" | "metricas";
+
+function TrayectoriaTab({ candidato }: { candidato: Candidato }) {
+  const { toast } = useToast();
+  const [hitos, setHitos] = useState<TrayectoriaHito[]>(candidato.trayectoria ?? []);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setHitos(candidato.trayectoria ?? []);
+  }, [candidato.id, candidato.trayectoria]);
+
+  const guardar = async (next: TrayectoriaHito[]) => {
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from("candidatos")
+        .update({ trayectoria: next as never })
+        .eq("id", candidato.id);
+      if (error) throw error;
+      setHitos(next);
+      toast({ title: "Trayectoria actualizada", description: "Los próximos análisis IA usarán este historial como base verificada." });
+    } catch (err) {
+      toast({
+        title: "Error guardando trayectoria",
+        description: err instanceof Error ? err.message : "Reintenta",
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="space-y-3 pt-3">
+      <TrayectoriaEditor hitos={hitos} onChange={guardar} saving={saving} />
+    </div>
+  );
+}
+
+function MetricasTab({ candidato }: { candidato: Candidato }) {
+  const { toast } = useToast();
+  const [metricas, setMetricas] = useState<MetricasRedes>(candidato.metricas_redes ?? {});
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setMetricas(candidato.metricas_redes ?? {});
+  }, [candidato.id, candidato.metricas_redes]);
+
+  const guardar = async (next: MetricasRedes) => {
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from("candidatos")
+        .update({ metricas_redes: next as never })
+        .eq("id", candidato.id);
+      if (error) throw error;
+      setMetricas(next);
+      toast({ title: "Métricas guardadas", description: "Datos por plataforma actualizados." });
+    } catch (err) {
+      toast({
+        title: "Error guardando métricas",
+        description: err instanceof Error ? err.message : "Reintenta",
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="space-y-3 pt-3">
+      <MetricasRedesEditor metricas={metricas} onChange={guardar} saving={saving} />
+    </div>
+  );
+}
 
 function WarRoomTab({
   candidato,
