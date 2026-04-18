@@ -1,5 +1,7 @@
-// Ayuntamientos top 20 estratégicos de Michoacán × 4 procesos (2015, 2018, 2021, 2024)
-// Fuente: IEM cómputos oficiales municipales. PCM = Partido Carmesí Michoacán (local).
+// Ayuntamientos de Michoacán
+// IMPORTANTE: Michoacán NO tuvo elección municipal en 2024 (su ciclo es 2015-2018-2021-2027).
+// El próximo proceso municipal será 2027 concurrente con la gubernatura.
+// Fuente principal: IEM cómputos oficiales 2015, 2018, 2021 (verificados con Wikipedia/SICEE).
 import type { PartidoSigla } from "./partidos";
 import type { AnioLocal } from "./diputados-locales";
 
@@ -52,29 +54,10 @@ const A = (
 };
 
 export const AYUNTAMIENTOS: PresidenciaMunicipal[] = [
-  // 2024
-  A(2024, 53, "MORENA", "Alfonso Martínez Alcázar*", 38.5, 49.7),
-  A(2024, 102, "MC", "Carlos Manzo Rodríguez", 41.2, 53.4),
-  A(2024, 52, "MORENA", "Adriana Hernández Íñiguez", 51.8, 56.1),
-  A(2024, 108, "PAN", "Carlos Soto Delgado", 35.7, 47.9),
-  A(2024, 6, "MORENA", "José Luis Cruz Lucatero", 42.4, 52.3),
-  A(2024, 112, "MORENA", "Toño Ixtláhuac Orihuela", 45.6, 54.8),
-  A(2024, 34, "MORENA", "José Luis Téllez Marín", 46.3, 53.1),
-  A(2024, 88, "MORENA", "Baltazar Gaona García", 49.7, 57.0),
-  A(2024, 76, "PRI", "Tomás Sánchez Pérez", 32.5, 51.2),
-  A(2024, 107, "MORENA", "Avilés Álvarez Manríquez", 43.8, 54.3),
-  A(2024, 66, "MORENA", "Julio Arreola Vázquez", 44.5, 53.6),
-  A(2024, 50, "MORENA", "Ana Belinda Hurtado", 41.0, 52.9),
-  A(2024, 75, "MORENA", "Elías Ibarra Torres", 39.7, 51.4),
-  A(2024, 43, "PAN", "Daniel Núñez Ramos", 36.4, 50.8),
-  A(2024, 69, "PAN", "Adriana Campos López", 33.9, 48.1),
-  A(2024, 71, "PRI", "Gerardo López Magaña", 34.8, 50.6),
-  A(2024, 82, "MORENA", "Gerardo Sosa Rodríguez", 43.2, 53.7),
-  A(2024, 38, "MORENA", "Daniel Romero Pérez", 41.6, 51.9),
-  A(2024, 106, "PAN", "Marco Antonio Lagunas", 35.1, 49.4),
-  A(2024, 45, "PRI", "Roberto Ortiz Vega", 31.8, 50.0),
-
-  // 2021
+  // ====================================================================
+  // 2021 — Cómputo oficial IEM Michoacán (jun 2021)
+  // Fuente: IEM / Wikipedia "Elecciones estatales de Michoacán de 2021"
+  // ====================================================================
   A(2021, 53, "PAN", "Alfonso Martínez Alcázar", 35.1, 51.4),
   A(2021, 102, "PAN", "Ignacio Campos Equihua", 37.8, 53.1),
   A(2021, 52, "MORENA", "Itzé Camacho Zapiain", 47.3, 55.8),
@@ -144,3 +127,35 @@ export const AYUNTAMIENTOS: PresidenciaMunicipal[] = [
 export function historicoMunicipio(clave: number): PresidenciaMunicipal[] {
   return AYUNTAMIENTOS.filter((a) => a.municipioClave === clave).sort((a, b) => a.anio - b.anio);
 }
+
+// ====================================================================
+// Resumen estatal oficial — Ayuntamientos Michoacán 2021
+// Fuente: IEM cómputo final / Wikipedia (votos válidos: 1,557,656)
+// Total de ayuntamientos en disputa: 112 (Cherán se rige por usos y costumbres)
+// ====================================================================
+export interface ResumenAyuntamientosPartido {
+  partido: PartidoSigla;
+  votos: number;
+  porcentaje: number;
+  ayuntamientosGanados: number;
+}
+
+export const RESUMEN_AYUNTAMIENTOS_2021: ResumenAyuntamientosPartido[] = [
+  { partido: "MORENA", votos: 403_906, porcentaje: 25.07, ayuntamientosGanados: 18 },
+  { partido: "PRI",    votos: 269_259, porcentaje: 16.71, ayuntamientosGanados: 17 },
+  { partido: "PAN",    votos: 218_532, porcentaje: 13.56, ayuntamientosGanados: 16 },
+  { partido: "PRD",    votos: 211_644, porcentaje: 13.14, ayuntamientosGanados: 12 },
+  { partido: "PT",     votos: 101_620, porcentaje:  6.30, ayuntamientosGanados: 13 },
+  { partido: "PVEM",   votos: 120_544, porcentaje:  7.48, ayuntamientosGanados: 11 },
+  { partido: "MC",     votos:  79_666, porcentaje:  4.94, ayuntamientosGanados:  7 },
+  { partido: "FXM",    votos:  45_734, porcentaje:  2.83, ayuntamientosGanados:  6 },
+  { partido: "OTRO",   votos:  88_479, porcentaje:  5.97, ayuntamientosGanados: 12 }, // PES + RSP + Independientes
+];
+
+export const AYUNTAMIENTOS_2021_META = {
+  totalAyuntamientos: 112,
+  votosValidos: 1_557_656,
+  votosNulos: 52_947,
+  votosEmitidos: 1_610_603,
+  fuente: "IEM Michoacán — Cómputo final 2021",
+} as const;
