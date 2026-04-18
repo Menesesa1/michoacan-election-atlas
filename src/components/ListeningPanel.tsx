@@ -225,13 +225,31 @@ export function ListeningPanel({ scope }: ListeningPanelProps) {
         </div>
       ) : (
         <>
+          {/* Leyenda de niveles */}
+          <div className="executive-panel px-3 py-2 flex items-center gap-3 flex-wrap text-[10px] font-mono">
+            <span className="text-muted-foreground uppercase tracking-widest">Escala</span>
+            {(["muy_pos", "pos", "neutro", "neg", "muy_neg"] as NivelSent[]).map((n) => {
+              const st = SENT_STYLES[n];
+              const Ic = st.icon;
+              return (
+                <span key={n} className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border ${st.bg} ${st.border} ${st.text}`}>
+                  <Ic className="w-3 h-3" />
+                  {st.label}
+                </span>
+              );
+            })}
+          </div>
+
           {/* Cards de resumen por entidad */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {resumenes.map((r) => {
-              const Icon = sentimientoIcon(r.sentimiento_promedio);
-              const color = sentimientoColor(r.sentimiento_promedio);
+              const st = styleFor(r.sentimiento_promedio);
+              const Icon = st.icon;
+              const pPos = r.pct_positivo ?? 0;
+              const pNeu = r.pct_neutro ?? 0;
+              const pNeg = r.pct_negativo ?? 0;
               return (
-                <article key={r.id} className="executive-panel p-4 space-y-3">
+                <article key={r.id} className={`executive-panel p-4 space-y-3 border-l-4 ${st.border}`}>
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <h3 className="text-sm font-bold text-foreground truncate">{r.entidad_nombre}</h3>
@@ -239,9 +257,11 @@ export function ListeningPanel({ scope }: ListeningPanelProps) {
                         {r.entidad_tipo === "candidato_propio" ? "Propio" : r.entidad_tipo === "rival" ? "Rival" : "Estatal"}
                       </Badge>
                     </div>
-                    <div className={`flex items-center gap-1 ${color}`}>
-                      <Icon className="w-4 h-4" />
-                      <span className="text-xs font-mono font-bold">
+                    {/* Badge dominante de sentimiento */}
+                    <div className={`flex items-center gap-1.5 px-2 py-1 rounded-md border ${st.bg} ${st.border} ${st.text}`}>
+                      <Icon className="w-3.5 h-3.5" />
+                      <span className="text-[10px] font-bold uppercase tracking-wide">{st.label}</span>
+                      <span className="text-[10px] font-mono opacity-70">
                         {r.sentimiento_promedio !== null ? r.sentimiento_promedio.toFixed(2) : "—"}
                       </span>
                     </div>
@@ -251,17 +271,23 @@ export function ListeningPanel({ scope }: ListeningPanelProps) {
                     {r.total_menciones} <span className="text-xs font-normal text-muted-foreground">menciones</span>
                   </div>
 
-                  {/* Barras de sentimiento */}
-                  <div className="space-y-1">
-                    <div className="flex h-1.5 rounded-full overflow-hidden bg-muted/30">
-                      <div className="bg-emerald-400" style={{ width: `${r.pct_positivo ?? 0}%` }} />
-                      <div className="bg-blue-300" style={{ width: `${r.pct_neutro ?? 0}%` }} />
-                      <div className="bg-destructive" style={{ width: `${r.pct_negativo ?? 0}%` }} />
+                  {/* Barra apilada con etiquetas en cada segmento */}
+                  <div className="space-y-1.5">
+                    <div className="flex h-2.5 rounded-full overflow-hidden bg-muted/30 ring-1 ring-border">
+                      <div className={SENT_STYLES.pos.bar} style={{ width: `${pPos}%` }} title={`Positivo ${pPos.toFixed(0)}%`} />
+                      <div className={SENT_STYLES.neutro.bar} style={{ width: `${pNeu}%` }} title={`Neutro ${pNeu.toFixed(0)}%`} />
+                      <div className={SENT_STYLES.neg.bar} style={{ width: `${pNeg}%` }} title={`Negativo ${pNeg.toFixed(0)}%`} />
                     </div>
-                    <div className="flex justify-between text-[9px] font-mono text-muted-foreground">
-                      <span className="text-emerald-400">+{(r.pct_positivo ?? 0).toFixed(0)}%</span>
-                      <span className="text-blue-300">○{(r.pct_neutro ?? 0).toFixed(0)}%</span>
-                      <span className="text-destructive">-{(r.pct_negativo ?? 0).toFixed(0)}%</span>
+                    <div className="grid grid-cols-3 gap-1 text-[10px] font-mono">
+                      <span className={`flex items-center gap-1 ${SENT_STYLES.pos.text}`}>
+                        <TrendingUp className="w-2.5 h-2.5" /> {pPos.toFixed(0)}% pos
+                      </span>
+                      <span className={`flex items-center gap-1 justify-center ${SENT_STYLES.neutro.text}`}>
+                        <Minus className="w-2.5 h-2.5" /> {pNeu.toFixed(0)}% neu
+                      </span>
+                      <span className={`flex items-center gap-1 justify-end ${SENT_STYLES.neg.text}`}>
+                        <TrendingDown className="w-2.5 h-2.5" /> {pNeg.toFixed(0)}% neg
+                      </span>
                     </div>
                   </div>
 
