@@ -1,12 +1,13 @@
 import { useEffect, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
-import { TrendingUp, TrendingDown, Minus, RefreshCw, Loader2, Hash, Tag, ExternalLink, UserPlus, Flame, AlertTriangle } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, RefreshCw, Loader2, Hash, Tag, ExternalLink, UserPlus, Flame, AlertTriangle, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { DiscursoCiudadano } from "@/components/DiscursoCiudadano";
+import { RapidResponseDialog, type RapidResponseInput } from "@/components/RapidResponseDialog";
 
 interface ResumenRow {
   id: string;
@@ -96,6 +97,21 @@ export function ListeningPanel({ scope }: ListeningPanelProps) {
   const [lastRun, setLastRun] = useState<RunMeta | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [rrOpen, setRrOpen] = useState(false);
+  const [rrInput, setRrInput] = useState<RapidResponseInput | null>(null);
+
+  const openRapid = (m: MencionRow) => {
+    setRrInput({
+      tipo: "mencion",
+      titulo: m.titulo,
+      fragmento: m.fragmento,
+      fuente: m.fuente,
+      url: m.url,
+      distrito_o_entidad: m.entidad_nombre,
+      sentimiento: m.sentimiento,
+    });
+    setRrOpen(true);
+  };
 
   const loadLatest = useCallback(async () => {
     const { data: run } = await supabase
@@ -361,6 +377,15 @@ export function ListeningPanel({ scope }: ListeningPanelProps) {
                             <ExternalLink className="w-2.5 h-2.5" />Fuente
                           </a>
                         )}
+                        {m.sentimiento <= -0.4 && (
+                          <button
+                            type="button"
+                            onClick={() => openRapid(m)}
+                            className="ml-auto inline-flex items-center gap-1 px-2 py-0.5 rounded border border-primary/40 bg-primary/10 text-primary hover:bg-primary/20 transition"
+                          >
+                            <Sparkles className="w-2.5 h-2.5" />Rapid Response
+                          </button>
+                        )}
                       </div>
                     </div>
                   </article>
@@ -370,6 +395,7 @@ export function ListeningPanel({ scope }: ListeningPanelProps) {
           )}
         </>
       )}
+      <RapidResponseDialog open={rrOpen} onOpenChange={setRrOpen} input={rrInput} />
     </div>
   );
 }
