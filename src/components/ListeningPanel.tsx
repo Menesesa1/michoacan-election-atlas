@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
-import { TrendingUp, TrendingDown, Minus, RefreshCw, Loader2, Hash, Tag, ExternalLink } from "lucide-react";
+import { Link } from "react-router-dom";
+import { TrendingUp, TrendingDown, Minus, RefreshCw, Loader2, Hash, Tag, ExternalLink, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -174,10 +175,20 @@ export function ListeningPanel({ scope }: ListeningPanelProps) {
                 : "Sin datos. Ejecuta un monitoreo para comenzar."}
             </p>
           </div>
-          <Button onClick={handleRefresh} disabled={refreshing} size="sm" className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90">
-            {refreshing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
-            {refreshing ? "Monitoreando…" : "Actualizar ahora"}
-          </Button>
+          <div className="flex items-center gap-2 flex-wrap">
+            {scope === "candidatos" && (
+              <Button asChild size="sm" variant="outline" className="gap-2">
+                <Link to="/candidatos">
+                  <UserPlus className="w-3.5 h-3.5" />
+                  Nuevo candidato
+                </Link>
+              </Button>
+            )}
+            <Button onClick={handleRefresh} disabled={refreshing} size="sm" className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90">
+              {refreshing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
+              {refreshing ? "Monitoreando…" : "Actualizar ahora"}
+            </Button>
+          </div>
         </div>
         {lastRun && (
           <div className="mt-3 text-[10px] font-mono text-muted-foreground/80 flex flex-wrap gap-x-4 gap-y-1">
