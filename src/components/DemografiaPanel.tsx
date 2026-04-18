@@ -98,16 +98,20 @@ export function DemografiaPanel() {
 
       {/* CSV upload option */}
       <div className="p-3 rounded-md bg-primary/5 border border-primary/20 text-[11px]">
-        <div className="flex gap-2 items-center">
+        <div className="flex gap-2 items-center flex-wrap">
           <Info className="w-4 h-4 text-primary shrink-0" />
           <span className="text-muted-foreground">
-            {data ? "✅ Datos importados del INE" : "Usando datos estimados. Importa CSV del INE para datos reales:"}
+            {data
+              ? "✅ Datos importados del INE (sesión actual)"
+              : padronFedOficial && nivel === "federal"
+                ? `✅ Padrón oficial INE-DERFE Michoacán · cortes ${fuenteOficial?.edad ?? ""} (edad) y ${fuenteOficial?.sexo ?? ""} (sexo) — VALIDADO`
+                : "Usando datos estimados. Importa CSV del INE para datos reales:"}
           </span>
           {!data && (
             <div className="relative ml-auto">
-              <input ref={fileRef} type="file" accept=".csv" onChange={handleFile} className="absolute inset-0 opacity-0 cursor-pointer z-10 w-24" disabled={loading} />
+              <input ref={fileRef} type="file" accept=".csv" onChange={handleFile} className="absolute inset-0 opacity-0 cursor-pointer z-10 w-28" disabled={loading} />
               <span className="px-3 py-1 rounded bg-primary/20 text-primary text-[10px] font-mono cursor-pointer hover:bg-primary/30 transition-colors">
-                {loading ? "Procesando..." : "Subir CSV"}
+                {loading ? "Procesando..." : "Reemplazar CSV"}
               </span>
             </div>
           )}
