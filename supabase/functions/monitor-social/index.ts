@@ -30,6 +30,7 @@ interface MencionClasificada {
   sentimiento: number; // -1 to 1
   tema: string;
   hashtags: string[];
+  municipio?: string | null; // Municipio de Michoacán al que se refiere (o null si es estatal)
 }
 
 interface EntidadObjetivo {
