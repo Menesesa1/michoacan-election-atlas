@@ -1,73 +1,52 @@
 
-## Goal
-Add a **Candidatos** module that lets the user register/manage candidates per nivel (gobernatura / diputado local / ayuntamiento), generate AI profiles (fortalezas, debilidades, OSINT, análisis discursivo), compare two side-by-side, and feed selected candidates into the Estrategia 360 snapshot.
+## Plan: agregar "War Room" al perfil de cada candidato
 
-Seed: Alfonso Martínez (PAN, Morelia) y Raúl Morón (Morena, Morelia).
+El usuario quiere capturar el equipo de campaña real (oficial + operadores ocultos) con sus trayectorias e inconsistencias. Ejemplos: Morón → Humberto Moreno; Alfonso → Goberna y EME. Se usa como contexto OSINT profundo y se inyecta a la IA para que no invente.
 
-## Architecture
+### Modelo de datos
+Nueva columna `war_room jsonb default '[]'` en `candidatos`. Cada miembro:
+- `nombre`, `rol` (jefe campaña / vocero / consultor estrategia / digital / financista / coordinador territorial / jurídico / etc.)
+- `tipo`: persona | consultora
+- `visible`: true (oficial) | false (operador en la sombra)
+- `trayectoria_breve`, `inconsistencias[]`, `fuentes[]` (URLs)
 
-```text
-/candidatos (nueva ruta)
-   ├── Lista filtrable por nivel + territorio
-   ├── Form alta manual (nombre, partido, cargo, territorio, redes, bio)
-   ├── Ficha individual: perfil IA + OSINT + discurso
-   └── Comparador 2-up
+### UI — pestaña "War Room" en `FichaCandidato.tsx`
+Nuevo componente `WarRoomEditor.tsx`: tabla editable con add/edit/delete por fila. Badges:
+- "Oficial" vs "🔍 Operador oculto"
+- "Persona" vs "Consultora"
+- Chips para inconsistencias (rojo) y fuentes (link)
+Nota explicativa: "Captura aquí el equipo conocido del candidato, incluidos operadores no oficiales. Esta información se usa como contexto verificado para los análisis IA y NO se inventa."
 
-Estrategia 360 (/escenarios)
-   └── nuevo selector "Candidato propio + adversarios"
-       └── inyecta candidatos al snapshot → IA los considera
-```
+### Integración con IA
+- Edge `analizar-candidato`: el `war_room` viaja en el prompt como contexto obligatorio.
+- Schema OSINT añade `war_room_resumen`: coherencia con narrativa pública + alertas reputacionales por miembro.
+- Schema FODA: equipo se considera fortaleza/amenaza.
+- Schema Discurso: evalúa si la narrativa refleja al equipo real.
+- Snapshot a Estrategia 360 incluye War Room resumido para análisis cruzado entre candidatos.
+- Editar War Room dispara regeneración (mismo flujo que ya existe para campos clave) si el toggle "Regenerar análisis IA" está activo.
 
-## Backend
+### Seed inicial (marcado "borrador por verificar")
+- **Raúl Morón Orozco** → Humberto Moreno (rol: operador político, visible=false, inconsistencias: placeholder "por documentar con fuentes", fuentes: [])
+- **Alfonso Martínez Alcázar** → Goberna (consultora estrategia, visible=true), EME (consultora comunicación/imagen, visible=true)
 
-**1. Tabla `candidatos`** (RLS por user_id)
-- id, user_id, nombre, partido, nivel, territorio, cargo_buscado
-- bio_breve, redes (jsonb: twitter/fb/ig/web), foto_url
-- tags (text[]), notas
-- created_at, updated_at
+Cada entrada con `notas_internas: "Borrador inicial — completar fuentes antes de usar en estrategia"` para que sea evidente que requiere validación.
 
-**2. Tabla `candidato_analisis`** (cachea outputs de IA)
-- id, candidato_id, tipo ('perfil' | 'osint' | 'discurso'), output_json, model, created_at
+### Entregables
+1. Migración: `ALTER TABLE candidatos ADD COLUMN war_room jsonb NOT NULL DEFAULT '[]'`.
+2. `src/lib/candidatos/types.ts` → tipo `WarRoomMiembro` + campo en `Candidato` y en `CandidatoSnapshot`.
+3. `src/components/candidatos/WarRoomEditor.tsx` (nuevo).
+4. `src/components/candidatos/FichaCandidato.tsx` → nueva pestaña "War Room".
+5. `supabase/functions/analizar-candidato/index.ts` → contexto obligatorio + nuevo campo `war_room_resumen` en schema OSINT.
+6. `src/components/candidatos/CandidatoForm.tsx` → contar `war_room` como cambio que dispara regeneración.
+7. `src/lib/estrategia/snapshot-builder.ts` → incluir resumen de War Room en snapshot.
+8. Seed via insert tool (3 miembros marcados como borrador).
 
-**3. Edge function `analizar-candidato`**
-- Input: candidato + tipo de análisis + contexto territorial
-- Modelo: `google/gemini-2.5-flash` (rápido, evita 504)
-- Tool-calling con schema fijo:
-  - **perfil**: fortalezas[], debilidades[], oportunidades[], amenazas[], score_competitividad (0-100), perfil_votante_natural
-  - **osint**: presencia_digital{}, controversias[], aliados_clave[], temas_recurrentes[], menciones_recientes[]
-  - **discurso**: ejes_narrativos[], tono, frames_dominantes[], vulnerabilidades_argumentales[], contraargumentos_sugeridos[]
+### Después (turno aparte)
+Cuando aprobemos Firecrawl/Perplexity, el edge `investigar-candidato` precargará War Room desde fuentes públicas; tú validas antes de guardar.
 
-**4. Seed inicial** (insert tool, asignado al user_id del usuario actual): Alfonso Martínez Alcázar y Raúl Morón Orozco.
-
-## Frontend
-
-**Nuevos archivos:**
-- `src/pages/Candidatos.tsx` — lista + filtros + botón "Nuevo candidato" + acceso a ficha y comparador
-- `src/components/candidatos/CandidatoForm.tsx` — alta/edición manual (Dialog)
-- `src/components/candidatos/CandidatoCard.tsx` — tarjeta resumen
-- `src/components/candidatos/FichaCandidato.tsx` — perfil IA + OSINT + discurso en tabs, con botón "Regenerar análisis"
-- `src/components/candidatos/ComparadorCandidatos.tsx` — selector de 2 candidatos + tabla diff (FODA, score, ejes discursivos, vulnerabilidades)
-- `src/lib/candidatos/types.ts`
-
-**Integración Estrategia 360:**
-- En `WizardAlcance.tsx` añadir paso opcional: seleccionar "candidato propio" + adversarios (multi) filtrados por nivel/territorio.
-- En `snapshot-builder.ts` agregar campo `candidatos: { propio?, adversarios: [] }` al `SnapshotPayload` con perfil resumido (nombre, partido, FODA top, ejes discursivos).
-- Edge `generar-estrategia-360` ya recibe el snapshot como JSON libre, así que el prompt incorporará automáticamente el bloque "Candidatos en escena" para análisis discursivo cruzado.
-
-**Routing:** añadir `/candidatos` en `App.tsx` y entrada en `AppSidebar.tsx`.
-
-## UX flow
-1. Usuario entra a `/candidatos`, ve seed (Alfonso, Raúl) + botón "Agregar candidato".
-2. Clic en ficha → tabs Perfil / OSINT / Discurso. Si no hay análisis, botón "Generar con IA". Resultados se cachean en `candidato_analisis`.
-3. Botón "Comparar" → elige 2 → vista lado a lado con diff de FODA, score, narrativa.
-4. En `/escenarios` paso 1, nuevo bloque "Candidatos" para anclar el análisis 360 a personas concretas.
-
-## Disclaimer OSINT
-El módulo OSINT generará análisis basado en conocimiento público del modelo (no scraping en vivo). Mostraremos badge "Análisis basado en información pública conocida — verificar fuentes" en la ficha.
-
-## Entregables
-- 2 migraciones (candidatos + candidato_analisis con RLS)
-- 1 edge function nueva (`analizar-candidato`)
-- 1 seed inicial (2 candidatos Morelia)
-- 5 componentes + 1 página + integración wizard
-- Update sidebar + rutas
+<lov-actions>
+<lov-suggestion message="Procede con todo el plan: migración, editor War Room, integración IA, seed marcado como borrador y regeneración automática al editarlo.">Sí, procede con todo</lov-suggestion>
+<lov-suggestion message="Hazlo todo pero NO siembres datos iniciales (ni siquiera marcados como borrador). Prefiero capturar yo cada miembro desde cero para no contaminar el expediente.">Sin seed, yo capturo todo</lov-suggestion>
+<lov-suggestion message="Implementa solo el editor War Room y la migración por ahora. La integración con la IA (war_room_resumen, snapshot a Estrategia 360, regeneración) la hacemos en un segundo paso para validar primero el flujo de captura.">Solo captura primero, IA después</lov-suggestion>
+<lov-suggestion message="Agrega también campo de foto opcional y handles de redes por cada miembro del War Room, para poder perfilar también a los operadores clave (no solo al candidato).">Incluye foto y redes por miembro</lov-suggestion>
+</lov-actions>
