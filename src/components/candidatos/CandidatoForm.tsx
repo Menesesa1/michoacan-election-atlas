@@ -225,7 +225,7 @@ export function CandidatoForm({ candidato, onSaved, trigger }: Props) {
             {
               ...inserted,
               redes: (inserted.redes ?? {}) as Record<string, string | undefined>,
-              war_room: (inserted.war_room ?? []) as import("@/lib/candidatos/types").WarRoomMiembro[],
+              war_room: (inserted.war_room ?? []) as unknown as import("@/lib/candidatos/types").WarRoomMiembro[],
             },
             authData.user.id,
             (p) => {
