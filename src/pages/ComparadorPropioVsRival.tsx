@@ -70,7 +70,7 @@ export default function ComparadorPropioVsRival() {
       .select("*")
       .eq("batch_id", run.batch_id)
       .in("entidad_tipo", ["candidato_propio", "rival"]);
-    setRows((data as ResumenRow[]) ?? []);
+    setRows(((data ?? []) as unknown) as ResumenRow[]);
   }, []);
 
   useEffect(() => {
