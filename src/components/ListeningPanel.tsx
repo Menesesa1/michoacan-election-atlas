@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
-import { TrendingUp, TrendingDown, Minus, RefreshCw, Loader2, Hash, Tag, ExternalLink, UserPlus } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, RefreshCw, Loader2, Hash, Tag, ExternalLink, UserPlus, Flame, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -46,25 +46,39 @@ interface RunMeta {
   error: string | null;
 }
 
-function sentimientoColor(s: number | null): string {
-  if (s === null) return "text-muted-foreground";
-  if (s > 0.2) return "text-emerald-400";
-  if (s < -0.2) return "text-destructive";
-  return "text-blue-300";
+// 5 niveles de sentimiento: muy_neg < -0.6, neg [-0.6,-0.2), neutro [-0.2,0.2], pos (0.2,0.6], muy_pos >0.6
+type NivelSent = "muy_pos" | "pos" | "neutro" | "neg" | "muy_neg" | "na";
+
+function nivelSentimiento(s: number | null): NivelSent {
+  if (s === null || Number.isNaN(s)) return "na";
+  if (s > 0.6) return "muy_pos";
+  if (s > 0.2) return "pos";
+  if (s >= -0.2) return "neutro";
+  if (s >= -0.6) return "neg";
+  return "muy_neg";
 }
 
-function sentimientoIcon(s: number | null) {
-  if (s === null) return Minus;
-  if (s > 0.2) return TrendingUp;
-  if (s < -0.2) return TrendingDown;
-  return Minus;
+interface SentStyle {
+  label: string;
+  short: string;
+  text: string;
+  bg: string;
+  border: string;
+  bar: string;
+  icon: typeof TrendingUp;
 }
 
-function sentimientoLabel(s: number | null): string {
-  if (s === null) return "—";
-  if (s > 0.2) return "Positivo";
-  if (s < -0.2) return "Negativo";
-  return "Neutro";
+const SENT_STYLES: Record<NivelSent, SentStyle> = {
+  muy_pos: { label: "Muy positivo", short: "++", text: "text-emerald-300", bg: "bg-emerald-500/15", border: "border-emerald-400/50", bar: "bg-emerald-400",   icon: Flame },
+  pos:     { label: "Positivo",     short: "+",  text: "text-emerald-400", bg: "bg-emerald-500/10", border: "border-emerald-500/30", bar: "bg-emerald-500/80", icon: TrendingUp },
+  neutro:  { label: "Neutro",       short: "○",  text: "text-slate-300",   bg: "bg-slate-500/10",   border: "border-slate-400/30",   bar: "bg-slate-400/70",   icon: Minus },
+  neg:     { label: "Negativo",     short: "-",  text: "text-orange-400",  bg: "bg-orange-500/10",  border: "border-orange-500/30",  bar: "bg-orange-500/80",  icon: TrendingDown },
+  muy_neg: { label: "Muy negativo", short: "--", text: "text-red-400",     bg: "bg-red-500/15",     border: "border-red-500/50",     bar: "bg-red-500",        icon: AlertTriangle },
+  na:      { label: "Sin dato",     short: "—",  text: "text-muted-foreground", bg: "bg-muted/20",  border: "border-border",         bar: "bg-muted",          icon: Minus },
+};
+
+function styleFor(s: number | null): SentStyle {
+  return SENT_STYLES[nivelSentimiento(s)];
 }
 
 function formatExact(iso: string): string {
