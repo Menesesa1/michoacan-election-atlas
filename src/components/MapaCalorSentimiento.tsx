@@ -52,32 +52,45 @@ export function MapaCalorSentimiento() {
     setLoading(true);
     setError(null);
     try {
-      // Tomar último batch
-      const { data: run } = await supabase
+      // Buscar el batch MÁS RECIENTE que efectivamente tenga menciones con municipio.
+      // Las primeras corridas de listening no detectaban municipio, así que el último batch
+      // puede estar vacío de geo-data; saltamos hasta encontrar uno útil.
+      const { data: runs } = await supabase
         .from("social_runs")
         .select("batch_id")
         .is("error", null)
         .gt("total_menciones", 0)
         .order("ejecutada_en", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (!run) {
+        .limit(10);
+
+      if (!runs || runs.length === 0) {
         setStats([]);
         setLoading(false);
         return;
       }
-      setBatchId(run.batch_id);
 
-      // Cargar todas las menciones del batch que tengan municipio
-      const { data: menciones } = await supabase
-        .from("social_menciones")
-        .select("municipio, sentimiento, titulo")
-        .eq("batch_id", run.batch_id)
-        .not("municipio", "is", null)
-        .limit(2000);
+      let menciones: Array<{ municipio: string | null; sentimiento: number; titulo: string }> | null = null;
+      let batchUsado: string | null = null;
+
+      for (const r of runs) {
+        const { data } = await supabase
+          .from("social_menciones")
+          .select("municipio, sentimiento, titulo")
+          .eq("batch_id", r.batch_id)
+          .not("municipio", "is", null)
+          .limit(2000);
+        if (data && data.length > 0) {
+          menciones = data;
+          batchUsado = r.batch_id;
+          break;
+        }
+      }
+
+      setBatchId(batchUsado ?? runs[0].batch_id);
 
       if (!menciones || menciones.length === 0) {
         setStats([]);
+        setError("Las menciones existentes no tienen municipio detectado. Ejecuta un nuevo listening en /inteligencia/listening-estatal para que la IA clasifique el municipio de cada mención.");
         setLoading(false);
         return;
       }
