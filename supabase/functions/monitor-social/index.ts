@@ -102,7 +102,7 @@ async function classifyMenciones(
       messages: [
         {
           role: "system",
-          content: `Eres un analista de social listening político en Michoacán. Para cada noticia/mención sobre "${entidadNombre}", extrae: sentimiento (-1 muy negativo, 0 neutro, +1 muy positivo), tema principal (1-3 palabras: seguridad, economía, gobernanza, escándalo, agenda, etc.) y hashtags relevantes inferidos. Sé conciso y objetivo.`,
+          content: `Eres un analista de social listening político en Michoacán. Para cada noticia/mención sobre "${entidadNombre}", extrae: sentimiento (-1 muy negativo, 0 neutro, +1 muy positivo), tema principal (1-3 palabras: seguridad, economía, gobernanza, escándalo, agenda, etc.), hashtags relevantes inferidos y MUNICIPIO al que se refiere la mención. El municipio DEBE ser uno de los 113 municipios de Michoacán (ej: Morelia, Uruapan, Zamora, Lázaro Cárdenas, Apatzingán, Pátzcuaro, Zitácuaro, etc.) escrito con el nombre oficial INEGI. Si la mención es estatal/genérica de Michoacán sin municipio claro, devuelve null. NO inventes municipios fuera de Michoacán.`,
         },
         { role: "user", content: `Menciones sobre ${entidadNombre}:\n\n${corpus}\n\nClasifica cada una.` },
       ],
@@ -127,8 +127,9 @@ async function classifyMenciones(
                       sentimiento: { type: "number", minimum: -1, maximum: 1 },
                       tema: { type: "string" },
                       hashtags: { type: "array", items: { type: "string" }, maxItems: 5 },
+                      municipio: { type: ["string", "null"], description: "Municipio oficial de Michoacán o null si es estatal/no claro" },
                     },
-                    required: ["titulo", "fragmento", "url", "fuente", "sentimiento", "tema", "hashtags"],
+                    required: ["titulo", "fragmento", "url", "fuente", "sentimiento", "tema", "hashtags", "municipio"],
                   },
                 },
               },
