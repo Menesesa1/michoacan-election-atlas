@@ -29,6 +29,7 @@ interface RunMeta {
   duracion_ms: number | null;
   error: string | null;
   trigger: string;
+  batch_id: string | null;
 }
 
 const PRIORIDAD_STYLES: Record<PrioridadAlerta, { bg: string; text: string; border: string; icon: typeof AlertTriangle }> = {
@@ -80,14 +81,17 @@ export function AlertasOperacion() {
       return;
     }
 
-    // Alertas detectadas en/después de esa corrida
-    const { data: rows } = await supabase
+    // Preferir batch_id (vínculo exacto); fallback a ventana temporal para runs antiguas
+    const base = supabase
       .from("alertas_crisis")
       .select("*")
-      .gte("detectada_en", run.ejecutada_en)
       .order("prioridad", { ascending: true })
       .order("detectada_en", { ascending: false })
       .limit(50);
+
+    const { data: rows } = run.batch_id
+      ? await base.eq("batch_id", run.batch_id)
+      : await base.gte("detectada_en", new Date(new Date(run.ejecutada_en).getTime() - 10_000).toISOString());
 
     setAlertas((rows as Alerta[]) ?? []);
   }, []);

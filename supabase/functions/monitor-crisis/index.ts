@@ -203,6 +203,7 @@ Deno.serve(async (req) => {
       fuentes_consultadas: fuentesConsultadas,
       duracion_ms: Date.now() - startedAt,
       trigger,
+      batch_id: batchId,
     });
 
     return new Response(
