@@ -127,10 +127,11 @@ export function FichaCandidato({ candidato, open, onClose }: Props) {
           <span>Análisis basado en información pública conocida por el modelo IA — verifica fuentes antes de tomar decisiones.</span>
         </div>
 
-        <Tabs value={tab} onValueChange={(v) => setTab(v as TipoAnalisis)}>
-          <TabsList className="grid grid-cols-3 w-full">
+        <Tabs value={tab} onValueChange={(v) => setTab(v as TabKey)}>
+          <TabsList className="grid grid-cols-4 w-full">
             <TabsTrigger value="perfil"><User className="w-3.5 h-3.5 mr-1.5" />Perfil</TabsTrigger>
             <TabsTrigger value="osint"><Search className="w-3.5 h-3.5 mr-1.5" />OSINT</TabsTrigger>
+            <TabsTrigger value="war_room"><Users2 className="w-3.5 h-3.5 mr-1.5" />War Room</TabsTrigger>
             <TabsTrigger value="discurso"><MessageSquare className="w-3.5 h-3.5 mr-1.5" />Discurso</TabsTrigger>
           </TabsList>
 
@@ -144,9 +145,108 @@ export function FichaCandidato({ candidato, open, onClose }: Props) {
               />
             </TabsContent>
           ))}
+
+          <TabsContent value="war_room">
+            <WarRoomTab
+              candidato={candidato}
+              onUpdated={(nextWR) => {
+                // notifica al padre y refresca análisis si el usuario optó por regenerar
+                onWarRoomChanged?.(candidato.id, nextWR);
+              }}
+            />
+          </TabsContent>
         </Tabs>
       </DialogContent>
     </Dialog>
+  );
+}
+
+type TabKey = TipoAnalisis | "war_room";
+
+function WarRoomTab({
+  candidato,
+  onUpdated,
+}: {
+  candidato: Candidato;
+  onUpdated?: (next: WarRoomMiembro[]) => void;
+}) {
+  const { toast } = useToast();
+  const [miembros, setMiembros] = useState<WarRoomMiembro[]>(candidato.war_room ?? []);
+  const [saving, setSaving] = useState(false);
+  const [regenerando, setRegenerando] = useState(false);
+
+  useEffect(() => {
+    setMiembros(candidato.war_room ?? []);
+  }, [candidato.id, candidato.war_room]);
+
+  const guardar = async (next: WarRoomMiembro[]) => {
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from("candidatos")
+        .update({ war_room: next as never })
+        .eq("id", candidato.id);
+      if (error) throw error;
+      setMiembros(next);
+      onUpdated?.(next);
+      toast({ title: "War Room actualizado", description: "Los próximos análisis IA usarán esta información como contexto." });
+    } catch (err) {
+      toast({
+        title: "Error guardando War Room",
+        description: err instanceof Error ? err.message : "Reintenta",
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const regenerarAnalisis = async () => {
+    setRegenerando(true);
+    try {
+      const { data: authData } = await supabase.auth.getUser();
+      if (!authData?.user) throw new Error("No autenticado");
+      await supabase.from("candidato_analisis").delete().eq("candidato_id", candidato.id);
+      toast({ title: "Regenerando análisis IA…", description: "Perfil, OSINT y discurso con el War Room actualizado." });
+      const candForIA = {
+        ...candidato,
+        war_room: miembros,
+        redes: (candidato.redes ?? {}) as Record<string, string | undefined>,
+      };
+      const resultados = await generarTodosLosAnalisis(candForIA, authData.user.id);
+      const errores = resultados.filter((r) => r.estado === "error");
+      if (errores.length === 0) {
+        toast({ title: "Análisis regenerados ✓", description: "Ahora reflejan el War Room que capturaste." });
+      } else {
+        toast({
+          title: `Regeneración parcial (${resultados.length - errores.length}/${resultados.length})`,
+          description: `Falló: ${errores.map((e) => e.tipo).join(", ")}`,
+          variant: "destructive",
+        });
+      }
+    } catch (err) {
+      toast({
+        title: "Error regenerando",
+        description: err instanceof Error ? err.message : "Reintenta",
+        variant: "destructive",
+      });
+    } finally {
+      setRegenerando(false);
+    }
+  };
+
+  return (
+    <div className="space-y-3 pt-3">
+      <WarRoomEditor miembros={miembros} onChange={guardar} saving={saving} />
+      {miembros.length > 0 && (
+        <div className="flex justify-end pt-2 border-t border-border/40">
+          <Button size="sm" variant="outline" onClick={regenerarAnalisis} disabled={regenerando}>
+            <RotateCcw className={`w-3.5 h-3.5 mr-1.5 ${regenerando ? "animate-spin" : ""}`} />
+            {regenerando ? "Regenerando…" : "Regenerar análisis IA con este War Room"}
+          </Button>
+        </div>
+      )}
+    </div>
   );
 }
 
