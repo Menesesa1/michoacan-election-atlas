@@ -54,29 +54,10 @@ const A = (
 };
 
 export const AYUNTAMIENTOS: PresidenciaMunicipal[] = [
-  // 2024
-  A(2024, 53, "MORENA", "Alfonso Martínez Alcázar*", 38.5, 49.7),
-  A(2024, 102, "MC", "Carlos Manzo Rodríguez", 41.2, 53.4),
-  A(2024, 52, "MORENA", "Adriana Hernández Íñiguez", 51.8, 56.1),
-  A(2024, 108, "PAN", "Carlos Soto Delgado", 35.7, 47.9),
-  A(2024, 6, "MORENA", "José Luis Cruz Lucatero", 42.4, 52.3),
-  A(2024, 112, "MORENA", "Toño Ixtláhuac Orihuela", 45.6, 54.8),
-  A(2024, 34, "MORENA", "José Luis Téllez Marín", 46.3, 53.1),
-  A(2024, 88, "MORENA", "Baltazar Gaona García", 49.7, 57.0),
-  A(2024, 76, "PRI", "Tomás Sánchez Pérez", 32.5, 51.2),
-  A(2024, 107, "MORENA", "Avilés Álvarez Manríquez", 43.8, 54.3),
-  A(2024, 66, "MORENA", "Julio Arreola Vázquez", 44.5, 53.6),
-  A(2024, 50, "MORENA", "Ana Belinda Hurtado", 41.0, 52.9),
-  A(2024, 75, "MORENA", "Elías Ibarra Torres", 39.7, 51.4),
-  A(2024, 43, "PAN", "Daniel Núñez Ramos", 36.4, 50.8),
-  A(2024, 69, "PAN", "Adriana Campos López", 33.9, 48.1),
-  A(2024, 71, "PRI", "Gerardo López Magaña", 34.8, 50.6),
-  A(2024, 82, "MORENA", "Gerardo Sosa Rodríguez", 43.2, 53.7),
-  A(2024, 38, "MORENA", "Daniel Romero Pérez", 41.6, 51.9),
-  A(2024, 106, "PAN", "Marco Antonio Lagunas", 35.1, 49.4),
-  A(2024, 45, "PRI", "Roberto Ortiz Vega", 31.8, 50.0),
-
-  // 2021
+  // ====================================================================
+  // 2021 — Cómputo oficial IEM Michoacán (jun 2021)
+  // Fuente: IEM / Wikipedia "Elecciones estatales de Michoacán de 2021"
+  // ====================================================================
   A(2021, 53, "PAN", "Alfonso Martínez Alcázar", 35.1, 51.4),
   A(2021, 102, "PAN", "Ignacio Campos Equihua", 37.8, 53.1),
   A(2021, 52, "MORENA", "Itzé Camacho Zapiain", 47.3, 55.8),
