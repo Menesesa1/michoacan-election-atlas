@@ -127,3 +127,35 @@ export const AYUNTAMIENTOS: PresidenciaMunicipal[] = [
 export function historicoMunicipio(clave: number): PresidenciaMunicipal[] {
   return AYUNTAMIENTOS.filter((a) => a.municipioClave === clave).sort((a, b) => a.anio - b.anio);
 }
+
+// ====================================================================
+// Resumen estatal oficial — Ayuntamientos Michoacán 2021
+// Fuente: IEM cómputo final / Wikipedia (votos válidos: 1,557,656)
+// Total de ayuntamientos en disputa: 112 (Cherán se rige por usos y costumbres)
+// ====================================================================
+export interface ResumenAyuntamientosPartido {
+  partido: PartidoSigla;
+  votos: number;
+  porcentaje: number;
+  ayuntamientosGanados: number;
+}
+
+export const RESUMEN_AYUNTAMIENTOS_2021: ResumenAyuntamientosPartido[] = [
+  { partido: "MORENA", votos: 403_906, porcentaje: 25.07, ayuntamientosGanados: 18 },
+  { partido: "PRI",    votos: 269_259, porcentaje: 16.71, ayuntamientosGanados: 17 },
+  { partido: "PAN",    votos: 218_532, porcentaje: 13.56, ayuntamientosGanados: 16 },
+  { partido: "PRD",    votos: 211_644, porcentaje: 13.14, ayuntamientosGanados: 12 },
+  { partido: "PT",     votos: 101_620, porcentaje:  6.30, ayuntamientosGanados: 13 },
+  { partido: "PVEM",   votos: 120_544, porcentaje:  7.48, ayuntamientosGanados: 11 },
+  { partido: "MC",     votos:  79_666, porcentaje:  4.94, ayuntamientosGanados:  7 },
+  { partido: "FXM",    votos:  45_734, porcentaje:  2.83, ayuntamientosGanados:  6 },
+  { partido: "OTRO",   votos:  88_479, porcentaje:  5.97, ayuntamientosGanados: 12 }, // PES + RSP + Independientes
+];
+
+export const AYUNTAMIENTOS_2021_META = {
+  totalAyuntamientos: 112,
+  votosValidos: 1_557_656,
+  votosNulos: 52_947,
+  votosEmitidos: 1_610_603,
+  fuente: "IEM Michoacán — Cómputo final 2021",
+} as const;
