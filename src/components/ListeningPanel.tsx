@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { DiscursoCiudadano } from "@/components/DiscursoCiudadano";
 
 interface ResumenRow {
   id: string;
