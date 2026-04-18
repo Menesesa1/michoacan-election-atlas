@@ -50,6 +50,54 @@ export interface WarRoomMiembro {
   notas_internas?: string;
 }
 
+// ===== Trayectoria política =====
+export type TrayectoriaTipo =
+  | "electo"
+  | "designado"
+  | "candidatura"
+  | "cambio_partido"
+  | "dirigencia"
+  | "otro";
+
+export const TRAYECTORIA_TIPO_LABEL: Record<TrayectoriaTipo, string> = {
+  electo: "Cargo electo",
+  designado: "Cargo designado",
+  candidatura: "Candidatura (sin ganar)",
+  cambio_partido: "Cambio de partido",
+  dirigencia: "Dirigencia partidaria",
+  otro: "Otro",
+};
+
+export interface TrayectoriaHito {
+  id: string;
+  anio: number;
+  cargo: string;
+  partido?: string;
+  tipo: TrayectoriaTipo;
+  descripcion?: string;
+  fuentes: string[];
+}
+
+// ===== Métricas de redes =====
+export type PlataformaRed = "facebook" | "twitter" | "instagram" | "tiktok" | "youtube";
+
+export const PLATAFORMA_LABEL: Record<PlataformaRed, string> = {
+  facebook: "Facebook",
+  twitter: "Twitter / X",
+  instagram: "Instagram",
+  tiktok: "TikTok",
+  youtube: "YouTube",
+};
+
+export interface MetricaRed {
+  seguidores?: number;
+  engagement_rate?: number; // porcentaje 0-100
+  ultima_actualizacion?: string; // ISO date
+  notas?: string;
+}
+
+export type MetricasRedes = Partial<Record<PlataformaRed, MetricaRed>>;
+
 export interface Candidato {
   id: string;
   user_id: string;
@@ -66,6 +114,8 @@ export interface Candidato {
   tags: string[];
   notas?: string | null;
   war_room: WarRoomMiembro[];
+  trayectoria: TrayectoriaHito[];
+  metricas_redes: MetricasRedes;
   created_at: string;
   updated_at: string;
 }
