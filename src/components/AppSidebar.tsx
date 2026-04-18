@@ -47,7 +47,7 @@ const locales = [
   { title: "Tendencias", url: "/tendencias", icon: TrendingUp },
   { title: "Estrategia 360", url: "/escenarios", icon: Sparkles },
   { title: "Candidatos", url: "/candidatos", icon: Users },
-  { title: "Crisis", url: "/crisis", icon: ShieldAlert },
+  { title: "Inteligencia", url: "/inteligencia", icon: ShieldAlert },
   { title: "Fuentes", url: "/fuentes", icon: Database },
 ];
 

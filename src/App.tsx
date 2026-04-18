@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -14,7 +14,10 @@ import MandoCentral from "./pages/MandoCentral";
 import Distritos from "./pages/Distritos";
 import Demografia from "./pages/Demografia";
 import Tendencias from "./pages/Tendencias";
+import Inteligencia from "./pages/Inteligencia";
 import Crisis from "./pages/Crisis";
+import ListeningEstatal from "./pages/ListeningEstatal";
+import ListeningCandidatos from "./pages/ListeningCandidatos";
 import Fuentes from "./pages/Fuentes";
 import Socioeconomico from "./pages/Socioeconomico";
 import Gobernador from "./pages/Gobernador";
@@ -52,7 +55,13 @@ const App = () => (
                 <Route path="/socioeconomico" element={<Socioeconomico />} />
                 <Route path="/demografia" element={<Demografia />} />
                 <Route path="/tendencias" element={<Tendencias />} />
-                <Route path="/crisis" element={<Crisis />} />
+                <Route path="/crisis" element={<Navigate to="/inteligencia/alertas" replace />} />
+                <Route path="/inteligencia" element={<Inteligencia />}>
+                  <Route index element={<Navigate to="/inteligencia/alertas" replace />} />
+                  <Route path="alertas" element={<Crisis />} />
+                  <Route path="listening-estatal" element={<ListeningEstatal />} />
+                  <Route path="listening-candidatos" element={<ListeningCandidatos />} />
+                </Route>
                 <Route path="/escenarios" element={<Escenarios />} />
                 <Route path="/candidatos" element={<Candidatos />} />
                 <Route path="/distritos" element={<Distritos />} />

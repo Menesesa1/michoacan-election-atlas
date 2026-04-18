@@ -98,7 +98,8 @@ export function ListeningPanel({ scope }: ListeningPanelProps) {
       return;
     }
 
-    const tipos = scope === "estatal" ? ["estatal"] : ["candidato_propio", "rival"];
+    const tipos: ("estatal" | "candidato_propio" | "rival")[] =
+      scope === "estatal" ? ["estatal"] : ["candidato_propio", "rival"];
 
     const { data: resData } = await supabase
       .from("social_resumen")
