@@ -180,7 +180,7 @@ export function ListeningPanel({ scope }: ListeningPanelProps) {
               <Button asChild size="sm" variant="outline" className="gap-2">
                 <Link to="/candidatos">
                   <UserPlus className="w-3.5 h-3.5" />
-                  Nuevo candidato
+                  Gestionar candidatos
                 </Link>
               </Button>
             )}
