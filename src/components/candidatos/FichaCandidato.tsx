@@ -82,6 +82,9 @@ export function FichaCandidato({ candidato, open, onClose }: Props) {
             bio_breve: candidato.bio_breve ?? undefined,
             redes: candidato.redes,
             notas: candidato.notas ?? undefined,
+            war_room: candidato.war_room ?? undefined,
+            trayectoria: candidato.trayectoria ?? undefined,
+            metricas_redes: candidato.metricas_redes ?? undefined,
           },
         },
       });

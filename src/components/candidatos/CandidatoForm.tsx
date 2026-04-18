@@ -226,6 +226,8 @@ export function CandidatoForm({ candidato, onSaved, trigger }: Props) {
               ...inserted,
               redes: (inserted.redes ?? {}) as Record<string, string | undefined>,
               war_room: (inserted.war_room ?? []) as unknown as import("@/lib/candidatos/types").WarRoomMiembro[],
+              trayectoria: (inserted.trayectoria ?? []) as unknown as import("@/lib/candidatos/types").TrayectoriaHito[],
+              metricas_redes: (inserted.metricas_redes ?? {}) as unknown as import("@/lib/candidatos/types").MetricasRedes,
             },
             authData.user.id,
             (p) => {
