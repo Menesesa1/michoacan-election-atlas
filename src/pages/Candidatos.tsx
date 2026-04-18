@@ -24,6 +24,7 @@ export default function Candidatos() {
   const [filtroNivel, setFiltroNivel] = useState<string>("all");
   const [filtroPartido, setFiltroPartido] = useState<string>("all");
   const [filtroFase, setFiltroFase] = useState<string>("all");
+  const [filtroEquipo, setFiltroEquipo] = useState<"all" | "propios" | "oposicion">("all");
   const [busqueda, setBusqueda] = useState("");
   const [seleccionados, setSeleccionados] = useState<string[]>([]);
   const [comparando, setComparando] = useState(false);
