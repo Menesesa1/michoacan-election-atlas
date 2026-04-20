@@ -31,6 +31,16 @@ interface RequestBody {
   metricas_actuales?: Partial<Record<"facebook" | "twitter" | "instagram" | "tiktok" | "youtube", MetricaActual>>;
 }
 
+const CANALES_ESPERADOS = ["facebook", "instagram", "tiktok", "twitter", "landing_page", "whatsapp_community"] as const;
+const CANAL_LABEL: Record<string, string> = {
+  facebook: "Facebook",
+  instagram: "Instagram",
+  tiktok: "TikTok",
+  twitter: "X / Twitter",
+  landing_page: "Landing page propia",
+  whatsapp_community: "Comunidad de WhatsApp",
+};
+
 const TOOL = {
   type: "function",
   function: {
@@ -132,13 +142,19 @@ TAREA: Evaluar la presencia digital de un candidato en Michoacán y entregar:
 3) Recomendaciones tácticas accionables y medibles
 
 REGLAS DE ESTIMACIÓN:
-- Si el candidato es PÚBLICAMENTE CONOCIDO (gobernador en funciones, diputado federal con perfil, alcalde de capital), usa rangos realistas basados en cargos comparables — confianza media-alta.
-- Si es DESCONOCIDO (aspirante sin trayectoria), estima rangos CONSERVADORES (cientos a pocos miles) — confianza baja, justifícalo.
-- Si NO hay handle capturado en una plataforma, OMÍTELA del array de estimaciones (no inventes presencia donde no hay).
-- Si HAY métricas verificadas en metricas_actuales, ÚSALAS como ancla — la estimación NO debe contradecir lo verificado.
+- Si HAY métricas verificadas en metricas_actuales (capturadas a mano por el consultor), ÚSALAS COMO VALOR ANCLA. NO las contradigas. Reporta esos números EXACTOS y marca confianza="alta".
+- Si HAY handle pero NO métrica medida: estima con rangos del benchmark — confianza media o baja según notoriedad.
+- Si NO hay handle ni evidencia pública en una plataforma: OMÍTELA del array de estimaciones.
+- Si el candidato es PÚBLICAMENTE CONOCIDO (gobernador en funciones, diputado federal con perfil, alcalde de capital), usa rangos realistas — confianza media-alta.
+- Si es DESCONOCIDO (aspirante sin trayectoria), estima rangos CONSERVADORES (cientos a pocos miles) — confianza baja.
+
+REGLAS DE OPORTUNIDADES (CRÍTICO):
+Los canales esperados para un candidato moderno son: Facebook, Instagram, TikTok, X/Twitter, Landing page propia y Comunidad de WhatsApp.
+Por CADA canal de la lista CANALES_AUSENTES que recibirás, DEBES agregar al menos UNA oportunidad explícita en foda_digital.oportunidades indicando "Abrir/activar [canal]: [beneficio concreto para el cargo]" Y al menos UNA recomendación de prioridad alta o media para activarlo con KPI medible.
+TikTok es prioridad ALTA si el cargo busca voto joven (<35 años). WhatsApp Community es prioridad ALTA siempre para movilización territorial. Landing page es prioridad media para captura de leads.
 
 REGLAS DE DIAGNÓSTICO:
-- score_digital pondera alcance, engagement y suficiencia para el cargo (0=inexistente, 100=excede demanda del cargo).
+- score_digital pondera alcance, engagement Y cobertura de canales (un candidato sin TikTok ni WhatsApp NO puede pasar de 70).
 - brecha_vs_cargo debe ser CONCRETA: "necesita 5x más seguidores en TikTok para competir con [referencia]".
 - FODA debe ser ESPECÍFICO al territorio y cargo, NO genérico.
 - Recomendaciones deben ser ACCIONABLES con KPIs medibles en 30-90 días.
@@ -161,9 +177,17 @@ Deno.serve(async (req) => {
     }
 
     const benchmark = NIVEL_BENCHMARK[input.nivel] ?? "";
-    const handlesCapturados = Object.entries(input.redes ?? {})
-      .filter(([k, v]) => v && k !== "web")
+    const redes = input.redes ?? {};
+    const handlesCapturados = Object.entries(redes)
+      .filter(([, v]) => v)
       .map(([k, v]) => `${k}: ${v}`);
+
+    // Detecta canales ausentes (sin handle / URL capturada) para forzar oportunidades
+    const tieneCanal = (k: string) => Boolean((redes as Record<string, string | undefined>)[k]);
+    const canalesAusentes = CANALES_ESPERADOS.filter((c) => {
+      if (c === "landing_page") return !tieneCanal("web");
+      return !tieneCanal(c);
+    }).map((c) => CANAL_LABEL[c]);
 
     const metricasVerificadas = Object.entries(input.metricas_actuales ?? {})
       .filter(([, v]) => v && (v.seguidores !== undefined || v.engagement_rate !== undefined))
@@ -178,17 +202,20 @@ TERRITORIO: ${input.territorio}
 ${input.cargo_buscado ? `CARGO BUSCADO: ${input.cargo_buscado}` : ""}
 ${input.bio_breve ? `BIO: ${input.bio_breve}` : ""}
 
-HANDLES CAPTURADOS:
+HANDLES / URLS CAPTURADAS:
 ${handlesCapturados.length > 0 ? handlesCapturados.join("\n") : "(ninguno)"}
 
-MÉTRICAS YA VERIFICADAS POR EL CONSULTOR (úsalas como ancla, no las contradigas):
+MÉTRICAS YA VERIFICADAS POR EL CONSULTOR (ANCLA — usa estos números EXACTOS, no los contradigas):
 ${metricasVerificadas.length > 0 ? metricasVerificadas.join("\n") : "(ninguna — toda métrica será estimación IA)"}
+
+CANALES_AUSENTES (genera oportunidad + recomendación de activación para cada uno):
+${canalesAusentes.length > 0 ? canalesAusentes.join(", ") : "(ninguno — cobertura completa)"}
 
 BENCHMARK DEL CARGO:
 ${benchmark}
 
 Devuelve la herramienta evaluacion_redes con todos los campos requeridos.
-RECUERDA: confianza="baja" cuando estimes sin base sólida; OMITE plataformas sin handle ni evidencia pública.`;
+RECUERDA: confianza="alta" cuando uses métricas verificadas; OMITE plataformas sin handle ni evidencia pública del array de estimaciones, pero SÍ inclúyelas en oportunidades como canal a abrir.`;
 
     const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
