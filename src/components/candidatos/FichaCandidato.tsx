@@ -172,7 +172,7 @@ export function FichaCandidato({ candidato, open, onClose }: Props) {
   );
 }
 
-type TabKey = TipoAnalisis | "war_room" | "trayectoria" | "metricas";
+type TabKey = TipoAnalisis | "war_room" | "trayectoria" | "metricas" | "eval_digital";
 
 function TrayectoriaTab({ candidato }: { candidato: Candidato }) {
   const { toast } = useToast();
