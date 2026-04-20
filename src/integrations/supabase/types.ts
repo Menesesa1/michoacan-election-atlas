@@ -395,6 +395,48 @@ export type Database = {
         }
         Relationships: []
       }
+      solicitudes_acceso_anticipado: {
+        Row: {
+          cargo: string | null
+          comentario: string | null
+          created_at: string
+          email: string
+          id: string
+          modulo: string
+          nombre: string
+          organizacion: string | null
+          prioridad_percibida: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cargo?: string | null
+          comentario?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          modulo: string
+          nombre: string
+          organizacion?: string | null
+          prioridad_percibida?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cargo?: string | null
+          comentario?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          modulo?: string
+          nombre?: string
+          organizacion?: string | null
+          prioridad_percibida?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

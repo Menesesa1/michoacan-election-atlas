@@ -28,6 +28,9 @@ import Ayuntamientos from "./pages/Ayuntamientos";
 import Escenarios from "./pages/Escenarios";
 import Candidatos from "./pages/Candidatos";
 import Operacion from "./pages/Operacion";
+import OperacionTerritorial from "./pages/OperacionTerritorial";
+import CrmSimpatizantes from "./pages/CrmSimpatizantes";
+import DiaD from "./pages/DiaD";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -69,6 +72,9 @@ const App = () => (
                 </Route>
                 <Route path="/escenarios" element={<Escenarios />} />
                 <Route path="/operacion" element={<Operacion />} />
+                <Route path="/operacion-territorial" element={<OperacionTerritorial />} />
+                <Route path="/crm-simpatizantes" element={<CrmSimpatizantes />} />
+                <Route path="/dia-d" element={<DiaD />} />
                 <Route path="/candidatos" element={<Candidatos />} />
                 <Route path="/distritos" element={<Distritos />} />
                 <Route path="/fuentes" element={<Fuentes />} />
