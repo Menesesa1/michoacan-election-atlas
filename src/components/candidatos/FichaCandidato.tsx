@@ -134,12 +134,11 @@ export function FichaCandidato({ candidato, open, onClose }: Props) {
         </div>
 
         <Tabs value={tab} onValueChange={(v) => setTab(v as TabKey)}>
-          <TabsList className="grid grid-cols-4 md:grid-cols-7 w-full h-auto">
+          <TabsList className="grid grid-cols-3 md:grid-cols-6 w-full h-auto">
             <TabsTrigger value="perfil"><User className="w-3.5 h-3.5 mr-1.5" />Perfil</TabsTrigger>
             <TabsTrigger value="osint"><Search className="w-3.5 h-3.5 mr-1.5" />OSINT</TabsTrigger>
             <TabsTrigger value="discurso"><MessageSquare className="w-3.5 h-3.5 mr-1.5" />Discurso</TabsTrigger>
             <TabsTrigger value="trayectoria"><History className="w-3.5 h-3.5 mr-1.5" />Trayectoria</TabsTrigger>
-            <TabsTrigger value="metricas"><BarChart3 className="w-3.5 h-3.5 mr-1.5" />Métricas</TabsTrigger>
             <TabsTrigger value="eval_digital"><Radar className="w-3.5 h-3.5 mr-1.5" />Eval. digital</TabsTrigger>
             <TabsTrigger value="war_room"><Users2 className="w-3.5 h-3.5 mr-1.5" />War Room</TabsTrigger>
           </TabsList>
@@ -159,10 +158,6 @@ export function FichaCandidato({ candidato, open, onClose }: Props) {
             <TrayectoriaTab candidato={candidato} />
           </TabsContent>
 
-          <TabsContent value="metricas">
-            <MetricasTab candidato={candidato} />
-          </TabsContent>
-
           <TabsContent value="eval_digital">
             <EvaluacionDigitalTab candidato={candidato} onMetricasActualizadas={() => { /* refresh-on-close handled por parent */ }} />
           </TabsContent>
@@ -176,7 +171,7 @@ export function FichaCandidato({ candidato, open, onClose }: Props) {
   );
 }
 
-type TabKey = TipoAnalisis | "war_room" | "trayectoria" | "metricas" | "eval_digital";
+type TabKey = TipoAnalisis | "war_room" | "trayectoria" | "eval_digital";
 
 function TrayectoriaTab({ candidato }: { candidato: Candidato }) {
   const { toast } = useToast();
