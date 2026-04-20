@@ -9,15 +9,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
-import { Sparkles, AlertTriangle, RotateCcw, Search, MessageSquare, User, Users2, History, BarChart3, Radar } from "lucide-react";
+import { Sparkles, AlertTriangle, RotateCcw, Search, MessageSquare, User, Users2, History, Radar } from "lucide-react";
 import type {
   Candidato, TipoAnalisis, AnalisisPerfil, AnalisisOSINT, AnalisisDiscurso,
-  WarRoomMiembro, TrayectoriaHito, MetricasRedes,
+  WarRoomMiembro, TrayectoriaHito,
 } from "@/lib/candidatos/types";
 import { PartidoBadges } from "./PartidoBadges";
 import { WarRoomEditor } from "./WarRoomEditor";
 import { TrayectoriaEditor } from "./TrayectoriaEditor";
-import { MetricasRedesEditor } from "./MetricasRedesEditor";
 import { PrecargaFirecrawl } from "./PrecargaFirecrawl";
 import { EvaluacionDigitalTab } from "./EvaluacionDigitalTab";
 import { generarTodosLosAnalisis } from "@/lib/candidatos/auto-analisis";
@@ -135,12 +134,11 @@ export function FichaCandidato({ candidato, open, onClose }: Props) {
         </div>
 
         <Tabs value={tab} onValueChange={(v) => setTab(v as TabKey)}>
-          <TabsList className="grid grid-cols-4 md:grid-cols-7 w-full h-auto">
+          <TabsList className="grid grid-cols-3 md:grid-cols-6 w-full h-auto">
             <TabsTrigger value="perfil"><User className="w-3.5 h-3.5 mr-1.5" />Perfil</TabsTrigger>
             <TabsTrigger value="osint"><Search className="w-3.5 h-3.5 mr-1.5" />OSINT</TabsTrigger>
             <TabsTrigger value="discurso"><MessageSquare className="w-3.5 h-3.5 mr-1.5" />Discurso</TabsTrigger>
             <TabsTrigger value="trayectoria"><History className="w-3.5 h-3.5 mr-1.5" />Trayectoria</TabsTrigger>
-            <TabsTrigger value="metricas"><BarChart3 className="w-3.5 h-3.5 mr-1.5" />Métricas</TabsTrigger>
             <TabsTrigger value="eval_digital"><Radar className="w-3.5 h-3.5 mr-1.5" />Eval. digital</TabsTrigger>
             <TabsTrigger value="war_room"><Users2 className="w-3.5 h-3.5 mr-1.5" />War Room</TabsTrigger>
           </TabsList>
@@ -160,10 +158,6 @@ export function FichaCandidato({ candidato, open, onClose }: Props) {
             <TrayectoriaTab candidato={candidato} />
           </TabsContent>
 
-          <TabsContent value="metricas">
-            <MetricasTab candidato={candidato} />
-          </TabsContent>
-
           <TabsContent value="eval_digital">
             <EvaluacionDigitalTab candidato={candidato} onMetricasActualizadas={() => { /* refresh-on-close handled por parent */ }} />
           </TabsContent>
@@ -177,7 +171,7 @@ export function FichaCandidato({ candidato, open, onClose }: Props) {
   );
 }
 
-type TabKey = TipoAnalisis | "war_room" | "trayectoria" | "metricas" | "eval_digital";
+type TabKey = TipoAnalisis | "war_room" | "trayectoria" | "eval_digital";
 
 function TrayectoriaTab({ candidato }: { candidato: Candidato }) {
   const { toast } = useToast();
@@ -225,198 +219,6 @@ function TrayectoriaTab({ candidato }: { candidato: Candidato }) {
       <TrayectoriaEditor hitos={hitos} onChange={guardar} saving={saving} />
       <PrecargaFirecrawl
         candidato={{ ...candidato, trayectoria: hitos }}
-        open={precargaOpen}
-        onClose={() => setPrecargaOpen(false)}
-        onAplicado={aplicarPrecarga}
-      />
-    </div>
-  );
-}
-
-function MetricasTab({ candidato }: { candidato: Candidato }) {
-  const { toast } = useToast();
-  const [metricas, setMetricas] = useState<MetricasRedes>(candidato.metricas_redes ?? {});
-  const [saving, setSaving] = useState(false);
-  const [precargaOpen, setPrecargaOpen] = useState(false);
-  const [refrescando, setRefrescando] = useState(false);
-
-  useEffect(() => {
-    setMetricas(candidato.metricas_redes ?? {});
-  }, [candidato.id, candidato.metricas_redes]);
-
-  const guardar = async (next: MetricasRedes) => {
-    setSaving(true);
-    try {
-      const { error } = await supabase
-        .from("candidatos")
-        .update({ metricas_redes: next as never })
-        .eq("id", candidato.id);
-      if (error) throw error;
-      setMetricas(next);
-      toast({ title: "Métricas guardadas", description: "Datos por plataforma actualizados." });
-    } catch (err) {
-      toast({
-        title: "Error guardando métricas",
-        description: err instanceof Error ? err.message : "Reintenta",
-        variant: "destructive",
-      });
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const aplicarPrecarga = async (parche: { metricas_redes?: MetricasRedes }) => {
-    if (parche.metricas_redes) await guardar(parche.metricas_redes);
-  };
-
-  // Refresh inteligente:
-  // 1) Llama Firecrawl para extraer cifras reales de redes públicas
-  // 2) Aplica las de confianza alta automáticamente
-  // 3) Para las plataformas con URL pero SIN métricas verificadas, llama a la evaluación IA
-  //    para llenar seguidores estimados + engagement (marcadas como "Estimación IA").
-  const refrescarRapido = async () => {
-    const redesObj = (candidato.redes ?? {}) as Record<string, string | undefined>;
-    const tieneRedes = Object.values(redesObj).some((v) => typeof v === "string" && v.length > 0);
-    if (!tieneRedes) {
-      toast({
-        title: "Faltan URLs de redes",
-        description: "Captura al menos una URL (Facebook, X, IG, TikTok, YouTube) en el perfil.",
-        variant: "destructive",
-      });
-      return;
-    }
-    setRefrescando(true);
-    let resultadoBase: MetricasRedes = { ...metricas };
-    let aplicadasReales = 0;
-    let aplicadasIA = 0;
-
-    try {
-      // ---- 1) Firecrawl real ----
-      try {
-        const { data, error } = await supabase.functions.invoke("firecrawl-precarga-candidato", {
-          body: {
-            nombre: candidato.nombre,
-            partido: candidato.partido,
-            territorio: candidato.territorio,
-            cargo_buscado: candidato.cargo_buscado ?? undefined,
-            nivel: candidato.nivel,
-            redes: redesObj,
-          },
-        });
-        if (!error) {
-          const payload = data as {
-            metricas_propuesta?: Array<{
-              plataforma: keyof MetricasRedes;
-              seguidores?: number;
-              engagement_rate?: number;
-              fuente_url: string;
-              confianza: "alta" | "media" | "baja";
-            }>;
-          };
-          const altas = (payload?.metricas_propuesta ?? []).filter((m) => m.confianza === "alta" && m.seguidores);
-          altas.forEach((m) => {
-            resultadoBase[m.plataforma] = {
-              seguidores: m.seguidores,
-              engagement_rate: m.engagement_rate,
-              ultima_actualizacion: new Date().toISOString(),
-              notas: `Auto-actualizado vía Firecrawl · ${m.fuente_url}`,
-            };
-            aplicadasReales++;
-          });
-        }
-      } catch { /* sigue al fallback IA */ }
-
-      // ---- 2) Fallback: evaluación IA para llenar las plataformas con URL pero sin métricas ----
-      // Mapa URL→plataforma. landing/whatsapp no aplican a métricas IA (no tienen seguidores/engagement).
-      const PLAT_KEYS: Array<keyof MetricasRedes> = ["facebook", "twitter", "instagram", "tiktok", "youtube"];
-      const conUrlSinMetrica = PLAT_KEYS.filter((p) => {
-        const url = redesObj[p];
-        const actual = resultadoBase[p];
-        return Boolean(url) && (!actual || !actual.seguidores);
-      });
-
-      if (conUrlSinMetrica.length > 0) {
-        const { data, error } = await supabase.functions.invoke("evaluacion-redes-candidato", {
-          body: {
-            nombre: candidato.nombre,
-            partido: candidato.partido,
-            nivel: candidato.nivel,
-            territorio: candidato.territorio,
-            cargo_buscado: candidato.cargo_buscado ?? undefined,
-            bio_breve: candidato.bio_breve ?? undefined,
-            redes: redesObj,
-            metricas_actuales: resultadoBase,
-          },
-        });
-        if (!error) {
-          const payload = data as {
-            output?: {
-              estimacion_metricas?: Array<{
-                plataforma: keyof MetricasRedes;
-                seguidores_estimados: number;
-                engagement_estimado: number;
-                base_estimacion: string;
-                confianza: "alta" | "media" | "baja";
-              }>;
-            };
-          };
-          (payload?.output?.estimacion_metricas ?? []).forEach((est) => {
-            // Solo aplica si la plataforma sigue sin valor (no sobrescribe nada verificado)
-            const actual = resultadoBase[est.plataforma];
-            if (actual?.seguidores) return;
-            resultadoBase[est.plataforma] = {
-              seguidores: est.seguidores_estimados,
-              engagement_rate: est.engagement_estimado,
-              ultima_actualizacion: new Date().toISOString(),
-              notas: `[Estimación IA · ${est.confianza}] ${est.base_estimacion}`,
-            };
-            aplicadasIA++;
-          });
-        }
-      }
-
-      const total = aplicadasReales + aplicadasIA;
-      if (total === 0) {
-        toast({
-          title: "Sin actualizaciones",
-          description: "Ni Firecrawl ni la IA pudieron generar métricas. Captura URLs de redes o ingresa cifras manualmente.",
-        });
-        return;
-      }
-
-      await guardar(resultadoBase);
-      toast({
-        title: `${total} plataforma(s) actualizadas`,
-        description: aplicadasIA > 0
-          ? `${aplicadasReales} reales (Firecrawl) + ${aplicadasIA} estimadas (IA). Las estimadas se marcan como [Estimación IA].`
-          : "Todas las cifras provienen de scrape real (alta confianza).",
-      });
-    } catch (err) {
-      toast({
-        title: "Error actualizando",
-        description: err instanceof Error ? err.message : "Reintenta",
-        variant: "destructive",
-      });
-    } finally {
-      setRefrescando(false);
-    }
-  };
-
-  return (
-    <div className="space-y-3 pt-3">
-      <div className="flex flex-wrap justify-end gap-2">
-        <Button size="sm" onClick={refrescarRapido} disabled={refrescando || saving}>
-          <RotateCcw className={`w-3.5 h-3.5 mr-1.5 ${refrescando ? "animate-spin" : ""}`} />
-          {refrescando ? "Actualizando…" : "Actualizar ahora"}
-        </Button>
-        <Button size="sm" variant="outline" onClick={() => setPrecargaOpen(true)} disabled={saving || refrescando}>
-          <Sparkles className="w-3.5 h-3.5 mr-1.5 text-primary" />
-          Revisar propuestas (Firecrawl)
-        </Button>
-      </div>
-      <MetricasRedesEditor metricas={metricas} onChange={guardar} saving={saving} />
-      <PrecargaFirecrawl
-        candidato={{ ...candidato, metricas_redes: metricas }}
         open={precargaOpen}
         onClose={() => setPrecargaOpen(false)}
         onAplicado={aplicarPrecarga}
