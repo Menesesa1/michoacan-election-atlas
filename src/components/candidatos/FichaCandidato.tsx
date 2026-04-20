@@ -387,13 +387,6 @@ function PerfilView({ data }: { data: AnalisisPerfil }) {
 function OsintView({ data }: { data: AnalisisOSINT }) {
   return (
     <div className="space-y-3">
-      <Card className="p-3 bg-card/60">
-        <div className="text-xs font-mono uppercase tracking-widest mb-1">Presencia digital · {data.presencia_digital.nivel}</div>
-        <div className="flex flex-wrap gap-1 mb-2">
-          {data.presencia_digital.plataformas_fuertes.map((p) => (<Badge key={p} variant="secondary" className="text-[10px]">{p}</Badge>))}
-        </div>
-        <p className="text-sm text-muted-foreground">{data.presencia_digital.observaciones}</p>
-      </Card>
       <ListaCard titulo="Aliados clave" items={data.aliados_clave} color="border-sky-500/40" />
       <ListaCard titulo="Temas recurrentes" items={data.temas_recurrentes} color="border-violet-500/40" />
       <Card className="p-3 bg-card/60 border-rose-500/40">
