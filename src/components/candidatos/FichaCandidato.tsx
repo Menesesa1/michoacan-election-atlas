@@ -135,12 +135,13 @@ export function FichaCandidato({ candidato, open, onClose }: Props) {
         </div>
 
         <Tabs value={tab} onValueChange={(v) => setTab(v as TabKey)}>
-          <TabsList className="grid grid-cols-3 md:grid-cols-6 w-full h-auto">
+          <TabsList className="grid grid-cols-4 md:grid-cols-7 w-full h-auto">
             <TabsTrigger value="perfil"><User className="w-3.5 h-3.5 mr-1.5" />Perfil</TabsTrigger>
             <TabsTrigger value="osint"><Search className="w-3.5 h-3.5 mr-1.5" />OSINT</TabsTrigger>
             <TabsTrigger value="discurso"><MessageSquare className="w-3.5 h-3.5 mr-1.5" />Discurso</TabsTrigger>
             <TabsTrigger value="trayectoria"><History className="w-3.5 h-3.5 mr-1.5" />Trayectoria</TabsTrigger>
             <TabsTrigger value="metricas"><BarChart3 className="w-3.5 h-3.5 mr-1.5" />Métricas</TabsTrigger>
+            <TabsTrigger value="eval_digital"><Radar className="w-3.5 h-3.5 mr-1.5" />Eval. digital</TabsTrigger>
             <TabsTrigger value="war_room"><Users2 className="w-3.5 h-3.5 mr-1.5" />War Room</TabsTrigger>
           </TabsList>
 
@@ -161,6 +162,10 @@ export function FichaCandidato({ candidato, open, onClose }: Props) {
 
           <TabsContent value="metricas">
             <MetricasTab candidato={candidato} />
+          </TabsContent>
+
+          <TabsContent value="eval_digital">
+            <EvaluacionDigitalTab candidato={candidato} onMetricasActualizadas={() => { /* refresh-on-close handled por parent */ }} />
           </TabsContent>
 
           <TabsContent value="war_room">
@@ -264,63 +269,127 @@ function MetricasTab({ candidato }: { candidato: Candidato }) {
     if (parche.metricas_redes) await guardar(parche.metricas_redes);
   };
 
-  // Refresh rápido: llama Firecrawl, aplica métricas de confianza alta automáticamente.
+  // Refresh inteligente:
+  // 1) Llama Firecrawl para extraer cifras reales de redes públicas
+  // 2) Aplica las de confianza alta automáticamente
+  // 3) Para las plataformas con URL pero SIN métricas verificadas, llama a la evaluación IA
+  //    para llenar seguidores estimados + engagement (marcadas como "Estimación IA").
   const refrescarRapido = async () => {
-    const tieneRedes = Object.values(candidato.redes ?? {}).some((v) => typeof v === "string" && v.length > 0);
+    const redesObj = (candidato.redes ?? {}) as Record<string, string | undefined>;
+    const tieneRedes = Object.values(redesObj).some((v) => typeof v === "string" && v.length > 0);
     if (!tieneRedes) {
       toast({
         title: "Faltan URLs de redes",
-        description: "Captura al menos una URL (Facebook, X, IG, TikTok, YouTube) en el perfil para refrescar.",
+        description: "Captura al menos una URL (Facebook, X, IG, TikTok, YouTube) en el perfil.",
         variant: "destructive",
       });
       return;
     }
     setRefrescando(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("firecrawl-precarga-candidato", {
-        body: {
-          nombre: candidato.nombre,
-          partido: candidato.partido,
-          territorio: candidato.territorio,
-          cargo_buscado: candidato.cargo_buscado ?? undefined,
-          nivel: candidato.nivel,
-          redes: candidato.redes ?? {},
-        },
-      });
-      if (error) throw error;
-      const payload = data as {
-        metricas_propuesta?: Array<{
-          plataforma: keyof MetricasRedes;
-          seguidores?: number;
-          engagement_rate?: number;
-          fuente_url: string;
-          confianza: "alta" | "media" | "baja";
-        }>;
-        error?: string;
-      };
-      if (payload?.error) throw new Error(payload.error);
+    let resultadoBase: MetricasRedes = { ...metricas };
+    let aplicadasReales = 0;
+    let aplicadasIA = 0;
 
-      const altas = (payload.metricas_propuesta ?? []).filter((m) => m.confianza === "alta" && m.seguidores);
-      if (altas.length === 0) {
+    try {
+      // ---- 1) Firecrawl real ----
+      try {
+        const { data, error } = await supabase.functions.invoke("firecrawl-precarga-candidato", {
+          body: {
+            nombre: candidato.nombre,
+            partido: candidato.partido,
+            territorio: candidato.territorio,
+            cargo_buscado: candidato.cargo_buscado ?? undefined,
+            nivel: candidato.nivel,
+            redes: redesObj,
+          },
+        });
+        if (!error) {
+          const payload = data as {
+            metricas_propuesta?: Array<{
+              plataforma: keyof MetricasRedes;
+              seguidores?: number;
+              engagement_rate?: number;
+              fuente_url: string;
+              confianza: "alta" | "media" | "baja";
+            }>;
+          };
+          const altas = (payload?.metricas_propuesta ?? []).filter((m) => m.confianza === "alta" && m.seguidores);
+          altas.forEach((m) => {
+            resultadoBase[m.plataforma] = {
+              seguidores: m.seguidores,
+              engagement_rate: m.engagement_rate,
+              ultima_actualizacion: new Date().toISOString(),
+              notas: `Auto-actualizado vía Firecrawl · ${m.fuente_url}`,
+            };
+            aplicadasReales++;
+          });
+        }
+      } catch { /* sigue al fallback IA */ }
+
+      // ---- 2) Fallback: evaluación IA para llenar las plataformas con URL pero sin métricas ----
+      // Mapa URL→plataforma. landing/whatsapp no aplican a métricas IA (no tienen seguidores/engagement).
+      const PLAT_KEYS: Array<keyof MetricasRedes> = ["facebook", "twitter", "instagram", "tiktok", "youtube"];
+      const conUrlSinMetrica = PLAT_KEYS.filter((p) => {
+        const url = redesObj[p];
+        const actual = resultadoBase[p];
+        return Boolean(url) && (!actual || !actual.seguidores);
+      });
+
+      if (conUrlSinMetrica.length > 0) {
+        const { data, error } = await supabase.functions.invoke("evaluacion-redes-candidato", {
+          body: {
+            nombre: candidato.nombre,
+            partido: candidato.partido,
+            nivel: candidato.nivel,
+            territorio: candidato.territorio,
+            cargo_buscado: candidato.cargo_buscado ?? undefined,
+            bio_breve: candidato.bio_breve ?? undefined,
+            redes: redesObj,
+            metricas_actuales: resultadoBase,
+          },
+        });
+        if (!error) {
+          const payload = data as {
+            output?: {
+              estimacion_metricas?: Array<{
+                plataforma: keyof MetricasRedes;
+                seguidores_estimados: number;
+                engagement_estimado: number;
+                base_estimacion: string;
+                confianza: "alta" | "media" | "baja";
+              }>;
+            };
+          };
+          (payload?.output?.estimacion_metricas ?? []).forEach((est) => {
+            // Solo aplica si la plataforma sigue sin valor (no sobrescribe nada verificado)
+            const actual = resultadoBase[est.plataforma];
+            if (actual?.seguidores) return;
+            resultadoBase[est.plataforma] = {
+              seguidores: est.seguidores_estimados,
+              engagement_rate: est.engagement_estimado,
+              ultima_actualizacion: new Date().toISOString(),
+              notas: `[Estimación IA · ${est.confianza}] ${est.base_estimacion}`,
+            };
+            aplicadasIA++;
+          });
+        }
+      }
+
+      const total = aplicadasReales + aplicadasIA;
+      if (total === 0) {
         toast({
-          title: "Sin actualizaciones automáticas",
-          description: "Firecrawl no obtuvo métricas con alta confianza. Abre 'Precargar con Firecrawl' para revisar propuestas manualmente.",
+          title: "Sin actualizaciones",
+          description: "Ni Firecrawl ni la IA pudieron generar métricas. Captura URLs de redes o ingresa cifras manualmente.",
         });
         return;
       }
-      const nuevas: MetricasRedes = { ...metricas };
-      altas.forEach((m) => {
-        nuevas[m.plataforma] = {
-          seguidores: m.seguidores,
-          engagement_rate: m.engagement_rate,
-          ultima_actualizacion: new Date().toISOString(),
-          notas: `Auto-actualizado vía Firecrawl · ${m.fuente_url}`,
-        };
-      });
-      await guardar(nuevas);
+
+      await guardar(resultadoBase);
       toast({
-        title: `${altas.length} plataforma(s) actualizadas`,
-        description: "Aplicadas solo propuestas de confianza alta. Revisa el detalle abajo.",
+        title: `${total} plataforma(s) actualizadas`,
+        description: aplicadasIA > 0
+          ? `${aplicadasReales} reales (Firecrawl) + ${aplicadasIA} estimadas (IA). Las estimadas se marcan como [Estimación IA].`
+          : "Todas las cifras provienen de scrape real (alta confianza).",
       });
     } catch (err) {
       toast({
