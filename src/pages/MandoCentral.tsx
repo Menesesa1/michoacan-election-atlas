@@ -11,6 +11,7 @@ import { ContiendasActivas } from "@/components/mando/ContiendasActivas";
 import { CandidatosDestacados } from "@/components/mando/CandidatosDestacados";
 import { EstrategiasRecientes } from "@/components/mando/EstrategiasRecientes";
 import { TendenciaResumen } from "@/components/mando/TendenciaResumen";
+import { InteresModulos } from "@/components/mando/InteresModulos";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { useElectoralData } from "@/context/DataContext";
@@ -81,6 +82,7 @@ export default function MandoCentral() {
             <CandidatosDestacados />
             <EstrategiasRecientes />
             <TendenciaResumen />
+            <InteresModulos />
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

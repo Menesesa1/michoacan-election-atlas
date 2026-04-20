@@ -19,6 +19,9 @@ import {
   ChevronDown,
   Sparkles,
   Zap,
+  Network,
+  MessageCircle,
+  ShieldCheck,
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useState } from "react";
@@ -51,6 +54,12 @@ const locales = [
   { title: "Candidatos", url: "/candidatos", icon: Users },
   { title: "Inteligencia", url: "/inteligencia", icon: ShieldAlert },
   { title: "Fuentes", url: "/fuentes", icon: Database },
+];
+
+const operacionCampania = [
+  { title: "Operación territorial", url: "/operacion-territorial", icon: Network },
+  { title: "CRM simpatizantes", url: "/crm-simpatizantes", icon: MessageCircle },
+  { title: "Día D · Casilla", url: "/dia-d", icon: ShieldCheck },
 ];
 
 const federal = [
@@ -113,6 +122,41 @@ export function AppSidebar() {
                       >
                         <item.icon className="w-4 h-4" />
                         {!collapsed && <span>{item.title}</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Operación de campaña — Próximamente */}
+        <SidebarGroup>
+          <SidebarGroupLabel className="text-primary/80 font-semibold uppercase tracking-widest text-[10px]">
+            <Sparkles className="w-3 h-3 mr-1.5 inline" />
+            {!collapsed && "Operación de campaña"}
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {operacionCampania.map((item) => {
+                const active = isActive(item.url);
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild isActive={active}>
+                      <NavLink
+                        to={item.url}
+                        className={`${active ? "bg-sidebar-accent text-primary font-semibold border-l-2 border-primary" : "hover:bg-sidebar-accent/60"}`}
+                      >
+                        <item.icon className="w-4 h-4" />
+                        {!collapsed && (
+                          <>
+                            <span className="truncate">{item.title}</span>
+                            <span className="ml-auto text-[9px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded bg-primary/15 text-primary border border-primary/30">
+                              Pronto
+                            </span>
+                          </>
+                        )}
                       </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
