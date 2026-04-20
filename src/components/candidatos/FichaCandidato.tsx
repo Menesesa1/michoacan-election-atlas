@@ -9,15 +9,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
-import { Sparkles, AlertTriangle, RotateCcw, Search, MessageSquare, User, Users2, History, BarChart3, Radar } from "lucide-react";
+import { Sparkles, AlertTriangle, Search, MessageSquare, User, Users2, History, Radar } from "lucide-react";
 import type {
   Candidato, TipoAnalisis, AnalisisPerfil, AnalisisOSINT, AnalisisDiscurso,
-  WarRoomMiembro, TrayectoriaHito, MetricasRedes,
+  WarRoomMiembro, TrayectoriaHito,
 } from "@/lib/candidatos/types";
 import { PartidoBadges } from "./PartidoBadges";
 import { WarRoomEditor } from "./WarRoomEditor";
 import { TrayectoriaEditor } from "./TrayectoriaEditor";
-import { MetricasRedesEditor } from "./MetricasRedesEditor";
 import { PrecargaFirecrawl } from "./PrecargaFirecrawl";
 import { EvaluacionDigitalTab } from "./EvaluacionDigitalTab";
 import { generarTodosLosAnalisis } from "@/lib/candidatos/auto-analisis";
