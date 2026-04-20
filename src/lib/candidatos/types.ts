@@ -155,6 +155,38 @@ export interface AnalisisDiscurso {
   contraargumentos_sugeridos: { vs_eje: string; respuesta: string }[];
 }
 
+// ===== Evaluación digital (estimación IA + diagnóstico) =====
+export interface EstimacionMetricaIA {
+  plataforma: PlataformaRed;
+  seguidores_estimados: number;
+  engagement_estimado: number;
+  base_estimacion: string;
+  confianza: "alta" | "media" | "baja";
+}
+
+export interface EvaluacionRedes {
+  estimacion_metricas: EstimacionMetricaIA[];
+  diagnostico_global: {
+    nivel_presencia: "alta" | "media" | "baja" | "inexistente";
+    score_digital: number;
+    resumen_ejecutivo: string;
+    brecha_vs_cargo: string;
+  };
+  foda_digital: {
+    fortalezas: string[];
+    debilidades: string[];
+    oportunidades: string[];
+    amenazas: string[];
+  };
+  recomendaciones: {
+    plataforma: PlataformaRed | "general";
+    prioridad: "alta" | "media" | "baja";
+    accion: string;
+    kpi_objetivo: string;
+  }[];
+  comparables_referencia?: { referencia: string; observacion: string }[];
+}
+
 export type AnalisisOutput = AnalisisPerfil | AnalisisOSINT | AnalisisDiscurso;
 
 export interface CandidatoAnalisisRow {
