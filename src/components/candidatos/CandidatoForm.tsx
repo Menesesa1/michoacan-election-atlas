@@ -36,7 +36,9 @@ const schema = z.object({
   twitter: z.string().trim().max(120).optional(),
   facebook: z.string().trim().max(120).optional(),
   instagram: z.string().trim().max(120).optional(),
+  tiktok: z.string().trim().max(120).optional(),
   web: z.string().trim().max(200).optional(),
+  whatsapp_community: z.string().trim().max(200).optional(),
   notas: z.string().trim().max(1000).optional(),
 });
 
@@ -70,7 +72,7 @@ export function CandidatoForm({ candidato, onSaved, trigger }: Props) {
     nombre: "", nivel: "ayuntamientos" as NivelEstrategia, territorio: "",
     fase: "precampana" as FaseCandidatura,
     es_propio: false,
-    cargo_buscado: "", bio_breve: "", twitter: "", facebook: "", instagram: "", web: "", notas: "",
+    cargo_buscado: "", bio_breve: "", twitter: "", facebook: "", instagram: "", tiktok: "", web: "", whatsapp_community: "", notas: "",
   });
 
   useEffect(() => {
@@ -89,7 +91,9 @@ export function CandidatoForm({ candidato, onSaved, trigger }: Props) {
         twitter: candidato.redes?.twitter ?? "",
         facebook: candidato.redes?.facebook ?? "",
         instagram: candidato.redes?.instagram ?? "",
+        tiktok: candidato.redes?.tiktok ?? "",
         web: candidato.redes?.web ?? "",
+        whatsapp_community: candidato.redes?.whatsapp_community ?? "",
         notas: candidato.notas ?? "",
       });
     }
@@ -138,7 +142,9 @@ export function CandidatoForm({ candidato, onSaved, trigger }: Props) {
           twitter: parsed.data.twitter || undefined,
           facebook: parsed.data.facebook || undefined,
           instagram: parsed.data.instagram || undefined,
+          tiktok: parsed.data.tiktok || undefined,
           web: parsed.data.web || undefined,
+          whatsapp_community: parsed.data.whatsapp_community || undefined,
         },
         notas: parsed.data.notas || null,
       };
@@ -473,7 +479,9 @@ export function CandidatoForm({ candidato, onSaved, trigger }: Props) {
           <div><Label>Twitter / X</Label><Input value={form.twitter} onChange={(e) => setForm({ ...form, twitter: e.target.value })} placeholder="@usuario" /></div>
           <div><Label>Facebook</Label><Input value={form.facebook} onChange={(e) => setForm({ ...form, facebook: e.target.value })} /></div>
           <div><Label>Instagram</Label><Input value={form.instagram} onChange={(e) => setForm({ ...form, instagram: e.target.value })} /></div>
-          <div><Label>Sitio web</Label><Input value={form.web} onChange={(e) => setForm({ ...form, web: e.target.value })} /></div>
+          <div><Label>TikTok</Label><Input value={form.tiktok} onChange={(e) => setForm({ ...form, tiktok: e.target.value })} placeholder="@usuario" /></div>
+          <div><Label>Landing page</Label><Input value={form.web} onChange={(e) => setForm({ ...form, web: e.target.value })} placeholder="https://…" /></div>
+          <div><Label>Comunidad WhatsApp</Label><Input value={form.whatsapp_community} onChange={(e) => setForm({ ...form, whatsapp_community: e.target.value })} placeholder="https://chat.whatsapp.com/…" /></div>
           <div className="md:col-span-2">
             <Label>Notas internas</Label>
             <Textarea rows={2} value={form.notas} onChange={(e) => setForm({ ...form, notas: e.target.value })} placeholder="Información adicional para enriquecer el análisis IA" />
