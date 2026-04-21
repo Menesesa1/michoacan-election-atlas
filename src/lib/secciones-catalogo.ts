@@ -54,6 +54,7 @@ let cache: SeccionCat[] | null = null;
 let bySec: Map<number, SeccionCat> | null = null;
 let distritosLocales: DistritoLocal[] | null = null;
 let secToDistritoLocal: Map<number, number> | null = null;
+let secsByDistritoFederal: Map<number, SeccionCat[]> | null = null;
 
 export async function loadCatalogo(): Promise<SeccionCat[]> {
   if (cache) return cache;
@@ -64,6 +65,12 @@ export async function loadCatalogo(): Promise<SeccionCat[]> {
   if (!resCat.ok) throw new Error("No se pudo cargar el catálogo de secciones");
   cache = (await resCat.json()) as SeccionCat[];
   bySec = new Map(cache.map((c) => [c.sec, c]));
+  secsByDistritoFederal = new Map();
+  for (const s of cache) {
+    const arr = secsByDistritoFederal.get(s.dis);
+    if (arr) arr.push(s);
+    else secsByDistritoFederal.set(s.dis, [s]);
+  }
   if (resDL.ok) {
     const dl = (await resDL.json()) as DistritosLocalesPayload;
     distritosLocales = dl.distritos;
@@ -96,5 +103,15 @@ export function distritoLocalDeSeccion(sec: number): number | undefined {
 
 export function infoDistritoLocal(num: number): DistritoLocal | undefined {
   return distritosLocales?.find((d) => d.distrito === num);
+}
+
+/** Devuelve las secciones INE pertenecientes a un distrito federal (1-12 según catálogo). */
+export function seccionesPorDistritoFederal(dis: number): SeccionCat[] {
+  return secsByDistritoFederal?.get(dis) ?? [];
+}
+
+/** Conjunto de claves de sección para un distrito federal (lookup O(1)). */
+export function setSeccionesDistritoFederal(dis: number): Set<number> {
+  return new Set((secsByDistritoFederal?.get(dis) ?? []).map((s) => s.sec));
 }
 

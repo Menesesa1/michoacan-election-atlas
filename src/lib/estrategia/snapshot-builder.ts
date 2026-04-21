@@ -6,6 +6,7 @@ import {
   getCatalogoSync,
   getDistritosLocales,
   nombreMunicipio,
+  seccionesPorDistritoFederal,
   TIPO_SECCION,
   type SeccionCat,
 } from "@/lib/secciones-catalogo";
@@ -164,13 +165,22 @@ export function buildSnapshot(params: BuildSnapshotParams): SnapshotPayload {
           riesgo_alternancia: calcRiesgo(ultimo.margen_pp),
         };
       }
-      // Composición a nivel estatal (los distritos federales agrupan varios municipios;
-      // el catálogo INE no expone mapeo federal directo, así que omitimos filtro fino)
-      composicion_territorial = calcComposicion(() => true);
-      if (catalogo) {
+      // Mapeo INE: filtrar secciones cuyo campo `dis` (distrito federal) coincide
+      const subsetFed = seccionesPorDistritoFederal(id);
+      if (subsetFed.length > 0) {
+        const setFed = new Set(subsetFed.map((s) => s.sec));
+        composicion_territorial = calcComposicion((s) => setFed.has(s.sec));
         meta_victoria = buildMetaVictoria(
           d.listaNominal2024,
-          // Aproximación: usar todo el catálogo con peso proporcional al ratio LN distrito/total
+          subsetFed,
+          participacionSupuesta ?? ultimo?.participacion_pct,
+          ultimo?.margen_pp,
+        );
+      } else if (catalogo) {
+        // Fallback (catálogo no cargado aún o id sin mapeo): vista estatal
+        composicion_territorial = calcComposicion(() => true);
+        meta_victoria = buildMetaVictoria(
+          d.listaNominal2024,
           catalogo,
           participacionSupuesta ?? ultimo?.participacion_pct,
           ultimo?.margen_pp,
