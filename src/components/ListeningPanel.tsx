@@ -8,6 +8,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { DiscursoCiudadano } from "@/components/DiscursoCiudadano";
 import { RapidResponseDialog, type RapidResponseInput } from "@/components/RapidResponseDialog";
+import { NarrativasPanel } from "@/components/NarrativasPanel";
+import { TemaDetailSheet } from "@/components/TemaDetailSheet";
 
 interface ResumenRow {
   id: string;
@@ -99,6 +101,13 @@ export function ListeningPanel({ scope }: ListeningPanelProps) {
   const [refreshing, setRefreshing] = useState(false);
   const [rrOpen, setRrOpen] = useState(false);
   const [rrInput, setRrInput] = useState<RapidResponseInput | null>(null);
+  const [drillOpen, setDrillOpen] = useState(false);
+  const [drillQuery, setDrillQuery] = useState<{ value: string; tipo: "tema" | "hashtag" } | null>(null);
+
+  const openDrill = (value: string, tipo: "tema" | "hashtag") => {
+    setDrillQuery({ value, tipo });
+    setDrillOpen(true);
+  };
 
   const openRapid = (m: MencionRow) => {
     setRrInput({
@@ -232,6 +241,8 @@ export function ListeningPanel({ scope }: ListeningPanelProps) {
 
       {scope === "estatal" && <DiscursoCiudadano />}
 
+      <NarrativasPanel scope={scope} />
+
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-48 w-full" />)}
@@ -318,7 +329,17 @@ export function ListeningPanel({ scope }: ListeningPanelProps) {
                       </div>
                       <div className="flex flex-wrap gap-1">
                         {r.top_temas.slice(0, 4).map((t) => (
-                          <Badge key={t.value} variant="secondary" className="text-[9px]">{t.value} · {t.count}</Badge>
+                          <button
+                            key={t.value}
+                            type="button"
+                            onClick={() => openDrill(t.value, "tema")}
+                            className="hover:opacity-80 transition"
+                            title="Ver evolución y menciones de este tema"
+                          >
+                            <Badge variant="secondary" className="text-[9px] cursor-pointer hover:bg-secondary/80">
+                              {t.value} · {t.count}
+                            </Badge>
+                          </button>
                         ))}
                       </div>
                     </div>
@@ -332,7 +353,15 @@ export function ListeningPanel({ scope }: ListeningPanelProps) {
                       </div>
                       <div className="flex flex-wrap gap-1">
                         {r.top_hashtags.slice(0, 4).map((h) => (
-                          <span key={h.value} className="text-[10px] text-primary font-mono">#{h.value.replace(/^#/, "")}</span>
+                          <button
+                            key={h.value}
+                            type="button"
+                            onClick={() => openDrill(h.value.replace(/^#/, ""), "hashtag")}
+                            className="text-[10px] text-primary font-mono hover:underline cursor-pointer"
+                            title="Ver evolución y menciones de este hashtag"
+                          >
+                            #{h.value.replace(/^#/, "")}
+                          </button>
                         ))}
                       </div>
                     </div>
@@ -396,6 +425,13 @@ export function ListeningPanel({ scope }: ListeningPanelProps) {
         </>
       )}
       <RapidResponseDialog open={rrOpen} onOpenChange={setRrOpen} input={rrInput} />
+      <TemaDetailSheet
+        open={drillOpen}
+        onOpenChange={setDrillOpen}
+        query={drillQuery?.value ?? null}
+        tipo={drillQuery?.tipo ?? "tema"}
+        scope={scope}
+      />
     </div>
   );
 }
