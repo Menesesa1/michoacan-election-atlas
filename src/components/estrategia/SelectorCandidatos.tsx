@@ -59,9 +59,28 @@ export function SelectorCandidatos({
   };
 
   const filtrados = useMemo(() => {
-    const t = territorioLabel.toLowerCase();
-    return candidatos.filter((c) => !t || c.territorio.toLowerCase().includes(t.split(" ")[0]) || t.includes(c.territorio.toLowerCase()));
-  }, [candidatos, territorioLabel]);
+    // Validación estricta de coherencia nivel ↔ territorio:
+    // los candidatos a Diputado Federal deben ser comparados solo contra
+    // el distrito federal seleccionado, nunca con un distrito local homónimo.
+    const t = territorioLabel.trim().toLowerCase();
+    if (!t) return candidatos;
+
+    // Token clave del territorio (p.ej. "distrito federal 07" → "07")
+    const numero = t.match(/\b(\d{1,2})\b/)?.[1];
+    const esFederal = nivel === "diputados_federales";
+
+    return candidatos.filter((c) => {
+      const ct = c.territorio.toLowerCase();
+      if (esFederal) {
+        // Debe mencionar "federal" o coincidir con el número de distrito federal
+        const mencionaFederal = ct.includes("federal");
+        const numeroOk = numero ? new RegExp(`\\b0?${parseInt(numero, 10)}\\b`).test(ct) : false;
+        return mencionaFederal && numeroOk;
+      }
+      // Resto de niveles: heurística previa por token
+      return ct.includes(t.split(" ")[0]) || t.includes(ct);
+    });
+  }, [candidatos, territorioLabel, nivel]);
 
   const buildSnap = (c: Candidato): CandidatoSnapshot => {
     const a = analisis[c.id];
