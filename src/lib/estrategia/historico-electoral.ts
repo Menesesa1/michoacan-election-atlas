@@ -1,5 +1,5 @@
 // Cálculos de histórico electoral y competitividad por territorio
-import type { DistritoLocal, Partido } from "@/data/electoral-data";
+import type { DistritoFederal, DistritoLocal, Partido } from "@/data/electoral-data";
 import type { SnapshotPayload } from "./types";
 
 export function pctVoto(
@@ -28,8 +28,8 @@ export function calcRiesgo(margen: number): "alto" | "medio" | "bajo" {
   return margen < 5 ? "alto" : margen < 12 ? "medio" : "bajo";
 }
 
-/** Histórico de un distrito local concreto */
-export function historicoDistrito(d: DistritoLocal): SnapshotPayload["historico"] {
+/** Histórico de un distrito (local o federal) — misma forma de datos */
+export function historicoDistrito(d: DistritoLocal | DistritoFederal): SnapshotPayload["historico"] {
   return Object.values(d.resultados).map((r) => ({
     año: r.año,
     ganador: r.ganador,

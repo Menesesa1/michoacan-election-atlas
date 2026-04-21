@@ -1,7 +1,7 @@
 // Plantillas base de escenarios por nivel electoral.
 // La IA enriquece estas plantillas con datos actuales y genera estrategias.
 
-export type NivelEscenario = "gobernador" | "diputados" | "ayuntamientos";
+export type NivelEscenario = "gobernador" | "diputados_federales" | "diputados" | "ayuntamientos";
 export type TipoEscenario = "optimista" | "moderado" | "pesimista";
 
 export interface EscenarioBase {
@@ -121,6 +121,59 @@ export const ESCENARIOS_BASE: Record<NivelEscenario, EscenarioBase[]> = {
       ],
     },
   ],
+  diputados_federales: [
+    {
+      tipo: "optimista",
+      titulo: "Bancada federal robusta por Michoacán",
+      probabilidad: 30,
+      supuestos: [
+        "Coalición oficialista federal mantiene unidad y arrastre presidencial",
+        "Participación 55-60% en elección intermedia favorece movilización",
+        "Triunfo en al menos 8 de 11 distritos federales",
+        "RP entrega 2-3 plurinominales adicionales por la 5ta circunscripción",
+      ],
+      metricas: [
+        { label: "Distritos federales MR", valor: "8-10 de 11", delta: "+2 vs 2021" },
+        { label: "Plurinominales (RP)", valor: "+2 a +3" },
+        { label: "Bancada Michoacán", valor: "10-13 diputados" },
+        { label: "Voto duro federal", valor: "36-40%" },
+      ],
+    },
+    {
+      tipo: "moderado",
+      titulo: "División de boleta federal",
+      probabilidad: 50,
+      supuestos: [
+        "Voto diferenciado: gana mayoría pero pierde 2-3 distritos urbanos",
+        "Oposición compite seriamente en D5 Zamora y D11 Morelia",
+        "Participación 48-52% en línea con histórico federal intermedio",
+        "Bancada estatal con disciplina parcial frente a Morelia y CDMX",
+      ],
+      metricas: [
+        { label: "Distritos federales MR", valor: "6-8 de 11" },
+        { label: "Plurinominales (RP)", valor: "+1 a +2" },
+        { label: "Bancada Michoacán", valor: "7-10 diputados" },
+        { label: "Distritos bisagra", valor: "3-4 en disputa" },
+      ],
+    },
+    {
+      tipo: "pesimista",
+      titulo: "Pérdida de hegemonía federal",
+      probabilidad: 20,
+      supuestos: [
+        "Coalición opositora (PAN-PRI-MC) coordinada en cabeceras urbanas",
+        "Voto de castigo por crisis nacional o regional de seguridad",
+        "Pérdida de Morelia, Zamora, Uruapan, Pátzcuaro a nivel federal",
+        "Participación >60% impulsada por castigo",
+      ],
+      metricas: [
+        { label: "Distritos federales MR", valor: "3-5 de 11" },
+        { label: "Plurinominales (RP)", valor: "+1" },
+        { label: "Bancada Michoacán", valor: "4-6 diputados" },
+        { label: "Distritos urbanos perdidos", valor: "4-6" },
+      ],
+    },
+  ],
   ayuntamientos: [
     {
       tipo: "optimista",
@@ -176,6 +229,7 @@ export const ESCENARIOS_BASE: Record<NivelEscenario, EscenarioBase[]> = {
 
 export const NIVEL_LABEL: Record<NivelEscenario, string> = {
   gobernador: "Gubernatura 2027",
+  diputados_federales: "Cámara de Diputados Federales (11 distritos)",
   diputados: "Congreso Local (24 distritos + RP)",
   ayuntamientos: "113 Ayuntamientos",
 };
