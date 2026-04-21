@@ -72,7 +72,7 @@ export function TendenciaResumen() {
           <div className="grid grid-cols-2 gap-2">
             {swings.map(({ partido, actual, swing }) => {
               const Icon = swing > 0.5 ? TrendingUp : swing < -0.5 ? TrendingDown : Minus;
-              const color = swing > 0.5 ? "text-emerald-400" : swing < -0.5 ? "text-destructive" : "text-muted-foreground";
+              const color = swing > 0.5 ? "text-emerald-400" : swing < -0.5 ? "text-destructive" : "text-foreground";
               return (
                 <div key={partido} className="flex items-center justify-between bg-secondary/40 rounded-md px-2 py-1.5">
                   <div className="flex items-center gap-1.5 min-w-0">
