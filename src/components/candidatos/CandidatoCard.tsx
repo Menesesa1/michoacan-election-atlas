@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Trash2, FileSearch, Twitter, Facebook, Instagram, Globe, Sparkles, Loader2, CheckCircle2, AlertCircle, Pencil, Star, Swords } from "lucide-react";
+import { Trash2, FileSearch, Twitter, Facebook, Instagram, Globe, AtSign, Sparkles, Loader2, CheckCircle2, AlertCircle, Pencil, Star, Swords } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { Candidato, TipoAnalisis } from "@/lib/candidatos/types";
