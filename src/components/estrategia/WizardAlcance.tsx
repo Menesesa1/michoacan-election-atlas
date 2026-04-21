@@ -59,6 +59,21 @@ export function WizardAlcance({
   nivel, setNivel, territorio, setTerritorio, territorios,
   posicion, setPosicion, coalicion, toggleCoalicion, horizonte, setHorizonte,
 }: Props) {
+  // Auto-corrección: si el territorio actual no corresponde al nivel,
+  // selecciona la primera opción válida del catálogo (evita estados inconsistentes
+  // tipo "diputados_federales" + "distrito-7" local).
+  useEffect(() => {
+    if (!territorio) return;
+    if (!territorioCoincideConNivel(nivel, territorio)) {
+      const primero = territorios[0]?.value;
+      if (primero) setTerritorio(primero);
+      else setTerritorio("");
+    }
+  }, [nivel, territorio, territorios, setTerritorio]);
+
+  const territorioInvalido =
+    territorio !== "" && !territorioCoincideConNivel(nivel, territorio);
+
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
