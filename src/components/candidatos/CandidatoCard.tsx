@@ -166,6 +166,7 @@ export function CandidatoCard({
             {candidato.redes?.twitter && <Twitter className="w-3 h-3" />}
             {candidato.redes?.facebook && <Facebook className="w-3 h-3" />}
             {candidato.redes?.instagram && <Instagram className="w-3 h-3" />}
+            {candidato.redes?.threads && <AtSign className="w-3 h-3" />}
             {candidato.redes?.web && <Globe className="w-3 h-3" />}
           </div>
         </div>
