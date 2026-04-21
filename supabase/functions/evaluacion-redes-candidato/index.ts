@@ -28,15 +28,16 @@ interface RequestBody {
   cargo_buscado?: string;
   bio_breve?: string;
   redes?: Record<string, string | undefined>;
-  metricas_actuales?: Partial<Record<"facebook" | "twitter" | "instagram" | "tiktok" | "youtube", MetricaActual>>;
+  metricas_actuales?: Partial<Record<"facebook" | "twitter" | "instagram" | "tiktok" | "youtube" | "threads", MetricaActual>>;
 }
 
-const CANALES_ESPERADOS = ["facebook", "instagram", "tiktok", "twitter", "landing_page", "whatsapp_community"] as const;
+const CANALES_ESPERADOS = ["facebook", "instagram", "tiktok", "twitter", "threads", "landing_page", "whatsapp_community"] as const;
 const CANAL_LABEL: Record<string, string> = {
   facebook: "Facebook",
   instagram: "Instagram",
   tiktok: "TikTok",
   twitter: "X / Twitter",
+  threads: "Threads",
   landing_page: "Landing page propia",
   whatsapp_community: "Comunidad de WhatsApp",
 };
@@ -55,7 +56,7 @@ const TOOL = {
           items: {
             type: "object",
             properties: {
-              plataforma: { type: "string", enum: ["facebook", "twitter", "instagram", "tiktok", "youtube"] },
+              plataforma: { type: "string", enum: ["facebook", "twitter", "instagram", "tiktok", "youtube", "threads"] },
               seguidores_estimados: { type: "number", description: "Número estimado de seguidores. Si no hay base sólida, usa rangos conservadores según el cargo." },
               engagement_estimado: { type: "number", description: "Porcentaje 0-100. Promedios típicos: 1-3% saludable, >5% excelente, <0.5% muerto." },
               base_estimacion: { type: "string", description: "Justifica brevemente: handle público, cargo previo, comparable con rivales, etc." },
@@ -94,7 +95,7 @@ const TOOL = {
           items: {
             type: "object",
             properties: {
-              plataforma: { type: "string", enum: ["facebook", "twitter", "instagram", "tiktok", "youtube", "general"] },
+              plataforma: { type: "string", enum: ["facebook", "twitter", "instagram", "tiktok", "youtube", "threads", "general"] },
               prioridad: { type: "string", enum: ["alta", "media", "baja"] },
               accion: { type: "string", description: "Acción concreta y medible (ej. 'Pasar de 1 a 5 reels semanales en TikTok con tema seguridad')." },
               kpi_objetivo: { type: "string", description: "Métrica medible esperada en 30-90 días." },
