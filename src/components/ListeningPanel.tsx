@@ -241,6 +241,8 @@ export function ListeningPanel({ scope }: ListeningPanelProps) {
 
       {scope === "estatal" && <DiscursoCiudadano />}
 
+      <NarrativasPanel scope={scope} />
+
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-48 w-full" />)}
@@ -327,7 +329,17 @@ export function ListeningPanel({ scope }: ListeningPanelProps) {
                       </div>
                       <div className="flex flex-wrap gap-1">
                         {r.top_temas.slice(0, 4).map((t) => (
-                          <Badge key={t.value} variant="secondary" className="text-[9px]">{t.value} · {t.count}</Badge>
+                          <button
+                            key={t.value}
+                            type="button"
+                            onClick={() => openDrill(t.value, "tema")}
+                            className="hover:opacity-80 transition"
+                            title="Ver evolución y menciones de este tema"
+                          >
+                            <Badge variant="secondary" className="text-[9px] cursor-pointer hover:bg-secondary/80">
+                              {t.value} · {t.count}
+                            </Badge>
+                          </button>
                         ))}
                       </div>
                     </div>
@@ -341,7 +353,15 @@ export function ListeningPanel({ scope }: ListeningPanelProps) {
                       </div>
                       <div className="flex flex-wrap gap-1">
                         {r.top_hashtags.slice(0, 4).map((h) => (
-                          <span key={h.value} className="text-[10px] text-primary font-mono">#{h.value.replace(/^#/, "")}</span>
+                          <button
+                            key={h.value}
+                            type="button"
+                            onClick={() => openDrill(h.value.replace(/^#/, ""), "hashtag")}
+                            className="text-[10px] text-primary font-mono hover:underline cursor-pointer"
+                            title="Ver evolución y menciones de este hashtag"
+                          >
+                            #{h.value.replace(/^#/, "")}
+                          </button>
                         ))}
                       </div>
                     </div>
