@@ -11,6 +11,7 @@ export interface CandidatoRedes {
   web?: string;
   tiktok?: string;
   youtube?: string;
+  threads?: string;
   whatsapp_community?: string; // URL/invite a comunidad de WhatsApp
 }
 
