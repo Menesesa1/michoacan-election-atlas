@@ -28,16 +28,18 @@ interface RequestBody {
   cargo_buscado?: string;
   bio_breve?: string;
   redes?: Record<string, string | undefined>;
-  metricas_actuales?: Partial<Record<"facebook" | "twitter" | "instagram" | "tiktok" | "youtube" | "threads", MetricaActual>>;
+  metricas_actuales?: Partial<Record<"facebook" | "twitter" | "instagram" | "tiktok" | "youtube" | "threads" | "bluesky" | "linkedin", MetricaActual>>;
 }
 
-const CANALES_ESPERADOS = ["facebook", "instagram", "tiktok", "twitter", "threads", "landing_page", "whatsapp_community"] as const;
+const CANALES_ESPERADOS = ["facebook", "instagram", "tiktok", "twitter", "threads", "bluesky", "linkedin", "landing_page", "whatsapp_community"] as const;
 const CANAL_LABEL: Record<string, string> = {
   facebook: "Facebook",
   instagram: "Instagram",
   tiktok: "TikTok",
   twitter: "X / Twitter",
   threads: "Threads",
+  bluesky: "Bluesky",
+  linkedin: "LinkedIn",
   landing_page: "Landing page propia",
   whatsapp_community: "Comunidad de WhatsApp",
 };
@@ -56,7 +58,7 @@ const TOOL = {
           items: {
             type: "object",
             properties: {
-              plataforma: { type: "string", enum: ["facebook", "twitter", "instagram", "tiktok", "youtube", "threads"] },
+              plataforma: { type: "string", enum: ["facebook", "twitter", "instagram", "tiktok", "youtube", "threads", "bluesky", "linkedin"] },
               seguidores_estimados: { type: "number", description: "Número estimado de seguidores. Si no hay base sólida, usa rangos conservadores según el cargo." },
               engagement_estimado: { type: "number", description: "Porcentaje 0-100. Promedios típicos: 1-3% saludable, >5% excelente, <0.5% muerto." },
               base_estimacion: { type: "string", description: "Justifica brevemente: handle público, cargo previo, comparable con rivales, etc." },
@@ -95,7 +97,7 @@ const TOOL = {
           items: {
             type: "object",
             properties: {
-              plataforma: { type: "string", enum: ["facebook", "twitter", "instagram", "tiktok", "youtube", "threads", "general"] },
+              plataforma: { type: "string", enum: ["facebook", "twitter", "instagram", "tiktok", "youtube", "threads", "bluesky", "linkedin", "general"] },
               prioridad: { type: "string", enum: ["alta", "media", "baja"] },
               accion: { type: "string", description: "Acción concreta y medible (ej. 'Pasar de 1 a 5 reels semanales en TikTok con tema seguridad')." },
               kpi_objetivo: { type: "string", description: "Métrica medible esperada en 30-90 días." },
@@ -150,12 +152,14 @@ REGLAS DE ESTIMACIÓN:
 - Si es DESCONOCIDO (aspirante sin trayectoria), estima rangos CONSERVADORES (cientos a pocos miles) — confianza baja.
 
 REGLAS DE OPORTUNIDADES (CRÍTICO):
-Los canales esperados para un candidato moderno son: Facebook, Instagram, TikTok, X/Twitter, Landing page propia y Comunidad de WhatsApp.
+Los canales esperados para un candidato moderno son: Facebook, Instagram, TikTok, X/Twitter, Threads, Bluesky, LinkedIn, Landing page propia y Comunidad de WhatsApp.
 Por CADA canal de la lista CANALES_AUSENTES que recibirás, DEBES agregar al menos UNA oportunidad explícita en foda_digital.oportunidades indicando "Abrir/activar [canal]: [beneficio concreto para el cargo]" Y al menos UNA recomendación de prioridad alta o media para activarlo con KPI medible.
 TikTok es prioridad ALTA si el cargo busca voto joven (<35 años). WhatsApp Community es prioridad ALTA siempre para movilización territorial. Landing page es prioridad media para captura de leads.
+Bluesky es prioridad BAJA-MEDIA: nicho de early-adopters (periodistas, líderes de opinión digitales), útil para hedging si X se deteriora. NO subestimes su valor como canal de influencia indirecta.
+LinkedIn es CANAL PROFESIONAL/ÉLITES, NO masivo: prioridad ALTA solo para gobernador, diputaciones urbanas o municipios con sector empresarial fuerte (Morelia, Uruapan, Zamora, Lázaro Cárdenas). En municipios rurales es prioridad BAJA. NO uses su volumen de seguidores como proxy de fuerza electoral; sí como proxy de credibilidad y red de financistas/aliados institucionales.
 
 REGLAS DE DIAGNÓSTICO:
-- score_digital pondera alcance, engagement Y cobertura de canales (un candidato sin TikTok ni WhatsApp NO puede pasar de 70).
+- score_digital pondera alcance, engagement Y cobertura de canales (un candidato sin TikTok ni WhatsApp NO puede pasar de 70). LinkedIn no influye en el techo del score salvo cargos donde es prioritario (gobernador / urbanos).
 - brecha_vs_cargo debe ser CONCRETA: "necesita 5x más seguidores en TikTok para competir con [referencia]".
 - FODA debe ser ESPECÍFICO al territorio y cargo, NO genérico.
 - Recomendaciones deben ser ACCIONABLES con KPIs medibles en 30-90 días.
