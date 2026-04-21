@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -12,7 +13,26 @@ import {
   type Posicion,
 } from "@/data/estrategia-templates";
 import type { TerritorioOption } from "@/lib/estrategia-context";
-import { Landmark, Vote, Building, MapPin, Users, Scale } from "lucide-react";
+import { Landmark, Vote, Building, MapPin, Users, Scale, AlertTriangle } from "lucide-react";
+
+/** Prefijo de territorio esperado por nivel (para validar coherencia). */
+const PREFIJO_TERRITORIO: Record<NivelEscenario, string> = {
+  gobernador: "estatal",
+  diputados_federales: "distrito-fed-",
+  diputados: "distrito-",
+  ayuntamientos: "mun-",
+};
+
+export function territorioCoincideConNivel(nivel: NivelEscenario, territorio: string): boolean {
+  if (!territorio) return false;
+  const prefijo = PREFIJO_TERRITORIO[nivel];
+  if (nivel === "gobernador") return territorio === prefijo;
+  // Diputados locales: prefijo "distrito-" pero NO "distrito-fed-"
+  if (nivel === "diputados") {
+    return territorio.startsWith("distrito-") && !territorio.startsWith("distrito-fed-");
+  }
+  return territorio.startsWith(prefijo);
+}
 
 interface Props {
   nivel: NivelEscenario;
@@ -39,6 +59,21 @@ export function WizardAlcance({
   nivel, setNivel, territorio, setTerritorio, territorios,
   posicion, setPosicion, coalicion, toggleCoalicion, horizonte, setHorizonte,
 }: Props) {
+  // Auto-corrección: si el territorio actual no corresponde al nivel,
+  // selecciona la primera opción válida del catálogo (evita estados inconsistentes
+  // tipo "diputados_federales" + "distrito-7" local).
+  useEffect(() => {
+    if (!territorio) return;
+    if (!territorioCoincideConNivel(nivel, territorio)) {
+      const primero = territorios[0]?.value;
+      if (primero) setTerritorio(primero);
+      else setTerritorio("");
+    }
+  }, [nivel, territorio, territorios, setTerritorio]);
+
+  const territorioInvalido =
+    territorio !== "" && !territorioCoincideConNivel(nivel, territorio);
+
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -74,13 +109,23 @@ export function WizardAlcance({
             <MapPin className="w-3 h-3" /> Territorio
           </Label>
           <Select value={territorio} onValueChange={setTerritorio}>
-            <SelectTrigger><SelectValue placeholder="Elige territorio" /></SelectTrigger>
+            <SelectTrigger
+              className={territorioInvalido ? "border-destructive/60" : undefined}
+            >
+              <SelectValue placeholder="Elige territorio" />
+            </SelectTrigger>
             <SelectContent className="max-h-72">
               {territorios.map((t) => (
                 <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
               ))}
             </SelectContent>
           </Select>
+          {territorioInvalido && (
+            <p className="text-[11px] text-destructive flex items-center gap-1 mt-1">
+              <AlertTriangle className="w-3 h-3" />
+              El territorio no coincide con el nivel <span className="font-mono">{nivel}</span>. Selecciona uno válido.
+            </p>
+          )}
         </div>
 
         <div className="space-y-1.5">
