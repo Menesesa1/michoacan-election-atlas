@@ -49,7 +49,8 @@ export function TemaDetailSheet({ open, onOpenChange, query, tipo, scope }: Prop
     (async () => {
       setLoading(true);
       try {
-        const tipos = scope === "estatal" ? ["estatal"] : ["candidato_propio", "rival"];
+        const tipos: ("estatal" | "candidato_propio" | "rival")[] =
+          scope === "estatal" ? ["estatal"] : ["candidato_propio", "rival"];
 
         // 1. Últimos 8 runs ok con datos
         const { data: runs } = await supabase

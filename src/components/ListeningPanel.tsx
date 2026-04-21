@@ -8,6 +8,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { DiscursoCiudadano } from "@/components/DiscursoCiudadano";
 import { RapidResponseDialog, type RapidResponseInput } from "@/components/RapidResponseDialog";
+import { NarrativasPanel } from "@/components/NarrativasPanel";
+import { TemaDetailSheet } from "@/components/TemaDetailSheet";
 
 interface ResumenRow {
   id: string;
@@ -99,6 +101,13 @@ export function ListeningPanel({ scope }: ListeningPanelProps) {
   const [refreshing, setRefreshing] = useState(false);
   const [rrOpen, setRrOpen] = useState(false);
   const [rrInput, setRrInput] = useState<RapidResponseInput | null>(null);
+  const [drillOpen, setDrillOpen] = useState(false);
+  const [drillQuery, setDrillQuery] = useState<{ value: string; tipo: "tema" | "hashtag" } | null>(null);
+
+  const openDrill = (value: string, tipo: "tema" | "hashtag") => {
+    setDrillQuery({ value, tipo });
+    setDrillOpen(true);
+  };
 
   const openRapid = (m: MencionRow) => {
     setRrInput({
