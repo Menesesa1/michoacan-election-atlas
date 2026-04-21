@@ -20,5 +20,6 @@ INE Tech encoding: "M" = Mujeres.
 - [Data Processing](mem://features/data-processing) — CSV importer via PapaParse, filtering for Michoacán (Clave 16)
 - [Multi-level Analysis](mem://features/multi-level-analysis) — Dynamic toggle between federal (11 districts) and local (24 districts) analysis
 - [Demographic Analysis](mem://features/demographic-analysis) — INE Nominal List analysis with population pyramids and gender/age heatmaps
+- [Distritación Federal Michoacán](mem://data/distritos-federales-michoacan) — Cabeceras oficiales INE 2022: D08 y D10 son Morelia, D11 es Pátzcuaro
 - [Socioeconomic](mem://features/socioeconomic) — INEGI ECEG dataset integrated with INE section catalog for municipal and district aggregation
 - [Social Listening Roadmap](mem://features/social-listening-roadmap) — Plan por fases (1-5) para escalar el módulo de Inteligencia a nivel Brandwatch en el nicho Michoacán político (pendiente)

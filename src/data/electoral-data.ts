@@ -50,7 +50,7 @@ export const distritosFederales: DistritoFederal[] = [
     }
   },
   {
-    id: 2, cabecera: "Puruándiro", listaNominal2024: 342187, participacion2024: 55.8,
+    id: 2, cabecera: "Apatzingán", listaNominal2024: 342187, participacion2024: 55.8,
     resultados: {
       "fed2024": { año: 2024, tipo: "federal", votos: { MORENA: 78654, PAN: 42345, PRI: 28765, MC: 18432, PVEM: 9876, PT: 7654, PRD: 5432, OTROS: 2876 }, totalVotos: 194034, participacion: 55.8, ganador: "MORENA" },
       "fed2021": { año: 2021, tipo: "federal", votos: { MORENA: 62345, PAN: 45678, PRI: 32456, MC: 14567, PVEM: 7890, PT: 5678, PRD: 8901, OTROS: 1890 }, totalVotos: 179405, participacion: 51.2, ganador: "MORENA" },
@@ -66,7 +66,7 @@ export const distritosFederales: DistritoFederal[] = [
     }
   },
   {
-    id: 4, cabecera: "Jiquilpan", listaNominal2024: 312456, participacion2024: 54.3,
+    id: 4, cabecera: "Sahuayo", listaNominal2024: 312456, participacion2024: 54.3,
     resultados: {
       "fed2024": { año: 2024, tipo: "federal", votos: { MORENA: 65432, PAN: 45678, PRI: 22345, MC: 19876, PVEM: 8765, PT: 6543, PRD: 4321, OTROS: 2876 }, totalVotos: 175836, participacion: 54.3, ganador: "MORENA" },
       "fed2021": { año: 2021, tipo: "federal", votos: { MORENA: 52345, PAN: 48765, PRI: 26789, MC: 15432, PVEM: 7654, PT: 5432, PRD: 7890, OTROS: 1987 }, totalVotos: 166294, participacion: 50.8, ganador: "MORENA" },
@@ -90,7 +90,7 @@ export const distritosFederales: DistritoFederal[] = [
     }
   },
   {
-    id: 7, cabecera: "Morelia NE", listaNominal2024: 425678, participacion2024: 61.2,
+    id: 7, cabecera: "Zacapu", listaNominal2024: 425678, participacion2024: 61.2,
     resultados: {
       "fed2024": { año: 2024, tipo: "federal", votos: { MORENA: 105432, PAN: 52345, PRI: 28765, MC: 32456, PVEM: 14567, PT: 10234, PRD: 7890, OTROS: 4321 }, totalVotos: 256010, participacion: 61.2, ganador: "MORENA" },
       "fed2021": { año: 2021, tipo: "federal", votos: { MORENA: 82345, PAN: 58901, PRI: 32456, MC: 28765, PVEM: 11234, PT: 8901, PRD: 10234, OTROS: 3210 }, totalVotos: 236046, participacion: 57.4, ganador: "MORENA" },
@@ -98,7 +98,7 @@ export const distritosFederales: DistritoFederal[] = [
     }
   },
   {
-    id: 8, cabecera: "Morelia SO", listaNominal2024: 412345, participacion2024: 60.5,
+    id: 8, cabecera: "Morelia", listaNominal2024: 412345, participacion2024: 60.5,
     resultados: {
       "fed2024": { año: 2024, tipo: "federal", votos: { MORENA: 98765, PAN: 55432, PRI: 30234, MC: 28765, PVEM: 13456, PT: 9876, PRD: 7654, OTROS: 4321 }, totalVotos: 248503, participacion: 60.5, ganador: "MORENA" },
       "fed2021": { año: 2021, tipo: "federal", votos: { MORENA: 78901, PAN: 58765, PRI: 34567, MC: 24567, PVEM: 10234, PT: 7890, PRD: 9876, OTROS: 2987 }, totalVotos: 227787, participacion: 56.8, ganador: "MORENA" },
@@ -114,7 +114,7 @@ export const distritosFederales: DistritoFederal[] = [
     }
   },
   {
-    id: 10, cabecera: "Pátzcuaro", listaNominal2024: 356789, participacion2024: 56.3,
+    id: 10, cabecera: "Morelia", listaNominal2024: 356789, participacion2024: 56.3,
     resultados: {
       "fed2024": { año: 2024, tipo: "federal", votos: { MORENA: 82345, PAN: 42345, PRI: 24567, MC: 18765, PVEM: 10234, PT: 7890, PRD: 5678, OTROS: 3210 }, totalVotos: 195034, participacion: 56.3, ganador: "MORENA" },
       "fed2021": { año: 2021, tipo: "federal", votos: { MORENA: 65432, PAN: 45678, PRI: 28901, MC: 14567, PVEM: 8765, PT: 6543, PRD: 8234, OTROS: 2345 }, totalVotos: 180465, participacion: 52.7, ganador: "MORENA" },
@@ -122,7 +122,7 @@ export const distritosFederales: DistritoFederal[] = [
     }
   },
   {
-    id: 11, cabecera: "Apatzingán", listaNominal2024: 332456, participacion2024: 53.6,
+    id: 11, cabecera: "Pátzcuaro", listaNominal2024: 332456, participacion2024: 53.6,
     resultados: {
       "fed2024": { año: 2024, tipo: "federal", votos: { MORENA: 75432, PAN: 32456, PRI: 22345, MC: 15678, PVEM: 9876, PT: 7654, PRD: 5432, OTROS: 2987 }, totalVotos: 171860, participacion: 53.6, ganador: "MORENA" },
       "fed2021": { año: 2021, tipo: "federal", votos: { MORENA: 58765, PAN: 35432, PRI: 26789, MC: 12345, PVEM: 8234, PT: 5678, PRD: 7890, OTROS: 1876 }, totalVotos: 157009, participacion: 49.8, ganador: "MORENA" },
