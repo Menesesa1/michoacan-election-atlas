@@ -11,6 +11,7 @@ import { contiendaKey, contiendaLabel, FASE_LABEL_CORTO, type FaseCandidatura, t
 
 const NIVEL_LABEL: Record<string, string> = {
   gobernador: "Gobernatura",
+  diputados_federales: "Diputado Federal",
   diputados: "Diputado Local",
   ayuntamientos: "Ayuntamiento",
 };

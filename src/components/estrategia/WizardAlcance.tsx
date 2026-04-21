@@ -12,7 +12,7 @@ import {
   type Posicion,
 } from "@/data/estrategia-templates";
 import type { TerritorioOption } from "@/lib/estrategia-context";
-import { Landmark, Vote, Building, MapPin, Users } from "lucide-react";
+import { Landmark, Vote, Building, MapPin, Users, Scale } from "lucide-react";
 
 interface Props {
   nivel: NivelEscenario;
@@ -28,8 +28,9 @@ interface Props {
   setHorizonte: (h: string) => void;
 }
 
-const NIVEL_ICON = {
+const NIVEL_ICON: Record<NivelEscenario, typeof Landmark> = {
   gobernador: Landmark,
+  diputados_federales: Scale,
   diputados: Vote,
   ayuntamientos: Building,
 };
@@ -40,8 +41,8 @@ export function WizardAlcance({
 }: Props) {
   return (
     <div className="space-y-5">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        {(["gobernador", "diputados", "ayuntamientos"] as NivelEscenario[]).map((n) => {
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {(["gobernador", "diputados_federales", "diputados", "ayuntamientos"] as NivelEscenario[]).map((n) => {
           const Icon = NIVEL_ICON[n];
           const active = nivel === n;
           return (

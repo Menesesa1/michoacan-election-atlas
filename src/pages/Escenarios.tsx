@@ -52,8 +52,8 @@ export default function Escenarios() {
   const [saving, setSaving] = useState(false);
 
   const territorios = useMemo(
-    () => getTerritorios(nivel as NivelEstrategia, distritosLocales),
-    [nivel, distritosLocales],
+    () => getTerritorios(nivel as NivelEstrategia, distritosLocales, distritos),
+    [nivel, distritosLocales, distritos],
   );
 
   // Cargar catálogo INE de secciones (composición urbano/rural en snapshot)

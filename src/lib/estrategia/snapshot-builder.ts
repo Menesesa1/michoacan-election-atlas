@@ -108,7 +108,7 @@ function buildMetaVictoria(
 export function buildSnapshot(params: BuildSnapshotParams): SnapshotPayload {
   const {
     nivel, nivelLabel, territorio, territorioLabel, posicion, coalicion, horizonte,
-    distritosLocales, alertas, candidatos, supuestos,
+    distritosFederales, distritosLocales, alertas, candidatos, supuestos,
   } = params;
 
   let historico: SnapshotPayload["historico"] = [];
@@ -126,7 +126,7 @@ export function buildSnapshot(params: BuildSnapshotParams): SnapshotPayload {
   const catalogo = getCatalogoSync();
   const participacionSupuesta = supuestos?.participacion_esperada_pct;
 
-  if (nivel === "diputados" && territorio.startsWith("distrito-")) {
+  if (nivel === "diputados" && territorio.startsWith("distrito-") && !territorio.startsWith("distrito-fed-")) {
     const id = parseInt(territorio.replace("distrito-", ""), 10);
     const d = distritosLocales.find((x) => x.id === id);
     if (d) {
@@ -146,6 +146,32 @@ export function buildSnapshot(params: BuildSnapshotParams): SnapshotPayload {
         meta_victoria = buildMetaVictoria(
           d.listaNominal2024,
           subset,
+          participacionSupuesta ?? ultimo?.participacion_pct,
+          ultimo?.margen_pp,
+        );
+      }
+    }
+  } else if (nivel === "diputados_federales" && territorio.startsWith("distrito-fed-")) {
+    const id = parseInt(territorio.replace("distrito-fed-", ""), 10);
+    const d = distritosFederales.find((x) => x.id === id);
+    if (d) {
+      historico = historicoDistrito(d);
+      demografia = { lista_nominal: d.listaNominal2024 };
+      const ultimo = [...historico].sort((a, b) => b.año - a.año)[0];
+      if (ultimo) {
+        competitividad = {
+          margen_ultimo_pct: ultimo.margen_pp,
+          riesgo_alternancia: calcRiesgo(ultimo.margen_pp),
+        };
+      }
+      // Composición a nivel estatal (los distritos federales agrupan varios municipios;
+      // el catálogo INE no expone mapeo federal directo, así que omitimos filtro fino)
+      composicion_territorial = calcComposicion(() => true);
+      if (catalogo) {
+        meta_victoria = buildMetaVictoria(
+          d.listaNominal2024,
+          // Aproximación: usar todo el catálogo con peso proporcional al ratio LN distrito/total
+          catalogo,
           participacionSupuesta ?? ultimo?.participacion_pct,
           ultimo?.margen_pp,
         );

@@ -192,6 +192,13 @@ Considera dinámicas estatales completas: 24 distritos locales, 113 municipios, 
 voto rural vs urbano (Morelia, Uruapan, Zamora, Lázaro Cárdenas), seguridad regional (Tierra Caliente,
 Meseta Purépecha), relación con federación, magisterio (CNTE-Sección XVIII) y autodefensas/normalistas.
 NO mezcles dinámicas locales municipales como si fueran estatales.`,
+  diputados_federales: `CARGO: DIPUTACIÓN FEDERAL POR MICHOACÁN (Cámara de Diputados, LXVII Legislatura).
+Considera el distrito federal específico (1 de 11), su cabecera, composición rural/urbana,
+voto histórico federal (2018, 2021, 2024) que SUELE diferir del local. Agenda legislativa NACIONAL:
+Presupuesto de Egresos de la Federación, Ley de Ingresos, fiscalización (ASF), reformas constitucionales,
+relación con bancada federal del partido, coordinación con Senado y con Palacio Nacional.
+Factor arrastre presidencial cuando coincide con elección federal. NO confundas con cargo local
+ni con presidencia municipal — la representación es FEDERAL ante CDMX.`,
   diputados: `CARGO: DIPUTACIÓN LOCAL EN EL CONGRESO DE MICHOACÁN (LXXVI Legislatura).
 Considera el distrito específico, su cabecera, composición rural/urbana, voto histórico distrital,
 agenda legislativa local (presupuesto, fiscalización, leyes secundarias), relación con presidencia
@@ -217,9 +224,10 @@ JERARQUÍA DE EVIDENCIA (respétala estrictamente):
 
 CRÍTICO: TODO el análisis debe ser COHERENTE con el NIVEL del cargo:
 - Gobernatura → escala estatal (24 distritos, 113 municipios, coaliciones estatales).
-- Diputado Local → escala distrital (1 de 24 distritos, agenda legislativa local).
+- Diputado Federal → escala distrital federal (1 de 11 distritos), agenda legislativa NACIONAL en CDMX.
+- Diputado Local → escala distrital local (1 de 24), agenda legislativa estatal en Morelia.
 - Ayuntamiento → escala municipal (gestión local, cabildo, servicios).
-NO mezcles escalas.
+NO mezcles escalas (ni federal con local, ni legislativo con ejecutivo).
 
 REGLAS ESPECÍFICAS:
 - Trayectoria: si hay cambios de partido, considéralos en FODA (lealtad/ductilidad), OSINT (narrativa) y discurso (consistencia ideológica). Si NO hay hitos verificados, NO afirmes trayectorias.
