@@ -81,7 +81,7 @@ export interface TrayectoriaHito {
 }
 
 // ===== Métricas de redes =====
-export type PlataformaRed = "facebook" | "twitter" | "instagram" | "tiktok" | "youtube";
+export type PlataformaRed = "facebook" | "twitter" | "instagram" | "tiktok" | "youtube" | "threads";
 
 export const PLATAFORMA_LABEL: Record<PlataformaRed, string> = {
   facebook: "Facebook",
@@ -89,6 +89,7 @@ export const PLATAFORMA_LABEL: Record<PlataformaRed, string> = {
   instagram: "Instagram",
   tiktok: "TikTok",
   youtube: "YouTube",
+  threads: "Threads",
 };
 
 export interface MetricaRed {
