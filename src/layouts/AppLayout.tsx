@@ -38,7 +38,7 @@ export function AppLayout() {
             <p className="text-[10px] text-foreground/80 leading-relaxed text-center max-w-4xl mx-auto">
               Producto electoral verificado y desarrollado por{" "}
               <span className="font-semibold text-primary">Job Meneses, Estratega Sr. y Arquitecto del Poder</span>,
-              como herramienta estratégica para diputaciones locales y ayuntamientos.
+              como herramienta estratégica para gubernatura, diputaciones locales y ayuntamientos.
               Uso exclusivo del equipo de campaña; centrado en el
               <span className="font-semibold"> War Room (WR) de cada escenario</span>.
             </p>
