@@ -100,7 +100,7 @@ export function CandidatosDestacados() {
                   variant="outline"
                   className={`font-mono text-[10px] flex-shrink-0 ${
                     c.score >= 70 ? "border-emerald-500/40 text-emerald-400"
-                      : c.score >= 50 ? "border-amber-500/40 text-amber-400"
+                      : c.score >= 50 ? "border-foreground/30 text-foreground"
                       : "border-destructive/40 text-destructive"
                   }`}
                 >
