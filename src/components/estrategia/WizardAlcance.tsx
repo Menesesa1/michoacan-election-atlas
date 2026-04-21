@@ -94,13 +94,23 @@ export function WizardAlcance({
             <MapPin className="w-3 h-3" /> Territorio
           </Label>
           <Select value={territorio} onValueChange={setTerritorio}>
-            <SelectTrigger><SelectValue placeholder="Elige territorio" /></SelectTrigger>
+            <SelectTrigger
+              className={territorioInvalido ? "border-destructive/60" : undefined}
+            >
+              <SelectValue placeholder="Elige territorio" />
+            </SelectTrigger>
             <SelectContent className="max-h-72">
               {territorios.map((t) => (
                 <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
               ))}
             </SelectContent>
           </Select>
+          {territorioInvalido && (
+            <p className="text-[11px] text-destructive flex items-center gap-1 mt-1">
+              <AlertTriangle className="w-3 h-3" />
+              El territorio no coincide con el nivel <span className="font-mono">{nivel}</span>. Selecciona uno válido.
+            </p>
+          )}
         </div>
 
         <div className="space-y-1.5">
