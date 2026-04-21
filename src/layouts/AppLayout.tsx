@@ -36,9 +36,10 @@ export function AppLayout() {
 
           <footer className="border-t border-border/30 bg-card/30 px-4 py-3 space-y-2">
             <p className="text-[10px] text-foreground/80 leading-relaxed text-center max-w-4xl mx-auto">
-              Producto desarrollado por <span className="font-semibold text-primary">Job Meneses, CEO de EME</span>,
-              en específico para las campañas de <span className="font-semibold">Alfonso Martínez</span> y aliados estratégicos
-              para diputaciones locales y ayuntamientos. Uso exclusivo del equipo de campaña; centrado en el
+              Producto electoral verificado y desarrollado por{" "}
+              <span className="font-semibold text-primary">Job Meneses, Estratega Sr. y Arquitecto del Poder</span>,
+              como herramienta estratégica para diputaciones locales y ayuntamientos.
+              Uso exclusivo del equipo de campaña; centrado en el
               <span className="font-semibold"> War Room (WR) de cada escenario</span>.
             </p>
             <div className="text-center text-[10px] text-muted-foreground/70 font-mono">
