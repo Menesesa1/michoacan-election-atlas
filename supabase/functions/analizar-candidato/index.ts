@@ -224,9 +224,10 @@ JERARQUÍA DE EVIDENCIA (respétala estrictamente):
 
 CRÍTICO: TODO el análisis debe ser COHERENTE con el NIVEL del cargo:
 - Gobernatura → escala estatal (24 distritos, 113 municipios, coaliciones estatales).
-- Diputado Local → escala distrital (1 de 24 distritos, agenda legislativa local).
+- Diputado Federal → escala distrital federal (1 de 11 distritos), agenda legislativa NACIONAL en CDMX.
+- Diputado Local → escala distrital local (1 de 24), agenda legislativa estatal en Morelia.
 - Ayuntamiento → escala municipal (gestión local, cabildo, servicios).
-NO mezcles escalas.
+NO mezcles escalas (ni federal con local, ni legislativo con ejecutivo).
 
 REGLAS ESPECÍFICAS:
 - Trayectoria: si hay cambios de partido, considéralos en FODA (lealtad/ductilidad), OSINT (narrativa) y discurso (consistencia ideológica). Si NO hay hitos verificados, NO afirmes trayectorias.
