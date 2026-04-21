@@ -177,14 +177,14 @@ const C = {
   nsnc:      { candidato: "NS / NC",                  partido: "—",            color: "#9CA3AF" },
 };
 
-const r = (m: number, o: number, mc: number, pv: number, pt: number, ind: number, ns: number): EncuestaResultado[] => [
-  { ...C.morena, pct: m },
-  { ...C.oposicion, pct: o },
-  { ...C.mc, pct: mc },
-  { ...C.pvem, pct: pv },
-  { ...C.pt, pct: pt },
-  { ...C.indep, pct: ind },
-  { ...C.nsnc, pct: ns },
+const r = (m: number | null, o: number | null, mc: number | null, pv: number | null, pt: number | null, ind: number | null, ns: number | null): EncuestaResultado[] => [
+  { candidato: C.morena.candidato,    partido: C.morena.partido,    partidoColor: C.morena.color,    pct: m },
+  { candidato: C.oposicion.candidato, partido: C.oposicion.partido, partidoColor: C.oposicion.color, pct: o },
+  { candidato: C.mc.candidato,        partido: C.mc.partido,        partidoColor: C.mc.color,        pct: mc },
+  { candidato: C.pvem.candidato,      partido: C.pvem.partido,      partidoColor: C.pvem.color,      pct: pv },
+  { candidato: C.pt.candidato,        partido: C.pt.partido,        partidoColor: C.pt.color,        pct: pt },
+  { candidato: C.indep.candidato,     partido: C.indep.partido,     partidoColor: C.indep.color,     pct: ind },
+  { candidato: C.nsnc.candidato,      partido: C.nsnc.partido,      partidoColor: C.nsnc.color,      pct: ns },
 ];
 
 export const ENCUESTAS: Encuesta[] = [
