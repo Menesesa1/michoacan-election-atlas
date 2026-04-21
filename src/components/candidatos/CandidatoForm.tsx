@@ -29,7 +29,7 @@ import { Loader2, Plus, Pencil, X, Sparkles } from "lucide-react";
 
 const schema = z.object({
   nombre: z.string().trim().min(2).max(120),
-  nivel: z.enum(["gobernador", "diputados", "ayuntamientos"]),
+  nivel: z.enum(["gobernador", "diputados_federales", "diputados", "ayuntamientos"]),
   territorio: z.string().trim().min(1).max(120),
   cargo_buscado: z.string().trim().max(120).optional(),
   bio_breve: z.string().trim().max(800).optional(),
@@ -418,6 +418,7 @@ export function CandidatoForm({ candidato, onSaved, trigger }: Props) {
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="gobernador">Gobernatura · Estatal</SelectItem>
+                <SelectItem value="diputados_federales">Diputado Federal · 11 distritos</SelectItem>
                 <SelectItem value="diputados">Diputado Local · 24 distritos</SelectItem>
                 <SelectItem value="ayuntamientos">Ayuntamiento · 113 municipios</SelectItem>
               </SelectContent>

@@ -58,7 +58,9 @@ export function TerritorioInput({ nivel, value, onChange }: Props) {
           onFocus={() => setOpen(true)}
           onBlur={() => setTimeout(() => setOpen(false), 150)}
           placeholder={
-            nivel === "diputados"
+            nivel === "diputados_federales"
+              ? "Ej. Distrito Federal 10 - Morelia"
+              : nivel === "diputados"
               ? "Ej. Distrito 10 - Morelia Noroeste"
               : "Ej. Morelia, Uruapan, Zamora…"
           }
