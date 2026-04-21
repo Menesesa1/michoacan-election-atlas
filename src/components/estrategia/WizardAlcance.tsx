@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -12,7 +13,26 @@ import {
   type Posicion,
 } from "@/data/estrategia-templates";
 import type { TerritorioOption } from "@/lib/estrategia-context";
-import { Landmark, Vote, Building, MapPin, Users, Scale } from "lucide-react";
+import { Landmark, Vote, Building, MapPin, Users, Scale, AlertTriangle } from "lucide-react";
+
+/** Prefijo de territorio esperado por nivel (para validar coherencia). */
+const PREFIJO_TERRITORIO: Record<NivelEscenario, string> = {
+  gobernador: "estatal",
+  diputados_federales: "distrito-fed-",
+  diputados: "distrito-",
+  ayuntamientos: "mun-",
+};
+
+export function territorioCoincideConNivel(nivel: NivelEscenario, territorio: string): boolean {
+  if (!territorio) return false;
+  const prefijo = PREFIJO_TERRITORIO[nivel];
+  if (nivel === "gobernador") return territorio === prefijo;
+  // Diputados locales: prefijo "distrito-" pero NO "distrito-fed-"
+  if (nivel === "diputados") {
+    return territorio.startsWith("distrito-") && !territorio.startsWith("distrito-fed-");
+  }
+  return territorio.startsWith(prefijo);
+}
 
 interface Props {
   nivel: NivelEscenario;
