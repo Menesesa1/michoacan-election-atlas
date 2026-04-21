@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Facebook, Twitter, Instagram, Youtube, Music2, AtSign, Save, TrendingUp, Users, Calendar } from "lucide-react";
+import { Facebook, Twitter, Instagram, Youtube, Music2, AtSign, Cloud, Linkedin, Save, TrendingUp, Users, Calendar } from "lucide-react";
 import {
   PLATAFORMA_LABEL,
   type MetricasRedes,
@@ -22,7 +22,7 @@ interface Props {
   saving?: boolean;
 }
 
-const PLATAFORMAS: PlataformaRed[] = ["facebook", "twitter", "instagram", "tiktok", "youtube", "threads"];
+const PLATAFORMAS: PlataformaRed[] = ["facebook", "twitter", "instagram", "tiktok", "youtube", "threads", "bluesky", "linkedin"];
 
 const ICONOS: Record<PlataformaRed, typeof Facebook> = {
   facebook: Facebook,
@@ -31,6 +31,8 @@ const ICONOS: Record<PlataformaRed, typeof Facebook> = {
   tiktok: Music2,
   youtube: Youtube,
   threads: AtSign,
+  bluesky: Cloud,
+  linkedin: Linkedin,
 };
 
 const COLORES: Record<PlataformaRed, string> = {
@@ -40,6 +42,8 @@ const COLORES: Record<PlataformaRed, string> = {
   tiktok: "border-fuchsia-500/40 text-fuchsia-400",
   youtube: "border-red-500/40 text-red-400",
   threads: "border-zinc-400/40 text-zinc-300",
+  bluesky: "border-cyan-500/40 text-cyan-400",
+  linkedin: "border-blue-700/40 text-blue-500",
 };
 
 const formatNumero = (n: number | undefined) => {
