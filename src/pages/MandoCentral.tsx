@@ -5,8 +5,9 @@ import { CompetitividadChart } from "@/components/CompetitividadChart";
 import { TablaDistritos } from "@/components/TablaDistritos";
 import { EleccionSelector } from "@/components/EleccionSelector";
 import { NivelSelector } from "@/components/NivelSelector";
-import { IntencionVotoChart } from "@/components/IntencionVotoChart";
-import { SentimientoMoreliaChart } from "@/components/SentimientoMoreliaChart";
+// Removidos: IntencionVotoChart y SentimientoMoreliaChart usaban series sintéticas
+// (Math.random + sin/cos en intencion-voto-mock.ts), no encuestas reales.
+// Reintroducir solo cuando exista tracking semanal con ficha técnica auditable.
 import { ContiendasActivas } from "@/components/mando/ContiendasActivas";
 import { CandidatosDestacados } from "@/components/mando/CandidatosDestacados";
 import { EstrategiasRecientes } from "@/components/mando/EstrategiasRecientes";
@@ -85,10 +86,6 @@ export default function MandoCentral() {
             <InteresModulos />
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <IntencionVotoChart />
-            <SentimientoMoreliaChart />
-          </div>
         </TabsContent>
 
         {/* DETALLE ELECTORAL */}
