@@ -1,9 +1,11 @@
 // Catálogo de territorios por nivel de candidatura para Michoacán.
 // - Gobernatura: territorio único "Estatal".
+// - Diputado Federal: 11 distritos federales (INE) — reusa src/data/electoral-data.ts.
 // - Diputado Local: 24 distritos locales (IEM) — reusa src/data/distritos-locales.ts.
 // - Ayuntamiento: 113 municipios de Michoacán (catálogo oficial INEGI).
 
 import { distritosLocales } from "@/data/distritos-locales";
+import { distritosFederales } from "@/data/electoral-data";
 import type { NivelEstrategia } from "@/data/estrategia-templates";
 
 /** Los 113 municipios de Michoacán (orden alfabético, nombres oficiales INEGI). */
@@ -36,11 +38,18 @@ export const DISTRITOS_LOCALES_NOMBRES: string[] = distritosLocales.map(
   (d) => `Distrito ${String(d.id).padStart(2, "0")} - ${d.cabecera}`,
 );
 
+/** Cabeceras de los 11 distritos federales de Michoacán (orden por id INE). */
+export const DISTRITOS_FEDERALES_NOMBRES: string[] = distritosFederales.map(
+  (d) => `Distrito Federal ${String(d.id).padStart(2, "0")} - ${d.cabecera}`,
+);
+
 /** Devuelve la lista de territorios sugeridos para un nivel. */
 export function territoriosPorNivel(nivel: NivelEstrategia): string[] {
   switch (nivel) {
     case "gobernador":
       return ["Estatal"];
+    case "diputados_federales":
+      return DISTRITOS_FEDERALES_NOMBRES;
     case "diputados":
       return DISTRITOS_LOCALES_NOMBRES;
     case "ayuntamientos":
@@ -53,6 +62,8 @@ export function etiquetaTerritorio(nivel: NivelEstrategia): string {
   switch (nivel) {
     case "gobernador":
       return "Ámbito (estatal)";
+    case "diputados_federales":
+      return "Distrito federal";
     case "diputados":
       return "Distrito local";
     case "ayuntamientos":
@@ -65,6 +76,10 @@ export function cargoSugerido(nivel: NivelEstrategia, territorio: string): strin
   switch (nivel) {
     case "gobernador":
       return "Gobernatura de Michoacán";
+    case "diputados_federales":
+      return territorio
+        ? `Diputación federal por ${territorio}`
+        : "Diputación federal";
     case "diputados":
       return territorio
         ? `Diputación local por ${territorio}`

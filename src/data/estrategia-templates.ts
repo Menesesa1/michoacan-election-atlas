@@ -3,7 +3,7 @@
 import type { PartidoSigla } from "./locales/partidos";
 
 export type Posicion = "oficialismo" | "oposicion" | "aspirante";
-export type NivelEstrategia = "gobernador" | "diputados" | "ayuntamientos";
+export type NivelEstrategia = "gobernador" | "diputados_federales" | "diputados" | "ayuntamientos";
 
 export const POSICION_LABEL: Record<Posicion, string> = {
   oficialismo: "Oficialismo (incumbente)",

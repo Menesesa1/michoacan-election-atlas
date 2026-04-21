@@ -291,6 +291,7 @@ export default function Candidatos() {
             <SelectContent>
               <SelectItem value="all">Todos los cargos</SelectItem>
               <SelectItem value="gobernador">Gobernatura</SelectItem>
+              <SelectItem value="diputados_federales">Diputado Federal</SelectItem>
               <SelectItem value="diputados">Diputado Local</SelectItem>
               <SelectItem value="ayuntamientos">Ayuntamiento</SelectItem>
             </SelectContent>
@@ -352,7 +353,13 @@ export default function Candidatos() {
                   </Badge>
                   <h3 className="text-sm font-semibold">{contiendaLabel(g.key)}</h3>
                   <span className="text-[10px] text-muted-foreground font-mono uppercase">
-                    {g.key.nivel === "gobernador" ? "Gobernatura" : g.key.nivel === "diputados" ? "Diputado local" : "Ayuntamiento"}
+                    {g.key.nivel === "gobernador"
+                      ? "Gobernatura"
+                      : g.key.nivel === "diputados_federales"
+                      ? "Diputado federal"
+                      : g.key.nivel === "diputados"
+                      ? "Diputado local"
+                      : "Ayuntamiento"}
                   </span>
                 </div>
                 {g.candidatos.length >= 2 && (
