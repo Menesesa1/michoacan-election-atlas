@@ -2,6 +2,7 @@ import { TendenciasHistoricas } from "@/components/TendenciasHistoricas";
 import { SimuladorEscenarios } from "@/components/SimuladorEscenarios";
 import { ProyeccionEstatal2027 } from "@/components/ProyeccionEstatal2027";
 import { ProyeccionDistrital2027 } from "@/components/ProyeccionDistrital2027";
+import { MetodologiaProyeccion } from "@/components/MetodologiaProyeccion";
 import { NivelSelector } from "@/components/NivelSelector";
 
 export default function Tendencias() {
@@ -30,6 +31,9 @@ export default function Tendencias() {
         <TendenciasHistoricas />
         <SimuladorEscenarios />
       </div>
+
+      {/* Metodología completa al final */}
+      <MetodologiaProyeccion />
     </div>
   );
 }
