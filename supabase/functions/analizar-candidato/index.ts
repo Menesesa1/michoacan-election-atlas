@@ -35,7 +35,7 @@ interface MetricaRedInput {
   notas?: string;
 }
 
-type MetricasRedesInput = Partial<Record<"facebook" | "twitter" | "instagram" | "tiktok" | "youtube", MetricaRedInput>>;
+type MetricasRedesInput = Partial<Record<"facebook" | "twitter" | "instagram" | "tiktok" | "youtube" | "threads", MetricaRedInput>>;
 
 interface Input {
   tipo: Tipo;
