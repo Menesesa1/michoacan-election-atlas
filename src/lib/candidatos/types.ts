@@ -12,6 +12,8 @@ export interface CandidatoRedes {
   tiktok?: string;
   youtube?: string;
   threads?: string;
+  bluesky?: string;
+  linkedin?: string;
   whatsapp_community?: string; // URL/invite a comunidad de WhatsApp
 }
 
@@ -81,7 +83,7 @@ export interface TrayectoriaHito {
 }
 
 // ===== Métricas de redes =====
-export type PlataformaRed = "facebook" | "twitter" | "instagram" | "tiktok" | "youtube" | "threads";
+export type PlataformaRed = "facebook" | "twitter" | "instagram" | "tiktok" | "youtube" | "threads" | "bluesky" | "linkedin";
 
 export const PLATAFORMA_LABEL: Record<PlataformaRed, string> = {
   facebook: "Facebook",
@@ -90,6 +92,8 @@ export const PLATAFORMA_LABEL: Record<PlataformaRed, string> = {
   tiktok: "TikTok",
   youtube: "YouTube",
   threads: "Threads",
+  bluesky: "Bluesky",
+  linkedin: "LinkedIn",
 };
 
 export interface MetricaRed {

@@ -38,6 +38,8 @@ const schema = z.object({
   instagram: z.string().trim().max(120).optional(),
   tiktok: z.string().trim().max(120).optional(),
   threads: z.string().trim().max(120).optional(),
+  bluesky: z.string().trim().max(120).optional(),
+  linkedin: z.string().trim().max(200).optional(),
   web: z.string().trim().max(200).optional(),
   whatsapp_community: z.string().trim().max(200).optional(),
   notas: z.string().trim().max(1000).optional(),
@@ -73,7 +75,7 @@ export function CandidatoForm({ candidato, onSaved, trigger }: Props) {
     nombre: "", nivel: "ayuntamientos" as NivelEstrategia, territorio: "",
     fase: "precampana" as FaseCandidatura,
     es_propio: false,
-    cargo_buscado: "", bio_breve: "", twitter: "", facebook: "", instagram: "", tiktok: "", threads: "", web: "", whatsapp_community: "", notas: "",
+    cargo_buscado: "", bio_breve: "", twitter: "", facebook: "", instagram: "", tiktok: "", threads: "", bluesky: "", linkedin: "", web: "", whatsapp_community: "", notas: "",
   });
 
   useEffect(() => {
@@ -94,6 +96,8 @@ export function CandidatoForm({ candidato, onSaved, trigger }: Props) {
         instagram: candidato.redes?.instagram ?? "",
         tiktok: candidato.redes?.tiktok ?? "",
         threads: candidato.redes?.threads ?? "",
+        bluesky: candidato.redes?.bluesky ?? "",
+        linkedin: candidato.redes?.linkedin ?? "",
         web: candidato.redes?.web ?? "",
         whatsapp_community: candidato.redes?.whatsapp_community ?? "",
         notas: candidato.notas ?? "",
@@ -146,6 +150,8 @@ export function CandidatoForm({ candidato, onSaved, trigger }: Props) {
           instagram: parsed.data.instagram || undefined,
           tiktok: parsed.data.tiktok || undefined,
           threads: parsed.data.threads || undefined,
+          bluesky: parsed.data.bluesky || undefined,
+          linkedin: parsed.data.linkedin || undefined,
           web: parsed.data.web || undefined,
           whatsapp_community: parsed.data.whatsapp_community || undefined,
         },
@@ -484,6 +490,8 @@ export function CandidatoForm({ candidato, onSaved, trigger }: Props) {
           <div><Label>Instagram</Label><Input value={form.instagram} onChange={(e) => setForm({ ...form, instagram: e.target.value })} /></div>
           <div><Label>TikTok</Label><Input value={form.tiktok} onChange={(e) => setForm({ ...form, tiktok: e.target.value })} placeholder="@usuario" /></div>
           <div><Label>Threads</Label><Input value={form.threads} onChange={(e) => setForm({ ...form, threads: e.target.value })} placeholder="@usuario" /></div>
+          <div><Label>Bluesky</Label><Input value={form.bluesky} onChange={(e) => setForm({ ...form, bluesky: e.target.value })} placeholder="usuario.bsky.social" /></div>
+          <div><Label>LinkedIn</Label><Input value={form.linkedin} onChange={(e) => setForm({ ...form, linkedin: e.target.value })} placeholder="https://linkedin.com/in/…" /></div>
           <div><Label>Landing page</Label><Input value={form.web} onChange={(e) => setForm({ ...form, web: e.target.value })} placeholder="https://…" /></div>
           <div><Label>Comunidad WhatsApp</Label><Input value={form.whatsapp_community} onChange={(e) => setForm({ ...form, whatsapp_community: e.target.value })} placeholder="https://chat.whatsapp.com/…" /></div>
           <div className="md:col-span-2">
