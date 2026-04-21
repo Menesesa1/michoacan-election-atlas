@@ -331,7 +331,7 @@ Todo el análisis debe estar acotado al cargo y territorio anteriores.
 RECUERDA: trayectoria + métricas + war room son la BASE DURA. No las contradigas ni inventes alternativas.
 Devuelve la herramienta con todos los campos requeridos.`;
 
-    const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const callGateway = () => fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${LOVABLE_API_KEY}`,
@@ -348,6 +348,18 @@ Devuelve la herramienta con todos los campos requeridos.`;
       }),
     });
 
+    // Retry hasta 3 intentos en caso de 502/503/504 (gateway saturado temporalmente)
+    let aiRes = await callGateway();
+    let attempt = 1;
+    while (!aiRes.ok && [502, 503, 504].includes(aiRes.status) && attempt < 3) {
+      const wait = 800 * Math.pow(2, attempt - 1); // 800ms, 1600ms
+      console.warn(`Gateway ${aiRes.status} en intento ${attempt}, reintentando en ${wait}ms...`);
+      await aiRes.text().catch(() => {});
+      await new Promise((r) => setTimeout(r, wait));
+      aiRes = await callGateway();
+      attempt++;
+    }
+
     if (!aiRes.ok) {
       if (aiRes.status === 429) {
         return new Response(JSON.stringify({ error: "Límite de uso alcanzado. Intenta en un momento." }), {
@@ -361,6 +373,12 @@ Devuelve la herramienta con todos los campos requeridos.`;
       }
       const txt = await aiRes.text();
       console.error("Gateway error:", aiRes.status, txt);
+      if ([502, 503, 504].includes(aiRes.status)) {
+        return new Response(
+          JSON.stringify({ error: "El servicio de IA está temporalmente saturado. Intenta de nuevo en unos segundos." }),
+          { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
       throw new Error(`AI gateway ${aiRes.status}`);
     }
 
