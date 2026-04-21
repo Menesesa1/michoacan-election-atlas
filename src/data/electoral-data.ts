@@ -50,7 +50,7 @@ export const distritosFederales: DistritoFederal[] = [
     }
   },
   {
-    id: 2, cabecera: "Puruándiro", listaNominal2024: 342187, participacion2024: 55.8,
+    id: 2, cabecera: "Apatzingán", listaNominal2024: 342187, participacion2024: 55.8,
     resultados: {
       "fed2024": { año: 2024, tipo: "federal", votos: { MORENA: 78654, PAN: 42345, PRI: 28765, MC: 18432, PVEM: 9876, PT: 7654, PRD: 5432, OTROS: 2876 }, totalVotos: 194034, participacion: 55.8, ganador: "MORENA" },
       "fed2021": { año: 2021, tipo: "federal", votos: { MORENA: 62345, PAN: 45678, PRI: 32456, MC: 14567, PVEM: 7890, PT: 5678, PRD: 8901, OTROS: 1890 }, totalVotos: 179405, participacion: 51.2, ganador: "MORENA" },
