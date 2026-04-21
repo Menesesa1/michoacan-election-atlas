@@ -8,7 +8,7 @@ const corsHeaders = {
 };
 
 interface SnapshotInput {
-  nivel: "gobernador" | "diputados" | "ayuntamientos";
+  nivel: "gobernador" | "diputados_federales" | "diputados" | "ayuntamientos";
   nivelLabel: string;
   territorio: string;
   posicion: "oficialismo" | "oposicion" | "aspirante";
