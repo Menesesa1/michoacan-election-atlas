@@ -425,6 +425,13 @@ export function ListeningPanel({ scope }: ListeningPanelProps) {
         </>
       )}
       <RapidResponseDialog open={rrOpen} onOpenChange={setRrOpen} input={rrInput} />
+      <TemaDetailSheet
+        open={drillOpen}
+        onOpenChange={setDrillOpen}
+        query={drillQuery?.value ?? null}
+        tipo={drillQuery?.tipo ?? "tema"}
+        scope={scope}
+      />
     </div>
   );
 }
