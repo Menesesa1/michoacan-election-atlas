@@ -259,76 +259,89 @@ Deno.serve(async (req) => {
       })),
     ];
 
-    // 3. Procesar cada entidad: search → classify → filtro Michoacán → persistir
+    // 3. Procesar entidades en paralelo con límite de concurrencia para evitar timeout (150s).
+    //    Cada entidad: search → classify → filtro Michoacán → persistir.
     let totalMenciones = 0;
     let totalDescartadas = 0;
-    for (const ent of entidades) {
-      const hitsArrays = await Promise.all(ent.queries.map((q) => firecrawlSearch(q, FIRECRAWL_API_KEY)));
-      // Pre-filtro: solo hits cuyo título/descripción mencionen Michoacán o municipio
-      const hits = hitsArrays.flat().filter((h) => {
-        if (ent.tipo === "estatal") return true; // queries ya son estatales
-        const texto = `${h.title ?? ""} ${h.description ?? ""} ${h.url ?? ""}`;
-        return esMichoacan(texto);
-      });
-      if (hits.length === 0) continue;
+    const CONCURRENCIA = 5;
 
-      const mencionesRaw = await classifyMenciones(hits, ent.nombre, LOVABLE_API_KEY);
+    const procesarEntidad = async (ent: EntidadObjetivo) => {
+      try {
+        const hitsArrays = await Promise.all(ent.queries.map((q) => firecrawlSearch(q, FIRECRAWL_API_KEY)));
+        const hits = hitsArrays.flat().filter((h) => {
+          if (ent.tipo === "estatal") return true;
+          const texto = `${h.title ?? ""} ${h.description ?? ""} ${h.url ?? ""}`;
+          return esMichoacan(texto);
+        });
+        if (hits.length === 0) return 0;
 
-      // Post-filtro: descartar menciones cuyo fragmento+titulo no aluda a Michoacán
-      const menciones = ent.tipo === "estatal"
-        ? mencionesRaw
-        : mencionesRaw.filter((m) => {
-            const ok = esMichoacan(`${m.titulo} ${m.fragmento} ${m.url}`);
-            if (!ok) totalDescartadas += 1;
-            return ok;
-          });
+        const mencionesRaw = await classifyMenciones(hits, ent.nombre, LOVABLE_API_KEY);
 
-      if (menciones.length === 0) continue;
+        let descartadasLocal = 0;
+        const menciones = ent.tipo === "estatal"
+          ? mencionesRaw
+          : mencionesRaw.filter((m) => {
+              const ok = esMichoacan(`${m.titulo} ${m.fragmento} ${m.url}`);
+              if (!ok) descartadasLocal += 1;
+              return ok;
+            });
+        totalDescartadas += descartadasLocal;
 
-      // Insertar menciones (validando municipio contra whitelist oficial)
-      const rows = menciones.map((m) => ({
-        batch_id: batchId,
-        entidad_tipo: ent.tipo,
-        entidad_nombre: ent.nombre,
-        candidato_id: ent.candidato_id,
-        titulo: m.titulo,
-        fragmento: m.fragmento,
-        url: m.url,
-        fuente: m.fuente,
-        sentimiento: Math.max(-1, Math.min(1, m.sentimiento)),
-        tema: m.tema,
-        hashtags: m.hashtags,
-        municipio: normalizarMunicipio(m.municipio),
-      }));
-      const { error: insErr } = await supabase.from("social_menciones").insert(rows);
-      if (insErr) {
-        console.error(`Insert menciones ${ent.nombre}:`, insErr.message);
-        continue;
+        if (menciones.length === 0) return 0;
+
+        const rows = menciones.map((m) => ({
+          batch_id: batchId,
+          entidad_tipo: ent.tipo,
+          entidad_nombre: ent.nombre,
+          candidato_id: ent.candidato_id,
+          titulo: m.titulo,
+          fragmento: m.fragmento,
+          url: m.url,
+          fuente: m.fuente,
+          sentimiento: Math.max(-1, Math.min(1, m.sentimiento)),
+          tema: m.tema,
+          hashtags: m.hashtags,
+          municipio: normalizarMunicipio(m.municipio),
+        }));
+        const { error: insErr } = await supabase.from("social_menciones").insert(rows);
+        if (insErr) {
+          console.error(`Insert menciones ${ent.nombre}:`, insErr.message);
+          return 0;
+        }
+
+        const sents = menciones.map((m) => m.sentimiento);
+        const promedio = sents.reduce((a, b) => a + b, 0) / sents.length;
+        const pos = sents.filter((s) => s > 0.2).length;
+        const neg = sents.filter((s) => s < -0.2).length;
+        const neu = sents.length - pos - neg;
+        const total = menciones.length;
+
+        await supabase.from("social_resumen").insert({
+          batch_id: batchId,
+          entidad_tipo: ent.tipo,
+          entidad_nombre: ent.nombre,
+          candidato_id: ent.candidato_id,
+          total_menciones: total,
+          sentimiento_promedio: Number(promedio.toFixed(2)),
+          pct_positivo: Number(((pos / total) * 100).toFixed(2)),
+          pct_neutro: Number(((neu / total) * 100).toFixed(2)),
+          pct_negativo: Number(((neg / total) * 100).toFixed(2)),
+          top_hashtags: topN(menciones.flatMap((m) => m.hashtags), (x) => x, 5),
+          top_temas: topN(menciones, (m) => m.tema, 5),
+        });
+
+        return total;
+      } catch (e) {
+        console.error(`Error procesando ${ent.nombre}:`, e instanceof Error ? e.message : e);
+        return 0;
       }
+    };
 
-      // Calcular resumen
-      const sents = menciones.map((m) => m.sentimiento);
-      const promedio = sents.reduce((a, b) => a + b, 0) / sents.length;
-      const pos = sents.filter((s) => s > 0.2).length;
-      const neg = sents.filter((s) => s < -0.2).length;
-      const neu = sents.length - pos - neg;
-      const total = menciones.length;
-
-      await supabase.from("social_resumen").insert({
-        batch_id: batchId,
-        entidad_tipo: ent.tipo,
-        entidad_nombre: ent.nombre,
-        candidato_id: ent.candidato_id,
-        total_menciones: total,
-        sentimiento_promedio: Number(promedio.toFixed(2)),
-        pct_positivo: Number(((pos / total) * 100).toFixed(2)),
-        pct_neutro: Number(((neu / total) * 100).toFixed(2)),
-        pct_negativo: Number(((neg / total) * 100).toFixed(2)),
-        top_hashtags: topN(menciones.flatMap((m) => m.hashtags), (x) => x, 5),
-        top_temas: topN(menciones, (m) => m.tema, 5),
-      });
-
-      totalMenciones += total;
+    // Ejecutar en lotes de CONCURRENCIA entidades simultáneas
+    for (let i = 0; i < entidades.length; i += CONCURRENCIA) {
+      const lote = entidades.slice(i, i + CONCURRENCIA);
+      const resultados = await Promise.all(lote.map(procesarEntidad));
+      totalMenciones += resultados.reduce((a, b) => a + b, 0);
     }
 
     await supabase.from("social_runs").insert({
