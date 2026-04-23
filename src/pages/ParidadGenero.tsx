@@ -17,7 +17,7 @@ import {
   type AyuntamientoConGenero,
   type DiputadoConGenero,
 } from "@/lib/paridad/historico-genero";
-import { MUNICIPIOS_ESTRATEGICOS } from "@/data/locales/ayuntamientos";
+import { MUNICIPIOS_MICHOACAN_113 } from "@/data/locales/municipios-catalogo";
 import type { Genero } from "@/lib/paridad/inferir-genero";
 
 function GeneroBadge({ genero, confianza }: { genero: Genero; confianza?: "alta" | "media" | "baja" }) {
@@ -277,10 +277,12 @@ export default function ParidadGenero() {
         <TabsContent value="sugerencias" className="space-y-3">
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-base">Sugerencia de género 2027 — Top 20 municipios</CardTitle>
+              <CardTitle className="text-base">Sugerencia de género 2027 — 113 municipios</CardTitle>
               <p className="text-xs text-muted-foreground">
                 Aplicación de reglas IEM: alternancia interna por partido, paridad horizontal en
                 bloques de alta competitividad, y equilibrio sugerido en bloques medios/bajos.
+                Los municipios sin histórico capturado quedan marcados como "por definir" — sirven
+                para registrar prospectos y luego enriquecer datos.
               </p>
             </CardHeader>
             <CardContent className="overflow-x-auto">
@@ -296,7 +298,9 @@ export default function ParidadGenero() {
                   </tr>
                 </thead>
                 <tbody>
-                  {MUNICIPIOS_ESTRATEGICOS.map((m) => {
+                  {MUNICIPIOS_MICHOACAN_113.filter((m) =>
+                    m.nombre.toLowerCase().includes(filtroLow),
+                  ).map((m) => {
                     const hist = historicoMunicipioConGenero(m.clave);
                     const s = sugerenciaParidadMunicipio(m.clave);
                     const niv =
