@@ -19,6 +19,7 @@ import {
 } from "@/lib/paridad/historico-genero";
 import { MUNICIPIOS_MICHOACAN_113 } from "@/data/locales/municipios-catalogo";
 import type { Genero } from "@/lib/paridad/inferir-genero";
+import { ImportadorGanadoresCSV } from "@/components/paridad/ImportadorGanadoresCSV";
 
 function GeneroBadge({ genero, confianza }: { genero: Genero; confianza?: "alta" | "media" | "baja" }) {
   if (genero === "M") {
@@ -153,6 +154,8 @@ export default function ParidadGenero() {
           className="max-w-md"
         />
       </div>
+
+      <ImportadorGanadoresCSV onImported={reload} />
 
       <Tabs defaultValue="ayuntamientos">
         <TabsList>
