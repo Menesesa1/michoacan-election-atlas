@@ -23,6 +23,7 @@ import {
   MessageCircle,
   ShieldCheck,
   CalendarDays,
+  Scale,
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useState } from "react";
@@ -54,6 +55,7 @@ const locales = [
   { title: "Estrategia 360", url: "/escenarios", icon: Sparkles },
   { title: "Operación 360", url: "/operacion", icon: Zap },
   { title: "Candidatos", url: "/candidatos", icon: Users },
+  { title: "Paridad de género", url: "/paridad-genero", icon: Scale },
   { title: "Inteligencia", url: "/inteligencia", icon: ShieldAlert },
   { title: "Fuentes", url: "/fuentes", icon: Database },
 ];
