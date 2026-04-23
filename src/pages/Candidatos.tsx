@@ -246,6 +246,22 @@ export default function Candidatos() {
         </div>
       </div>
 
+      <BannerFaseActiva />
+
+      <Tabs defaultValue="lista" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="lista" className="gap-1.5">
+            <ListFilter className="w-3.5 h-3.5" /> Lista completa
+          </TabsTrigger>
+          <TabsTrigger value="ranking" className="gap-1.5">
+            <Trophy className="w-3.5 h-3.5" /> Ranking de Aspirantes
+            <span className="ml-1 text-[9px] font-mono px-1 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/40">
+              FASE INTERNA
+            </span>
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="lista" className="space-y-4">
       <div className="flex flex-col gap-2">
         <div className="flex flex-wrap items-center gap-1.5">
           <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mr-1">Equipo:</span>
