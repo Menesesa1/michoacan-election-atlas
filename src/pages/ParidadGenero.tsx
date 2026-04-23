@@ -155,6 +155,8 @@ export default function ParidadGenero() {
         />
       </div>
 
+      <ImportadorGanadoresCSV onImported={reload} />
+
       <Tabs defaultValue="ayuntamientos">
         <TabsList>
           <TabsTrigger value="ayuntamientos">
