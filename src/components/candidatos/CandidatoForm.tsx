@@ -25,6 +25,7 @@ import { generarTodosLosAnalisis, TIPOS_ANALISIS } from "@/lib/candidatos/auto-a
 import { cargoSugerido, etiquetaTerritorio } from "@/lib/candidatos/territorios";
 import { FASES_CANDIDATURA, FASE_LABEL, FASE_DESCRIPCION, type FaseCandidatura } from "@/lib/candidatos/fase";
 import { TerritorioInput } from "./TerritorioInput";
+import { ParidadAlert } from "./ParidadAlert";
 import { Loader2, Plus, Pencil, X, Sparkles } from "lucide-react";
 
 const schema = z.object({
@@ -442,6 +443,13 @@ export function CandidatoForm({ candidato, onSaved, trigger }: Props) {
               }}
             />
           </div>
+
+          <ParidadAlert
+            nivel={form.nivel}
+            territorio={form.territorio}
+            partidoSigla={tipo === "partido" ? partidos[0] : undefined}
+            nombreCandidato={form.nombre}
+          />
           <div className="md:col-span-2">
             <Label>Fase del proceso *</Label>
             <Select value={form.fase} onValueChange={(v) => setForm({ ...form, fase: v as FaseCandidatura })}>
