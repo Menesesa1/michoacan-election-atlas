@@ -427,6 +427,15 @@ export default function Candidatos() {
           ))}
         </div>
       )}
+        </TabsContent>
+
+        <TabsContent value="ranking" className="space-y-4">
+          <RankingAspirantes
+            candidatos={candidatos}
+            onAbrir={(c) => setFichaAbierta(c)}
+          />
+        </TabsContent>
+      </Tabs>
 
       <FichaCandidato
         candidato={fichaAbierta}
