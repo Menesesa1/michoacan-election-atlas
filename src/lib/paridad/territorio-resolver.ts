@@ -1,7 +1,7 @@
 // Resuelve el "id territorial" usado por el motor de paridad a partir
 // del par (nivel, territorio) que maneja el formulario de candidatos.
 
-import { MUNICIPIOS_ESTRATEGICOS } from "@/data/locales/ayuntamientos";
+import { MUNICIPIOS_MICHOACAN_113, buscarMunicipio } from "@/data/locales/municipios-catalogo";
 import {
   sugerenciaParidadDistrito,
   sugerenciaParidadMunicipio,
@@ -17,16 +17,19 @@ export function extraerNumeroDistrito(territorio: string): number | null {
   return n >= 1 && n <= 24 ? n : null;
 }
 
-/** Resuelve clave INEGI del municipio si está en el catálogo estratégico. */
+/** Resuelve clave INEGI del municipio (catálogo completo de 113). */
 export function resolverClaveMunicipio(territorio: string): number | null {
-  const t = territorio.trim().toLowerCase();
-  if (!t) return null;
-  // Match exacto, o municipio incluido en la etiqueta (p.ej. "Hidalgo (Cd. Hidalgo)").
-  const hit = MUNICIPIOS_ESTRATEGICOS.find(
-    (m) =>
-      m.nombre.toLowerCase() === t ||
-      m.nombre.toLowerCase().includes(t) ||
-      t.includes(m.nombre.toLowerCase()),
+  if (!territorio) return null;
+  // Limpia paréntesis tipo "Hidalgo (Cd. Hidalgo)"
+  const limpio = territorio.replace(/\(.*?\)/g, "").trim();
+  const m = buscarMunicipio(limpio);
+  if (m) return m.clave;
+  // Fallback: contención parcial bidireccional
+  const norm = (s: string) =>
+    s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const q = norm(limpio);
+  const hit = MUNICIPIOS_MICHOACAN_113.find(
+    (mm) => norm(mm.nombre).includes(q) || q.includes(norm(mm.nombre)),
   );
   return hit?.clave ?? null;
 }
