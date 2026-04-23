@@ -22,6 +22,7 @@ import {
   Network,
   MessageCircle,
   ShieldCheck,
+  CalendarDays,
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useState } from "react";
@@ -43,6 +44,7 @@ import { useAuth } from "@/context/AuthContext";
 
 const locales = [
   { title: "Mando Central", url: "/mando", icon: LayoutDashboard, end: true },
+  { title: "Calendario electoral", url: "/calendario-electoral", icon: CalendarDays },
   { title: "Gobernador", url: "/gobernador", icon: Landmark },
   { title: "Diputados Locales", url: "/diputados-locales", icon: Vote },
   { title: "Ayuntamientos", url: "/ayuntamientos", icon: Building },

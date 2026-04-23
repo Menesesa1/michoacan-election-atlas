@@ -31,6 +31,7 @@ import Operacion from "./pages/Operacion";
 import OperacionTerritorial from "./pages/OperacionTerritorial";
 import CrmSimpatizantes from "./pages/CrmSimpatizantes";
 import DiaD from "./pages/DiaD";
+import CalendarioElectoral from "./pages/CalendarioElectoral";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -76,6 +77,7 @@ const App = () => (
                 <Route path="/crm-simpatizantes" element={<CrmSimpatizantes />} />
                 <Route path="/dia-d" element={<DiaD />} />
                 <Route path="/candidatos" element={<Candidatos />} />
+                <Route path="/calendario-electoral" element={<CalendarioElectoral />} />
                 <Route path="/distritos" element={<Distritos />} />
                 <Route path="/fuentes" element={<Fuentes />} />
               </Route>

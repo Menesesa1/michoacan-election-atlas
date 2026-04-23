@@ -8,6 +8,7 @@ import { NivelSelector } from "@/components/NivelSelector";
 // Removidos: IntencionVotoChart y SentimientoMoreliaChart usaban series sintéticas
 // (Math.random + sin/cos en intencion-voto-mock.ts), no encuestas reales.
 // Reintroducir solo cuando exista tracking semanal con ficha técnica auditable.
+import { BannerFaseActiva } from "@/components/mando/BannerFaseActiva";
 import { ContiendasActivas } from "@/components/mando/ContiendasActivas";
 import { CandidatosDestacados } from "@/components/mando/CandidatosDestacados";
 import { EstrategiasRecientes } from "@/components/mando/EstrategiasRecientes";
@@ -58,6 +59,8 @@ export default function MandoCentral() {
           {pdfLoading ? "Generando…" : "Briefing PDF"}
         </Button>
       </div>
+
+      <BannerFaseActiva />
 
       <Tabs defaultValue="resumen" className="space-y-4">
         <TabsList>
