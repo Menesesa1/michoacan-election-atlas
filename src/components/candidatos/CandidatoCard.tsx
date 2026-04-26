@@ -234,6 +234,29 @@ export function CandidatoCard({
               </Button>
             }
           />
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              try {
+                generarDossierCortesia({ candidato });
+                toast({
+                  title: "Dossier generado ✓",
+                  description: `PDF de cortesía para ${candidato.nombre} listo para entregar.`,
+                });
+              } catch (e) {
+                toast({
+                  title: "Error al generar PDF",
+                  description: e instanceof Error ? e.message : "Intenta de nuevo",
+                  variant: "destructive",
+                });
+              }
+            }}
+            className="h-8 px-2.5 border-amber-500/40 text-amber-500 hover:bg-amber-500/10 hover:text-amber-400"
+            title="PDF ejecutivo de cortesía para entregar al prospecto"
+          >
+            <FileText className="w-3.5 h-3.5 mr-1" /> Dossier
+          </Button>
           {onToggleSelect && (
             <Button
               size="sm"
