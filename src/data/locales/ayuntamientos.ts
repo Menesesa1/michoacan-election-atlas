@@ -102,6 +102,7 @@ export const AYUNTAMIENTOS: PresidenciaMunicipal[] = [
   A(2018, 38, "PRI", "Daniel Romero", 38.2, 53.0),
   A(2018, 106, "PAN", "Marco Lagunas", 32.4, 50.8),
   A(2018, 45, "PAN", "Roberto Ortiz", 29.7, 50.6),
+  A(2018, 20, "PRD", "Vicente Estrada Iturbide", 36.4, 53.7),
 
   // 2015
   A(2015, 53, "PRI", "Alfonso Martínez (independiente)", 35.4, 52.6),
