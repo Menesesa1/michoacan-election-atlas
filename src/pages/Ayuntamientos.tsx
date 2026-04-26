@@ -26,7 +26,7 @@ export default function Ayuntamientos() {
     return { alternancias, totalAlternancias, continuos };
   }, []);
 
-  // Composición por año (entre los 20 estratégicos)
+  // Composición por año (entre los 21 estratégicos)
   const composicionPorAnio = useMemo(() => {
     return ANIOS_LOCALES.map((anio) => {
       const filas = AYUNTAMIENTOS.filter((a) => a.anio === anio);
