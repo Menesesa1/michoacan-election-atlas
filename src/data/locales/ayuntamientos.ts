@@ -16,7 +16,7 @@ export interface PresidenciaMunicipal {
   poblacion: number;
 }
 
-// Top 20 municipios estratégicos (concentran ~58% de la lista nominal estatal)
+// Top 21 municipios estratégicos (concentran ~59% de la lista nominal estatal)
 export const MUNICIPIOS_ESTRATEGICOS: { clave: number; nombre: string; poblacion: number }[] = [
   { clave: 53, nombre: "Morelia", poblacion: 743_275 },
   { clave: 102, nombre: "Uruapan", poblacion: 358_690 },
@@ -38,6 +38,7 @@ export const MUNICIPIOS_ESTRATEGICOS: { clave: number; nombre: string; poblacion
   { clave: 38, nombre: "Huetamo", poblacion: 41_800 },
   { clave: 106, nombre: "Yurécuaro", poblacion: 31_500 },
   { clave: 45, nombre: "Jiquilpan", poblacion: 36_300 },
+  { clave: 20, nombre: "Cuitzeo", poblacion: 28_585 },
 ];
 
 // Cómputos verificables por municipio × año
