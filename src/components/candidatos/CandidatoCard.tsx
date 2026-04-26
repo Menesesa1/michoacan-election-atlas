@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Trash2, FileSearch, Twitter, Facebook, Instagram, Globe, AtSign, Cloud, Linkedin, Sparkles, Loader2, CheckCircle2, AlertCircle, Pencil, Star, Swords } from "lucide-react";
+import { Trash2, FileSearch, Twitter, Facebook, Instagram, Globe, AtSign, Cloud, Linkedin, Sparkles, Loader2, CheckCircle2, AlertCircle, Pencil, Star, Swords, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { Candidato, TipoAnalisis } from "@/lib/candidatos/types";
@@ -10,6 +10,7 @@ import { CandidatoForm } from "./CandidatoForm";
 import { PartidoBadges } from "./PartidoBadges";
 import { generarTodosLosAnalisis, TIPOS_ANALISIS } from "@/lib/candidatos/auto-analisis";
 import { FASE_LABEL_CORTO } from "@/lib/candidatos/fase";
+import { generarDossierCortesia } from "@/lib/pdf-cortesia-prospecto";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -233,6 +234,29 @@ export function CandidatoCard({
               </Button>
             }
           />
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              try {
+                generarDossierCortesia({ candidato });
+                toast({
+                  title: "Dossier generado ✓",
+                  description: `PDF de cortesía para ${candidato.nombre} listo para entregar.`,
+                });
+              } catch (e) {
+                toast({
+                  title: "Error al generar PDF",
+                  description: e instanceof Error ? e.message : "Intenta de nuevo",
+                  variant: "destructive",
+                });
+              }
+            }}
+            className="h-8 px-2.5 border-amber-500/40 text-amber-500 hover:bg-amber-500/10 hover:text-amber-400"
+            title="PDF ejecutivo de cortesía para entregar al prospecto"
+          >
+            <FileText className="w-3.5 h-3.5 mr-1" /> Dossier
+          </Button>
           {onToggleSelect && (
             <Button
               size="sm"
