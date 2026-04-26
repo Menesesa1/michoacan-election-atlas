@@ -125,6 +125,7 @@ export const AYUNTAMIENTOS: PresidenciaMunicipal[] = [
   A(2015, 38, "PRI", "Daniel Romero", 37.0, 52.0),
   A(2015, 106, "PAN", "Marco Lagunas", 31.5, 49.7),
   A(2015, 45, "PAN", "Roberto Ortiz", 28.8, 49.5),
+  A(2015, 20, "PRI", "J. Trinidad Martínez", 35.2, 52.0),
 ];
 
 export function historicoMunicipio(clave: number): PresidenciaMunicipal[] {
