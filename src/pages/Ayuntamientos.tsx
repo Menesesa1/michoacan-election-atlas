@@ -26,7 +26,7 @@ export default function Ayuntamientos() {
     return { alternancias, totalAlternancias, continuos };
   }, []);
 
-  // Composición por año (entre los 20 estratégicos)
+  // Composición por año (entre los 21 estratégicos)
   const composicionPorAnio = useMemo(() => {
     return ANIOS_LOCALES.map((anio) => {
       const filas = AYUNTAMIENTOS.filter((a) => a.anio === anio);
@@ -43,16 +43,16 @@ export default function Ayuntamientos() {
     <div className="space-y-5">
       <div>
         <div className="text-primary text-[10px] font-mono uppercase tracking-widest">
-          IEM · Cómputos municipales · Top 20 estratégicos
+          IEM · Cómputos municipales · Top 21 estratégicos
         </div>
         <h1 className="text-2xl font-bold text-foreground">Presidencias Municipales</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          20 ayuntamientos clave de Michoacán · 4 procesos electorales (2015–2024) · Concentran ~58% del electorado estatal
+          21 ayuntamientos clave de Michoacán · 4 procesos electorales (2015–2024) · Concentran ~59% del electorado estatal
         </p>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <KPI icon={Building2} label="Municipios analizados" value="20" sub="de 113 totales del estado" />
+        <KPI icon={Building2} label="Municipios analizados" value="21" sub="de 113 totales del estado" />
         <KPI icon={RotateCcw} label="Alternancias totales" value={String(stats.totalAlternancias)} sub="cambios de partido 2015→2024" />
         <KPI icon={TrendingUp} label="Bastiones (sin alternancia)" value={String(stats.continuos)} sub="mismo partido los 4 procesos" />
         <KPI icon={Users} label="Pobl. cubierta" value={fmt(MUNICIPIOS_ESTRATEGICOS.reduce((a, m) => a + m.poblacion, 0))} sub="habitantes" />
@@ -60,7 +60,7 @@ export default function Ayuntamientos() {
 
       {/* Composición por año */}
       <Card className="p-4">
-        <h3 className="text-sm font-semibold text-foreground mb-3">Reparto por partido (top 20 ayuntamientos)</h3>
+        <h3 className="text-sm font-semibold text-foreground mb-3">Reparto por partido (top 21 ayuntamientos)</h3>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
           {composicionPorAnio.map(({ anio, partidos }) => (
             <div key={anio} className="border border-border rounded-md p-3">

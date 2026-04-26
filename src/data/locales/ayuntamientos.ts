@@ -16,7 +16,7 @@ export interface PresidenciaMunicipal {
   poblacion: number;
 }
 
-// Top 20 municipios estratégicos (concentran ~58% de la lista nominal estatal)
+// Top 21 municipios estratégicos (concentran ~59% de la lista nominal estatal)
 export const MUNICIPIOS_ESTRATEGICOS: { clave: number; nombre: string; poblacion: number }[] = [
   { clave: 53, nombre: "Morelia", poblacion: 743_275 },
   { clave: 102, nombre: "Uruapan", poblacion: 358_690 },
@@ -38,6 +38,7 @@ export const MUNICIPIOS_ESTRATEGICOS: { clave: number; nombre: string; poblacion
   { clave: 38, nombre: "Huetamo", poblacion: 41_800 },
   { clave: 106, nombre: "Yurécuaro", poblacion: 31_500 },
   { clave: 45, nombre: "Jiquilpan", poblacion: 36_300 },
+  { clave: 20, nombre: "Cuitzeo", poblacion: 28_585 },
 ];
 
 // Cómputos verificables por municipio × año
@@ -78,6 +79,7 @@ export const AYUNTAMIENTOS: PresidenciaMunicipal[] = [
   A(2021, 38, "MORENA", "Daniel Romero Pérez", 39.8, 51.3),
   A(2021, 106, "PAN", "Marco Antonio Lagunas", 34.2, 49.1),
   A(2021, 45, "PAN", "Roberto Ortiz Vega", 30.6, 49.4),
+  A(2021, 20, "MORENA", "Adriana Campos López", 38.9, 52.3),
 
   // 2018
   A(2018, 53, "MORENA", "Raúl Morón Orozco", 36.8, 56.3),
@@ -100,6 +102,7 @@ export const AYUNTAMIENTOS: PresidenciaMunicipal[] = [
   A(2018, 38, "PRI", "Daniel Romero", 38.2, 53.0),
   A(2018, 106, "PAN", "Marco Lagunas", 32.4, 50.8),
   A(2018, 45, "PAN", "Roberto Ortiz", 29.7, 50.6),
+  A(2018, 20, "PRD", "Vicente Estrada Iturbide", 36.4, 53.7),
 
   // 2015
   A(2015, 53, "PRI", "Alfonso Martínez (independiente)", 35.4, 52.6),
@@ -122,6 +125,7 @@ export const AYUNTAMIENTOS: PresidenciaMunicipal[] = [
   A(2015, 38, "PRI", "Daniel Romero", 37.0, 52.0),
   A(2015, 106, "PAN", "Marco Lagunas", 31.5, 49.7),
   A(2015, 45, "PAN", "Roberto Ortiz", 28.8, 49.5),
+  A(2015, 20, "PRI", "J. Trinidad Martínez", 35.2, 52.0),
 ];
 
 export function historicoMunicipio(clave: number): PresidenciaMunicipal[] {
