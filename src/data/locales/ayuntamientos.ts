@@ -79,6 +79,7 @@ export const AYUNTAMIENTOS: PresidenciaMunicipal[] = [
   A(2021, 38, "MORENA", "Daniel Romero Pérez", 39.8, 51.3),
   A(2021, 106, "PAN", "Marco Antonio Lagunas", 34.2, 49.1),
   A(2021, 45, "PAN", "Roberto Ortiz Vega", 30.6, 49.4),
+  A(2021, 20, "MORENA", "Adriana Campos López", 38.9, 52.3),
 
   // 2018
   A(2018, 53, "MORENA", "Raúl Morón Orozco", 36.8, 56.3),
