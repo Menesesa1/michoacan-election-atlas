@@ -162,7 +162,6 @@ Deno.serve(async (req) => {
       }
       if (topTerminos.length >= 20) break;
     }
-    }
 
     // 2. Interest over time + related queries para los 5 términos top en geo Michoacán
     for (const termino of topTerminos.slice(0, 5)) {
