@@ -52,6 +52,7 @@ interface MetricasLocales {
   fuentePadron: string | null;
   origen: string;
   esEstimacion: boolean;
+  fragmentacion: MetricasOficiales["fragmentacion"];
 }
 
 function diasA2027(): number {
@@ -105,6 +106,7 @@ function calcularMetricas(c: Candidato, oficial?: MetricasOficiales | null): Met
     fuentePadron: oficial?.fuentePadron ?? null,
     origen: oficial?.origen ?? "Estimación EME",
     esEstimacion: oficial?.esEstimacion ?? true,
+    fragmentacion: oficial?.fragmentacion ?? null,
   };
 }
 
@@ -393,6 +395,57 @@ export function generarDossierComercial({ candidato, consultor = "Job Meneses", 
     doc.text(ls, x + 14, y + 100, { lineHeightFactor: 1.4 });
   });
   y += 150;
+
+  // Fragmentación territorial INE (catálogo SECCION.dbf) — solo si hay datos oficiales
+  if (m.fragmentacion) {
+    const f = m.fragmentacion;
+    const fragH = 110;
+    setF(C_PANEL);
+    doc.rect(margin, y, contentW, fragH, "F");
+    setF(C_DORADO);
+    doc.rect(margin, y, 3, fragH, "F");
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7.5);
+    setT(C_DORADO);
+    doc.text(`FRAGMENTACIÓN TERRITORIAL INE · PERFIL ${f.perfil.toUpperCase()}`, margin + 18, y + 22);
+
+    const subW = (contentW - 40 - 24) / 3;
+    const subY = y + 38;
+    const items: Array<{ label: string; n: number; pct: number; color: [number, number, number] }> = [
+      { label: "URBANAS", n: f.urbanas, pct: f.pctUrbano, color: C_VERDE },
+      { label: "MIXTAS", n: f.mixtas, pct: f.pctMixto, color: C_AMBAR },
+      { label: "RURALES", n: f.rurales, pct: f.pctRural, color: C_ROJO },
+    ];
+    items.forEach((it, i) => {
+      const sx = margin + 18 + i * (subW + 12);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(7);
+      setT(C_MUTED);
+      doc.text(it.label, sx, subY);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(22);
+      setT(it.color);
+      doc.text(`${it.n}`, sx, subY + 22);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      setT(C_MUTED);
+      doc.text(`${it.pct.toFixed(1)}% del territorio`, sx, subY + 38);
+      setF([40, 42, 56]);
+      doc.rect(sx, subY + 46, subW, 4, "F");
+      setF(it.color);
+      doc.rect(sx, subY + 46, (subW * it.pct) / 100, 4, "F");
+    });
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8.5);
+    setT(C_TEXTO);
+    doc.text(
+      `${f.noDigitales} secciones rurales/mixtas requieren operación NO digital · Fuente: catálogo INE (SECCION.dbf)`,
+      margin + 18,
+      y + fragH - 14,
+    );
+    y += fragH + 16;
+  }
 
   // Bloque cita — altura dinámica para que el texto no sobresalga
   doc.setFont("helvetica", "bolditalic");

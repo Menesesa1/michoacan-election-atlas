@@ -14,7 +14,21 @@ import { GOBERNADOR_RESULTADOS } from "@/data/locales/gobernador";
 import type { PartidoSigla } from "@/data/locales/partidos";
 import { MUNICIPIOS_MICHOACAN_113 } from "@/data/locales/municipios-catalogo";
 import { loadPadronOficial } from "@/lib/padron-loader";
+import { loadCatalogo, type SeccionCat } from "@/lib/secciones-catalogo";
 import type { Candidato } from "@/lib/candidatos/types";
+
+export interface FragmentacionTerritorial {
+  total: number;
+  urbanas: number;
+  mixtas: number;
+  rurales: number;
+  pctUrbano: number;
+  pctMixto: number;
+  pctRural: number;
+  perfil: "urbano" | "rural" | "mixto" | "balanceado";
+  /** Secciones que requieren operación NO digital (rural + mixta). */
+  noDigitales: number;
+}
 
 export interface MetricasOficiales {
   brechaPp: number | null;
@@ -37,6 +51,8 @@ export interface MetricasOficiales {
   origen: string;
   fuenteResultados: "INE" | "IEM" | null;
   fuentePadron: "INE-DERFE 2026" | null;
+  /** Fragmentación territorial INE (catálogo SECCION.dbf). */
+  fragmentacion: FragmentacionTerritorial | null;
   esEstimacion: boolean;
 }
 
@@ -55,6 +71,7 @@ export const METRICAS_VACIAS: MetricasOficiales = {
   origen: "Estimación EME (no se halló territorio oficial)",
   fuenteResultados: null,
   fuentePadron: null,
+  fragmentacion: null,
   esEstimacion: true,
 };
 
@@ -206,6 +223,63 @@ function estimarSecciones(seccionesTotal: number | null, brechaPp: number) {
   return { riesgo: Math.round(seccionesTotal * fr), pivote: Math.round(seccionesTotal * fp) };
 }
 
+// ─────────── Fragmentación territorial INE (catálogo SECCION.dbf) ───────────
+let catalogoCache: SeccionCat[] | null = null;
+async function getCatalogo(): Promise<SeccionCat[] | null> {
+  if (catalogoCache) return catalogoCache;
+  try {
+    catalogoCache = await loadCatalogo();
+    return catalogoCache;
+  } catch {
+    return null;
+  }
+}
+
+function fragmentar(subset: SeccionCat[]): FragmentacionTerritorial | null {
+  const total = subset.length;
+  if (total === 0) return null;
+  const urb = subset.filter((s) => s.tipo === 2).length;
+  const mix = subset.filter((s) => s.tipo === 3).length;
+  const rur = subset.filter((s) => s.tipo === 4).length;
+  const pctU = +((urb / total) * 100).toFixed(1);
+  const pctM = +((mix / total) * 100).toFixed(1);
+  const pctR = +((rur / total) * 100).toFixed(1);
+  let perfil: FragmentacionTerritorial["perfil"] = "balanceado";
+  if (pctU >= 60) perfil = "urbano";
+  else if (pctR >= 60) perfil = "rural";
+  else if (pctM >= 50) perfil = "mixto";
+  return {
+    total,
+    urbanas: urb,
+    mixtas: mix,
+    rurales: rur,
+    pctUrbano: pctU,
+    pctMixto: pctM,
+    pctRural: pctR,
+    perfil,
+    noDigitales: mix + rur,
+  };
+}
+
+async function fragEstatal(): Promise<FragmentacionTerritorial | null> {
+  const cat = await getCatalogo();
+  return cat ? fragmentar(cat) : null;
+}
+async function fragDistritoFederal(num: number): Promise<FragmentacionTerritorial | null> {
+  const cat = await getCatalogo();
+  return cat ? fragmentar(cat.filter((s) => s.dis === num)) : null;
+}
+async function fragMunicipio(claveMun: number): Promise<FragmentacionTerritorial | null> {
+  const cat = await getCatalogo();
+  return cat ? fragmentar(cat.filter((s) => s.mun === claveMun)) : null;
+}
+async function fragMunicipios(claves: number[]): Promise<FragmentacionTerritorial | null> {
+  const cat = await getCatalogo();
+  if (!cat) return null;
+  const set = new Set(claves);
+  return fragmentar(cat.filter((s) => set.has(s.mun)));
+}
+
 // ─────────── Resolución por nivel ───────────
 async function resolverFederal(c: Candidato, padron: PadronCache | null): Promise<MetricasOficiales | null> {
   const num = extraerNumDistrito(c.territorio);
@@ -228,6 +302,7 @@ async function resolverFederal(c: Candidato, padron: PadronCache | null): Promis
   const padronD = padron?.distritosFed.get(num) ?? null;
   const secT = padronD?.secciones ?? null;
   const sec = estimarSecciones(secT, brechaPp);
+  const fragmentacion = await fragDistritoFederal(num);
   return {
     brechaPp,
     intencionPropia: Math.round(propioPct * 10) / 10,
@@ -243,6 +318,7 @@ async function resolverFederal(c: Candidato, padron: PadronCache | null): Promis
     origen: `INE · Distrito Federal ${num} · ${distrito.cabecera} · cómputos ${r.año}${padronD ? " + padrón INE 2026" : ""}`,
     fuenteResultados: "INE",
     fuentePadron: padronD ? "INE-DERFE 2026" : null,
+    fragmentacion,
     esEstimacion: false,
   };
 }
@@ -314,6 +390,18 @@ async function resolverLocal(c: Candidato, padron: PadronCache | null): Promise<
       }
     : METRICAS_VACIAS.demografia;
 
+  // Fragmentación: cruzar municipios del distrito local con catálogo INE
+  let fragmentacion: FragmentacionTerritorial | null = null;
+  if (distLocMeta) {
+    const claves: number[] = [];
+    for (const muniNombre of distLocMeta.municipios) {
+      const mn = norm(muniNombre);
+      const cm = MUNICIPIOS_MICHOACAN_113.find((x) => norm(x.nombre) === mn);
+      if (cm) claves.push(cm.clave);
+    }
+    if (claves.length > 0) fragmentacion = await fragMunicipios(claves);
+  }
+
   return {
     brechaPp,
     intencionPropia: Math.round(propioPct * 10) / 10,
@@ -329,6 +417,7 @@ async function resolverLocal(c: Candidato, padron: PadronCache | null): Promise<
     origen: `IEM · Distrito Local ${num}${distLocMeta ? " · " + distLocMeta.cabecera : ""} · cómputos ${ult.anio}${listaFinal ? " + padrón INE 2026 (agregado municipal)" : ""}`,
     fuenteResultados: "IEM",
     fuentePadron: listaFinal ? "INE-DERFE 2026" : null,
+    fragmentacion,
     esEstimacion: false,
   };
 }
@@ -381,6 +470,7 @@ async function resolverAyuntamiento(c: Candidato, padron: PadronCache | null): P
   const lista = padM?.listaNominal ?? null;
   const secT = padM?.secciones ?? null;
   const sec = estimarSecciones(secT, brechaPp);
+  const fragmentacion = await fragMunicipio(muni.clave);
 
   return {
     brechaPp,
@@ -397,6 +487,7 @@ async function resolverAyuntamiento(c: Candidato, padron: PadronCache | null): P
     origen: `IEM · Ayuntamiento ${muni.nombre} · cómputo ${cicloRef}${padM ? " + padrón INE 2026" : ""}`,
     fuenteResultados: "IEM",
     fuentePadron: padM ? "INE-DERFE 2026" : null,
+    fragmentacion,
     esEstimacion: false,
   };
 }
@@ -426,6 +517,7 @@ async function resolverGobernador(c: Candidato, padron: PadronCache | null): Pro
   const lista = padron?.estado.listaNominal ?? ref.listaNominal;
   const secT = padron?.estado.secciones ?? null;
   const sec = estimarSecciones(secT, brechaPp);
+  const fragmentacion = await fragEstatal();
   return {
     brechaPp,
     intencionPropia: Math.round(propioPct * 10) / 10,
@@ -441,6 +533,7 @@ async function resolverGobernador(c: Candidato, padron: PadronCache | null): Pro
     origen: `IEM · Gubernatura Michoacán · cómputo ${ref.anio}${padron ? " + padrón INE 2026 estatal" : ""}`,
     fuenteResultados: "IEM",
     fuentePadron: padron ? "INE-DERFE 2026" : null,
+    fragmentacion,
     esEstimacion: false,
   };
 }
