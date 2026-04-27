@@ -9,10 +9,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
-import { Sparkles, AlertTriangle, RotateCcw, Search, MessageSquare, User, Users2, History, Radar, ScanSearch, ExternalLink } from "lucide-react";
+import { Sparkles, AlertTriangle, RotateCcw, Search, MessageSquare, User, Users2, History, Radar, ExternalLink } from "lucide-react";
 import type {
   Candidato, TipoAnalisis, AnalisisPerfil, AnalisisOSINT, AnalisisDiscurso,
-  AnalisisOsintProfundo, OsintItem, OsintControversia, OsintFuente,
+  OsintItem, OsintItemMencion, OsintControversia, OsintFuente,
   WarRoomMiembro, TrayectoriaHito,
 } from "@/lib/candidatos/types";
 import { PartidoBadges } from "./PartidoBadges";
@@ -32,7 +32,6 @@ interface AnalisisState {
   perfil?: AnalisisPerfil;
   osint?: AnalisisOSINT;
   discurso?: AnalisisDiscurso;
-  osint_profundo?: AnalisisOsintProfundo;
 }
 
 export function FichaCandidato({ candidato, open, onClose }: Props) {
