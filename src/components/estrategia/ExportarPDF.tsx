@@ -219,12 +219,17 @@ export function ExportarPDF({ snapshot, data }: Props) {
     doc.setFontSize(8);
     doc.setTextColor(120, 120, 130);
     doc.text(
-      "Producto exclusivo EME · Uso restringido · War Room Alfonso Martínez & aliados",
+      `Producto exclusivo EME · Uso restringido · War Room ${candidatoNombre}`,
       margin,
       pageH - 20,
     );
 
-    const fname = `estrategia-360-${snapshot.nivel}-${snapshot.territorio.replace(/\s+/g, "-")}.pdf`;
+    const slugCandidato = candidatoNombre
+      .toLowerCase()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "") || "aspirante";
+    const fname = `estrategia-360-${slugCandidato}-${snapshot.nivel}-${snapshot.territorio.replace(/\s+/g, "-")}.pdf`;
     doc.save(fname);
   };
 
