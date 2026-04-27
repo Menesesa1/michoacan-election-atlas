@@ -52,6 +52,7 @@ interface MetricasLocales {
   fuentePadron: string | null;
   origen: string;
   esEstimacion: boolean;
+  fragmentacion: MetricasOficiales["fragmentacion"];
 }
 
 function diasA2027(): number {
