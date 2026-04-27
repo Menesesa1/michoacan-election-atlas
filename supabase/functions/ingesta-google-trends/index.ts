@@ -104,6 +104,105 @@ Explica brevemente (máximo 6 frases) por qué cada uno está repuntando esta se
   }
 }
 
+// Extrae el primer bloque JSON balanceado de un string (más robusto que regex simple).
+function extraerJsonBalanceado(txt: string): string | null {
+  // Quitar fences markdown si vienen
+  const limpio = txt.replace(/```(?:json)?/gi, "").replace(/```/g, "").trim();
+  const start = limpio.indexOf("{");
+  if (start === -1) return null;
+  let depth = 0;
+  let inStr = false;
+  let escape = false;
+  for (let i = start; i < limpio.length; i++) {
+    const c = limpio[i];
+    if (inStr) {
+      if (escape) escape = false;
+      else if (c === "\\") escape = true;
+      else if (c === '"') inStr = false;
+      continue;
+    }
+    if (c === '"') inStr = true;
+    else if (c === "{") depth++;
+    else if (c === "}") {
+      depth--;
+      if (depth === 0) return limpio.slice(start, i + 1);
+    }
+  }
+  return null;
+}
+
+function parsearTerminos(rawContent: string): string[] {
+  const candidato = extraerJsonBalanceado(rawContent) ?? rawContent;
+  try {
+    const parsed = JSON.parse(candidato);
+    const arr = Array.isArray(parsed?.terminos)
+      ? parsed.terminos
+      : Array.isArray(parsed?.terms)
+        ? parsed.terms
+        : Array.isArray(parsed)
+          ? parsed
+          : [];
+    return arr
+      .map((t: unknown) => (typeof t === "string" ? t.trim() : ""))
+      .filter((t: string) => t.length > 0 && t.length < 80)
+      .slice(0, 10);
+  } catch {
+    return [];
+  }
+}
+
+async function descubrirTerminosConReintentos(
+  apiKey: string,
+  maxIntentos: number,
+): Promise<string[]> {
+  const userPrompt = `Identifica los 10 temas/personas/eventos que están generando MÁS búsquedas y conversación pública esta semana específicamente en Michoacán, México.
+Responde EXACTAMENTE con este JSON, sin markdown, sin texto antes ni después:
+{"terminos":["término 1","término 2","término 3","término 4","término 5","término 6","término 7","término 8","término 9","término 10"]}
+Cada término debe ser corto (1-4 palabras), sin comillas internas, ideal para una búsqueda de Google. Prioriza nombres propios de políticos michoacanos, municipios en crisis, eventos noticiosos del estado, no temas nacionales genéricos.`;
+
+  for (let intento = 1; intento <= maxIntentos; intento++) {
+    try {
+      const resp = await fetch("https://api.perplexity.ai/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "sonar",
+          messages: [
+            {
+              role: "system",
+              content:
+                "Devuelve EXCLUSIVAMENTE un objeto JSON válido. Nada de markdown, nada de explicaciones, nada de texto fuera del JSON.",
+            },
+            { role: "user", content: userPrompt },
+          ],
+          search_recency_filter: "week",
+          temperature: intento === 1 ? 0.1 : 0.3,
+        }),
+      });
+      if (!resp.ok) {
+        const errTxt = await resp.text();
+        console.warn(`[descubrir] intento ${intento} HTTP ${resp.status}: ${errTxt.slice(0, 200)}`);
+        continue;
+      }
+      const data = await resp.json();
+      const rawContent: string = data?.choices?.[0]?.message?.content ?? "";
+      const terminos = parsearTerminos(rawContent);
+      if (terminos.length > 0) {
+        return terminos;
+      }
+      console.warn(
+        `[descubrir] intento ${intento} JSON inválido o vacío. Raw (primeros 500 chars): ${rawContent.slice(0, 500)}`,
+      );
+    } catch (e) {
+      console.warn(`[descubrir] intento ${intento} excepción:`, e instanceof Error ? e.message : e);
+    }
+  }
+  return [];
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -132,46 +231,12 @@ Deno.serve(async (req) => {
     if (!PERPLEXITY_API_KEY) {
       throw new Error("PERPLEXITY_API_KEY no configurada para descubrir tendencias");
     }
-    const descubrirResp = await fetch("https://api.perplexity.ai/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${PERPLEXITY_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "sonar",
-        messages: [
-          { role: "system", content: "Devuelve solo JSON válido, sin texto extra." },
-          {
-            role: "user",
-            content: `Identifica los 10 temas/personas/eventos que están generando MÁS búsquedas y conversación pública esta semana específicamente en Michoacán, México.
-Responde EXACTAMENTE con este JSON:
-{"terminos":["término 1","término 2",...,"término 10"]}
-Cada término debe ser corto (1-4 palabras), sin comillas internas, ideal para una búsqueda de Google. Prioriza nombres propios de políticos michoacanos, municipios en crisis, eventos noticiosos del estado, no temas nacionales genéricos.`,
-          },
-        ],
-        search_recency_filter: "week",
-        temperature: 0.1,
-      }),
-    });
-    if (!descubrirResp.ok) {
-      throw new Error(`Perplexity descubrimiento error [${descubrirResp.status}]`);
-    }
-    const descubrirData = await descubrirResp.json();
-    const rawContent: string = descubrirData?.choices?.[0]?.message?.content ?? "{}";
-    const jsonMatch = rawContent.match(/\{[\s\S]*\}/);
-    let topTerminos: string[] = [];
-    try {
-      const parsed = JSON.parse(jsonMatch?.[0] ?? "{}");
-      topTerminos = Array.isArray(parsed.terminos)
-        ? parsed.terminos.filter((t: unknown): t is string => typeof t === "string" && t.length > 0).slice(0, 10)
-        : [];
-    } catch (e) {
-      console.error("Error parseando terminos perplexity:", e, rawContent);
-    }
+
+    const topTerminos = await descubrirTerminosConReintentos(PERPLEXITY_API_KEY, 3);
     if (topTerminos.length === 0) {
-      throw new Error("Perplexity no devolvió términos tendencia parseables");
+      throw new Error("Perplexity no devolvió términos tendencia parseables tras varios intentos");
     }
+    console.log(`Términos descubiertos (${topTerminos.length}):`, topTerminos.join(", "));
 
     const filas: Record<string, unknown>[] = [];
     const ahora = new Date().toISOString();
