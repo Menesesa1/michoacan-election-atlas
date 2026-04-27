@@ -475,42 +475,37 @@ export async function detectAndParse(file: File): Promise<ParsedDataset> {
         const partidoCols = detectPartidoColumns(headers);
         const partidosDetectados = [...new Set(partidoCols.map((p) => p.partido))];
 
-        const colSeccion = findCol(headers, ["SECCION", "SECCIÓN", "ID_SECCION"]);
+        const colSeccion = findCol(headers, [
+          "SECCION", "SECCIÓN", "ID_SECCION", "CVE_SECCION", "CLAVE_SECCION",
+          "NUM_SECCION", "NO_SECCION", "SECC", "SECC_ELECTORAL",
+        ]);
         const colDistFed = findCol(headers, [
-          "ID_DISTRITO_FEDERAL",
-          "DISTRITO_FEDERAL",
-          "ID_DISTRITO",
-          "DISTRITO",
+          "ID_DISTRITO_FEDERAL", "DISTRITO_FEDERAL", "DISTRITO_FED",
+          "ID_DISTRITO_FED", "DTTO_FEDERAL", "ID_DTTO_FEDERAL",
+          "ID_DISTRITO", "DISTRITO", "CLAVE_DISTRITO_FEDERAL", "CVE_DISTRITO_FED",
         ]);
         const colDistLoc = findCol(headers, [
-          "DISTRITO_LOCAL",
-          "ID_DISTRITO_LOCAL",
-          "DTTO_LOCAL",
-          "ID_DTTO_LOCAL",
+          "DISTRITO_LOCAL", "ID_DISTRITO_LOCAL", "DTTO_LOCAL", "ID_DTTO_LOCAL",
+          "DISTRITO_LOC", "CLAVE_DISTRITO_LOCAL", "CVE_DISTRITO_LOC",
+          "DIP_LOCAL", "ID_DIP_LOCAL",
         ]);
         const colMpio = findCol(headers, [
-          "MUNICIPIO",
-          "ID_MUNICIPIO",
-          "CLAVE_MUNICIPIO",
-          "CVE_MUN",
+          "MUNICIPIO", "ID_MUNICIPIO", "CLAVE_MUNICIPIO", "CVE_MUN",
+          "CVE_MUNICIPIO", "ID_MPIO", "MPIO", "NOMBRE_MUNICIPIO",
+          "MUNICIPIO_CLAVE",
         ]);
         const colEntidad = findCol(headers, [
-          "ID_ESTADO",
-          "ID_ENTIDAD",
-          "CLAVE_ENTIDAD",
-          "CVE_ENTIDAD",
-          "ENTIDAD",
+          "ID_ESTADO", "ID_ENTIDAD", "CLAVE_ENTIDAD", "CVE_ENTIDAD",
+          "CVE_ENT", "ENTIDAD", "ESTADO", "NOMBRE_ESTADO", "NOMBRE_ENTIDAD",
         ]);
         const colLN = findCol(headers, [
-          "LISTA_NOMINAL",
-          "LISTA_NOMINAL_CASILLA",
-          "LN",
+          "LISTA_NOMINAL", "LISTA_NOMINAL_CASILLA", "LN", "LISTA_NOM",
+          "LISTA_NOMINAL_SECCION", "LISTA_NOMINAL_TOTAL",
         ]);
         const colTotal = findCol(headers, [
-          "TOTAL_VOTOS",
-          "TOTAL_VOTOS_CALCULADOS",
-          "VOTACION_TOTAL",
-          "TOTAL_VOTOS_VALIDOS",
+          "TOTAL_VOTOS", "TOTAL_VOTOS_CALCULADOS", "VOTACION_TOTAL",
+          "TOTAL_VOTOS_VALIDOS", "TOTAL_VOTOS_ASENTADO",
+          "VOTOS_TOTALES", "TOTAL_BOLETAS", "TOTAL_VOTACION",
         ]);
 
         if (!colSeccion) {
