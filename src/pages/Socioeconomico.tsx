@@ -27,6 +27,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Database, GraduationCap, Home, Users, Wifi, Briefcase } from "lucide-react";
 import { EleccionTerritorioSelector } from "@/components/EleccionTerritorioSelector";
 import type { TerritorioResuelto } from "@/lib/territorio-cruzado";
+import { SeccionValidator } from "@/components/SeccionValidator";
 
 const fmt = (n: number) => new Intl.NumberFormat("es-MX").format(Math.round(n));
 const pct = (n: number) => `${n.toFixed(1)}%`;
