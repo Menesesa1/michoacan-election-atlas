@@ -4,6 +4,7 @@
 
 import jsPDF from "jspdf";
 import type { Candidato } from "./candidatos/types";
+import type { MetricasOficiales } from "./dossier-data-resolver";
 
 const NIVEL_LABEL: Record<string, string> = {
   gobernador: "Gubernatura del Estado",
@@ -34,13 +35,19 @@ interface MetricasLocales {
   brechaPp: number;            // brecha estimada vs adversario
   intencionPropia: number;     // %
   intencionRival: number;      // %
+  rivalPartido: string | null;
+  cicloRef: number | null;
+  listaNominal: number | null;
   seccionesRiesgo: number;     // # secciones rojas
   seccionesPivote: number;     // # secciones decisivas
+  seccionesTotal: number | null;
   costoSemanal: number;        // MXN/semana de inacción
   diasRestantes: number;       // a la jornada 2027
   probDerrota: number;         // %
   amenazasDigitales: number;   // narrativas adversas activas
   participacionEsperada: number;
+  origen: string;
+  esEstimacion: boolean;
 }
 
 function diasA2027(): number {
@@ -49,39 +56,58 @@ function diasA2027(): number {
   return Math.max(0, Math.ceil((target.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
 }
 
-function calcularMetricas(c: Candidato): MetricasLocales {
+function calcularMetricas(c: Candidato, oficial?: MetricasOficiales | null): MetricasLocales {
   const seed = hashSeed(`${c.id}|${c.territorio}|${c.partido}`);
   const r = rng(seed);
-  // El propio arranca con desventaja moderada; oposición arranca con ventaja contra el "ideal"
-  const baseBrecha = c.es_propio ? 6 + r() * 12 : 8 + r() * 14;
-  const intencionPropia = Math.round((c.es_propio ? 22 + r() * 10 : 18 + r() * 8) * 10) / 10;
-  const intencionRival = Math.round((intencionPropia + baseBrecha) * 10) / 10;
-  // Escala según nivel
+  const baseBrechaEst = c.es_propio ? 6 + r() * 12 : 8 + r() * 14;
+  const intencionPropiaEst = Math.round((c.es_propio ? 22 + r() * 10 : 18 + r() * 8) * 10) / 10;
+  const intencionRivalEst = Math.round((intencionPropiaEst + baseBrechaEst) * 10) / 10;
   const escala =
     c.nivel === "gobernador" ? 8 :
     c.nivel === "diputados_federales" ? 4 :
     c.nivel === "diputados" ? 3 : 1;
+
+  // Brecha real → probabilidad real de derrota (sigmoide simple)
+  const brecha = oficial?.brechaPp ?? baseBrechaEst;
+  const probDerrota = Math.round(
+    Math.max(20, Math.min(90, 50 + brecha * 1.6 + (c.es_propio ? -4 : 4))),
+  );
+
+  // Costo semanal escalado por lista nominal real cuando exista
+  const lista = oficial?.listaNominal ?? null;
+  const costoBase = lista
+    ? Math.max(220_000, Math.min(620_000, 0.18 * lista + 80_000))
+    : 280_000 + r() * 240_000;
+  const costoSemanal = Math.round((costoBase * (escala / 2 + 0.5)) / 1000) * 1000;
+
   return {
-    brechaPp: Math.round(baseBrecha * 10) / 10,
-    intencionPropia,
-    intencionRival,
-    seccionesRiesgo: Math.round((35 + r() * 60) * escala),
-    seccionesPivote: Math.round((12 + r() * 28) * escala),
-    costoSemanal: Math.round((280_000 + r() * 240_000) * (escala / 2 + 0.5) / 1000) * 1000,
+    brechaPp: Math.round((oficial?.brechaPp ?? baseBrechaEst) * 10) / 10,
+    intencionPropia: oficial?.intencionPropia ?? intencionPropiaEst,
+    intencionRival: oficial?.intencionRival ?? intencionRivalEst,
+    rivalPartido: oficial?.rivalPartido ?? null,
+    cicloRef: oficial?.cicloRef ?? null,
+    listaNominal: lista,
+    seccionesRiesgo: oficial?.seccionesRiesgo ?? Math.round((35 + r() * 60) * escala),
+    seccionesPivote: oficial?.seccionesPivote ?? Math.round((12 + r() * 28) * escala),
+    seccionesTotal: oficial?.seccionesTotal ?? null,
+    costoSemanal,
     diasRestantes: diasA2027(),
-    probDerrota: Math.round(58 + r() * 22),
+    probDerrota,
     amenazasDigitales: Math.round(3 + r() * 6),
-    participacionEsperada: Math.round((52 + r() * 14) * 10) / 10,
+    participacionEsperada: oficial?.participacionHist ?? Math.round((52 + r() * 14) * 10) / 10,
+    origen: oficial?.origen ?? "Estimación EME",
+    esEstimacion: oficial?.esEstimacion ?? true,
   };
 }
 
 interface Input {
   candidato: Candidato;
   consultor?: string;
+  metricasOficiales?: MetricasOficiales | null;
 }
 
-export function generarDossierComercial({ candidato, consultor = "Job Meneses" }: Input) {
-  const m = calcularMetricas(candidato);
+export function generarDossierComercial({ candidato, consultor = "Job Meneses", metricasOficiales }: Input) {
+  const m = calcularMetricas(candidato, metricasOficiales);
   const doc = new jsPDF({ unit: "pt", format: "letter" });
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
