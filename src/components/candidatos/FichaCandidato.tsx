@@ -73,24 +73,37 @@ export function FichaCandidato({ candidato, open, onClose }: Props) {
       const { data: authData } = await supabase.auth.getUser();
       if (!authData?.user) throw new Error("No autenticado");
 
-      const { data, error } = await supabase.functions.invoke("analizar-candidato", {
-        body: {
-          tipo,
-          candidato: {
-            nombre: candidato.nombre,
-            partido: candidato.partido,
-            nivel: candidato.nivel,
-            territorio: candidato.territorio,
-            cargo_buscado: candidato.cargo_buscado ?? undefined,
-            bio_breve: candidato.bio_breve ?? undefined,
-            redes: candidato.redes,
-            notas: candidato.notas ?? undefined,
-            war_room: candidato.war_room ?? undefined,
-            trayectoria: candidato.trayectoria ?? undefined,
-            metricas_redes: candidato.metricas_redes ?? undefined,
-          },
-        },
-      });
+      const esOsintProfundo = tipo === "osint_profundo";
+      const fnName = esOsintProfundo ? "osint-profundo-candidato" : "analizar-candidato";
+      const body = esOsintProfundo
+        ? {
+            candidato: {
+              nombre: candidato.nombre,
+              partido: candidato.partido,
+              nivel: candidato.nivel,
+              territorio: candidato.territorio,
+              cargo_buscado: candidato.cargo_buscado ?? undefined,
+              bio_breve: candidato.bio_breve ?? undefined,
+            },
+          }
+        : {
+            tipo,
+            candidato: {
+              nombre: candidato.nombre,
+              partido: candidato.partido,
+              nivel: candidato.nivel,
+              territorio: candidato.territorio,
+              cargo_buscado: candidato.cargo_buscado ?? undefined,
+              bio_breve: candidato.bio_breve ?? undefined,
+              redes: candidato.redes,
+              notas: candidato.notas ?? undefined,
+              war_room: candidato.war_room ?? undefined,
+              trayectoria: candidato.trayectoria ?? undefined,
+              metricas_redes: candidato.metricas_redes ?? undefined,
+            },
+          };
+
+      const { data, error } = await supabase.functions.invoke(fnName, { body });
       if (error) throw error;
       const payload = data as { output?: unknown; model?: string; error?: string };
       if (payload.error) throw new Error(payload.error);
@@ -104,8 +117,11 @@ export function FichaCandidato({ candidato, open, onClose }: Props) {
         model: payload.model ?? "google/gemini-2.5-flash",
       }]);
 
-      setAnalisis((prev) => ({ ...prev, [tipo]: payload.output }));
-      toast({ title: `Análisis de ${tipo} generado` });
+      setAnalisis((prev) => ({ ...prev, [tipo]: payload.output as never }));
+      toast({
+        title: esOsintProfundo ? "OSINT Profundo generado" : `Análisis de ${tipo} generado`,
+        description: esOsintProfundo ? "Dossier con citas verificables listo." : undefined,
+      });
     } catch (err) {
       toast({
         title: "Error generando análisis",
