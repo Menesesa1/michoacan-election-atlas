@@ -1,4 +1,4 @@
-import { useState, FormEvent } from "react";
+import { useEffect, useState, FormEvent } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { z } from "zod";
 import { Lock, User, ShieldCheck, AlertCircle } from "lucide-react";
@@ -47,9 +47,11 @@ export default function Login() {
     setResetSent(true);
   };
 
-  if (isAuthenticated) {
-    navigate(from, { replace: true });
-  }
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate(from, { replace: true });
+    }
+  }, [from, isAuthenticated, navigate]);
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
