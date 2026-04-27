@@ -6,6 +6,10 @@ import { pathToFileURL } from "node:url";
 const jspdfMod = await import("jspdf");
 const jsPDF = jspdfMod.jsPDF;
 
+// Hack: el módulo del proyecto hace `import jsPDF from "jspdf"`, pero el default
+// en Node es un objeto. Parcheamos antes de importar.
+jspdfMod.default = jsPDF;
+
 // Cargamos el módulo TS via tsx
 const { generarDossierComercial } = await import("./src/lib/pdf-dossier-comercial.ts");
 
