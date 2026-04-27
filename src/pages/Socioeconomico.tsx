@@ -165,7 +165,7 @@ export default function Socioeconomico() {
               <TabsTrigger value="municipios">Municipios ({porMunicipio.length})</TabsTrigger>
               <TabsTrigger value="distritosLocales">Distritos locales IEM ({porDistritoLocal.length})</TabsTrigger>
               <TabsTrigger value="distritos">Distritos federales ({porDistrito.length})</TabsTrigger>
-              <TabsTrigger value="secciones">Secciones ({fmt(data!.length)})</TabsTrigger>
+              <TabsTrigger value="secciones">Secciones ({fmt(dataFiltrada?.length ?? 0)})</TabsTrigger>
             </TabsList>
 
             <TabsContent value="municipios">
@@ -199,7 +199,7 @@ export default function Socioeconomico() {
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-3">
                   <div>
                     <h3 className="text-sm font-semibold text-foreground">Detalle por sección electoral</h3>
-                    <p className="text-xs text-muted-foreground">Mostrando primeras 50 de {fmt(data!.length)} secciones</p>
+                    <p className="text-xs text-muted-foreground">Mostrando primeras 50 de {fmt(dataFiltrada?.length ?? 0)} secciones</p>
                   </div>
                   <Input
                     placeholder="Filtrar por número de sección..."
