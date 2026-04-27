@@ -598,8 +598,11 @@ export function generarDossierComercial({ candidato, consultor = "Job Meneses", 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7);
   setT(C_MUTED);
+  const fuentesEtiqueta = m.esEstimacion
+    ? "Métricas estimadas con modelo interno EME"
+    : `Cómputos: ${m.fuenteResultados ?? "—"} · Padrón: ${m.fuentePadron ?? "—"} · Modelo EME`;
   doc.text(
-    `Fuente: ${m.origen}. ${m.esEstimacion ? "Métricas estimadas con modelo interno EME" : "Métricas oficiales INE/IEM/INEGI ajustadas con modelo EME"}.`,
+    `Fuente: ${m.origen}. ${fuentesEtiqueta}.`,
     pageW / 2,
     pageH - 24,
     { align: "center" },
