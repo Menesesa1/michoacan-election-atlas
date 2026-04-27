@@ -517,6 +517,7 @@ async function resolverGobernador(c: Candidato, padron: PadronCache | null): Pro
   const lista = padron?.estado.listaNominal ?? ref.listaNominal;
   const secT = padron?.estado.secciones ?? null;
   const sec = estimarSecciones(secT, brechaPp);
+  const fragmentacion = await fragEstatal();
   return {
     brechaPp,
     intencionPropia: Math.round(propioPct * 10) / 10,
@@ -532,6 +533,7 @@ async function resolverGobernador(c: Candidato, padron: PadronCache | null): Pro
     origen: `IEM · Gubernatura Michoacán · cómputo ${ref.anio}${padron ? " + padrón INE 2026 estatal" : ""}`,
     fuenteResultados: "IEM",
     fuentePadron: padron ? "INE-DERFE 2026" : null,
+    fragmentacion,
     esEstimacion: false,
   };
 }
