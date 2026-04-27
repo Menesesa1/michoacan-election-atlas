@@ -23,18 +23,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let active = true;
     // Subscribirse PRIMERO para no perder eventos durante la hidratación.
     const { data: sub } = supabase.auth.onAuthStateChange((_event, sess) => {
+      if (!active) return;
       setSession(sess);
       setUser(sess?.user ?? null);
+      setLoading(false);
     });
     // Luego hidratar la sesión existente.
     supabase.auth.getSession().then(({ data }) => {
+      if (!active) return;
       setSession(data.session);
       setUser(data.session?.user ?? null);
+    }).catch(() => {
+      if (!active) return;
+      setSession(null);
+      setUser(null);
+    }).finally(() => {
+      if (!active) return;
       setLoading(false);
     });
-    return () => sub.subscription.unsubscribe();
+    return () => {
+      active = false;
+      sub.subscription.unsubscribe();
+    };
   }, []);
 
   const login = async (email: string, password: string) => {
