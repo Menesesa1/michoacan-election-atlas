@@ -172,7 +172,7 @@ const SIGNATURES: SchemaSignature[] = [
     pista: "IEM 2021 gobernatura",
   },
 
-  // ----- INE Padrón / Lista Nominal -----
+// ----- INE Padrón / Lista Nominal -----
   {
     origen: "INE_PADRON",
     tipo_eleccion: "padron_lista_nominal",
@@ -183,6 +183,74 @@ const SIGNATURES: SchemaSignature[] = [
     pista: "Padrón/lista nominal sin columnas de partido",
   },
 ];
+
+// ---------- Detección de delimitador y encoding ----------
+
+const DELIMITERS = [",", ";", "\t", "|"] as const;
+type Delim = (typeof DELIMITERS)[number];
+
+/** Quita BOM (UTF-8 / UTF-16) si existe. */
+function stripBOM(s: string): string {
+  if (s.charCodeAt(0) === 0xfeff) return s.slice(1);
+  return s;
+}
+
+/** Detecta el delimitador más probable en las primeras N líneas no vacías. */
+function detectDelimiter(text: string): Delim {
+  const lines = text
+    .split(/\r?\n/)
+    .filter((l) => l.trim().length > 0)
+    .slice(0, 15);
+  let best: { d: Delim; score: number } = { d: ",", score: -1 };
+  for (const d of DELIMITERS) {
+    const counts = lines.map((l) => l.split(d).length);
+    if (counts.length === 0 || counts[0] < 2) continue;
+    const first = counts[0];
+    // Estabilidad: # de líneas con el mismo conteo + magnitud
+    const stable = counts.filter((c) => c === first).length;
+    const score = stable * 10 + first;
+    if (score > best.score) best = { d, score };
+  }
+  return best.d;
+}
+
+/**
+ * INE/IEM a veces exportan archivos con metadatos arriba del header
+ * (líneas con título, fecha, "REPORTE DE...", etc.). Detecta la primera línea
+ * que parece ser encabezado real: contiene varios delimitadores Y al menos
+ * una palabra clave electoral conocida.
+ */
+function findHeaderLine(text: string, delim: Delim): number {
+  const lines = text.split(/\r?\n/);
+  const KEYS = [
+    "SECCION", "SECCIÓN", "CASILLA", "DISTRITO", "MUNICIPIO",
+    "MORENA", "PAN", "PRI", "LISTA_NOMINAL", "LISTA NOMINAL",
+    "ENTIDAD", "ESTADO",
+  ];
+  for (let i = 0; i < Math.min(lines.length, 30); i++) {
+    const l = lines[i];
+    if (l.split(delim).length < 3) continue;
+    const upper = l.toUpperCase();
+    if (KEYS.some((k) => upper.includes(k))) return i;
+  }
+  return 0;
+}
+
+/** Lee el archivo como texto probando UTF-8 y, si hay caracteres de reemplazo, latin1. */
+async function readFileSmart(file: File): Promise<{ text: string; encoding: string }> {
+  // Intento 1: UTF-8
+  const utf8 = stripBOM(await file.text());
+  // El "replacement character" U+FFFD aparece cuando UTF-8 falla
+  if (!utf8.includes("\uFFFD")) return { text: utf8, encoding: "UTF-8" };
+  // Intento 2: latin1 (windows-1252) — común en exports gubernamentales MX
+  try {
+    const buf = await file.arrayBuffer();
+    const text = new TextDecoder("windows-1252").decode(buf);
+    return { text: stripBOM(text), encoding: "Windows-1252" };
+  } catch {
+    return { text: utf8, encoding: "UTF-8 (con caracteres inválidos)" };
+  }
+}
 
 // ---------- Mapas canónicos de partidos ----------
 
