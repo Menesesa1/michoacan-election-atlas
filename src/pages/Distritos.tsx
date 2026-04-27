@@ -5,6 +5,7 @@ import { MapaDistritos } from "@/components/MapaDistritos";
 import { TablaDistritos } from "@/components/TablaDistritos";
 import { EleccionSelector } from "@/components/EleccionSelector";
 import { NivelSelector } from "@/components/NivelSelector";
+import { SeccionValidator } from "@/components/SeccionValidator";
 
 export default function Distritos() {
   const [eleccion, setEleccion] = useState("fed2024");
@@ -25,6 +26,7 @@ export default function Distritos() {
       <MapaInteractivo eleccion={eleccion} />
       <MapaDistritos eleccion={eleccion} />
       <TablaDistritos eleccion={eleccion} />
+      <SeccionValidator />
     </div>
   );
 }

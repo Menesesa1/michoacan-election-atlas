@@ -1,4 +1,5 @@
 import { DemografiaPanel } from "@/components/DemografiaPanel";
+import { SeccionValidator } from "@/components/SeccionValidator";
 
 export default function Demografia() {
   return (
@@ -12,6 +13,7 @@ export default function Demografia() {
         </p>
       </div>
       <DemografiaPanel />
+      <SeccionValidator />
     </div>
   );
 }
