@@ -3,7 +3,10 @@
 // medios mexicanos (especialmente michoacanos), registros públicos y
 // menciones recientes; devuelve dossier estructurado con citas y enlaces.
 
-import { corsHeaders } from "@supabase/supabase-js/cors";
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
 
 interface CandidatoIn {
   nombre: string;
