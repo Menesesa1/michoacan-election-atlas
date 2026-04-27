@@ -25,6 +25,8 @@ import {
 import { loadECEG, resumir, agruparPor, type SeccionCenso, type GrupoCenso } from "@/lib/eceg-loader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Database, GraduationCap, Home, Users, Wifi, Briefcase } from "lucide-react";
+import { EleccionTerritorioSelector } from "@/components/EleccionTerritorioSelector";
+import type { TerritorioResuelto } from "@/lib/territorio-cruzado";
 
 const fmt = (n: number) => new Intl.NumberFormat("es-MX").format(Math.round(n));
 const pct = (n: number) => `${n.toFixed(1)}%`;
@@ -33,6 +35,7 @@ export default function Socioeconomico() {
   const [data, setData] = useState<SeccionCenso[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [filtro, setFiltro] = useState("");
+  const [territorio, setTerritorio] = useState<TerritorioResuelto | null>(null);
 
   useEffect(() => {
     loadECEG()
@@ -40,17 +43,24 @@ export default function Socioeconomico() {
       .catch((e) => setError(e.message));
   }, []);
 
-  const resumen = useMemo(() => (data ? resumir(data) : null), [data]);
-  const porMunicipio = useMemo<GrupoCenso[]>(() => (data ? agruparPor(data, "municipio") : []), [data]);
-  const porDistrito = useMemo<GrupoCenso[]>(() => (data ? agruparPor(data, "distrito") : []), [data]);
-  const porDistritoLocal = useMemo<GrupoCenso[]>(() => (data ? agruparPor(data, "distritoLocal") : []), [data]);
+  // Filtra el dataset al territorio seleccionado (suma de secciones del catálogo INE).
+  const dataFiltrada = useMemo<SeccionCenso[] | null>(() => {
+    if (!data) return null;
+    if (!territorio || territorio.tipo === "gobernador") return data;
+    return data.filter((r) => territorio.secciones.has(Number(r.seccion)));
+  }, [data, territorio]);
+
+  const resumen = useMemo(() => (dataFiltrada ? resumir(dataFiltrada) : null), [dataFiltrada]);
+  const porMunicipio = useMemo<GrupoCenso[]>(() => (dataFiltrada ? agruparPor(dataFiltrada, "municipio") : []), [dataFiltrada]);
+  const porDistrito = useMemo<GrupoCenso[]>(() => (dataFiltrada ? agruparPor(dataFiltrada, "distrito") : []), [dataFiltrada]);
+  const porDistritoLocal = useMemo<GrupoCenso[]>(() => (dataFiltrada ? agruparPor(dataFiltrada, "distritoLocal") : []), [dataFiltrada]);
 
   const seccionesFiltradas = useMemo(() => {
-    if (!data) return [];
+    if (!dataFiltrada) return [];
     const q = filtro.trim();
-    const base = q ? data.filter((r) => String(r.seccion).includes(q)) : data;
+    const base = q ? dataFiltrada.filter((r) => String(r.seccion).includes(q)) : dataFiltrada;
     return base.slice(0, 50);
-  }, [data, filtro]);
+  }, [dataFiltrada, filtro]);
 
   const piramide = useMemo(() => {
     if (!resumen) return [];
@@ -88,10 +98,16 @@ export default function Socioeconomico() {
         <h1 className="text-2xl font-bold text-foreground">Perfil socioeconómico Michoacán</h1>
         <p className="text-sm text-muted-foreground mt-1">
           {resumen
-            ? `${fmt(resumen.totalSecciones)} secciones electorales · ${fmt(resumen.POBTOT)} habitantes · 192 indicadores censales`
+            ? `${territorio?.label ?? "Estatal · Michoacán"} · ${fmt(resumen.totalSecciones)} secciones · ${fmt(resumen.POBTOT)} habitantes · 192 indicadores censales`
             : "Cargando dataset INEGI..."}
         </p>
       </div>
+
+      <EleccionTerritorioSelector
+        defaultTipo="gobernador"
+        defaultClave={0}
+        onChange={setTerritorio}
+      />
 
       {!resumen ? (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -149,7 +165,7 @@ export default function Socioeconomico() {
               <TabsTrigger value="municipios">Municipios ({porMunicipio.length})</TabsTrigger>
               <TabsTrigger value="distritosLocales">Distritos locales IEM ({porDistritoLocal.length})</TabsTrigger>
               <TabsTrigger value="distritos">Distritos federales ({porDistrito.length})</TabsTrigger>
-              <TabsTrigger value="secciones">Secciones ({fmt(data!.length)})</TabsTrigger>
+              <TabsTrigger value="secciones">Secciones ({fmt(dataFiltrada?.length ?? 0)})</TabsTrigger>
             </TabsList>
 
             <TabsContent value="municipios">
@@ -183,7 +199,7 @@ export default function Socioeconomico() {
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-3">
                   <div>
                     <h3 className="text-sm font-semibold text-foreground">Detalle por sección electoral</h3>
-                    <p className="text-xs text-muted-foreground">Mostrando primeras 50 de {fmt(data!.length)} secciones</p>
+                    <p className="text-xs text-muted-foreground">Mostrando primeras 50 de {fmt(dataFiltrada?.length ?? 0)} secciones</p>
                   </div>
                   <Input
                     placeholder="Filtrar por número de sección..."
