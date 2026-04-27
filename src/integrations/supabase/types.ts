@@ -437,6 +437,147 @@ export type Database = {
         }
         Relationships: []
       }
+      trends_candidato: {
+        Row: {
+          candidato_id: string
+          citas: Json | null
+          comparativos: Json | null
+          contexto_narrativo: string | null
+          created_at: string
+          ejecutada_en: string
+          geo: string
+          id: string
+          pico_interes: number | null
+          promedio_interes: number | null
+          rango_temporal: string
+          raw_serpapi: Json | null
+          related_rising: Json | null
+          related_top: Json | null
+          serie_temporal: Json | null
+          termino: string
+          user_id: string
+        }
+        Insert: {
+          candidato_id: string
+          citas?: Json | null
+          comparativos?: Json | null
+          contexto_narrativo?: string | null
+          created_at?: string
+          ejecutada_en?: string
+          geo?: string
+          id?: string
+          pico_interes?: number | null
+          promedio_interes?: number | null
+          rango_temporal?: string
+          raw_serpapi?: Json | null
+          related_rising?: Json | null
+          related_top?: Json | null
+          serie_temporal?: Json | null
+          termino: string
+          user_id: string
+        }
+        Update: {
+          candidato_id?: string
+          citas?: Json | null
+          comparativos?: Json | null
+          contexto_narrativo?: string | null
+          created_at?: string
+          ejecutada_en?: string
+          geo?: string
+          id?: string
+          pico_interes?: number | null
+          promedio_interes?: number | null
+          rango_temporal?: string
+          raw_serpapi?: Json | null
+          related_rising?: Json | null
+          related_top?: Json | null
+          serie_temporal?: Json | null
+          termino?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      trends_estatal: {
+        Row: {
+          batch_id: string
+          citas: Json | null
+          contexto_narrativo: string | null
+          created_at: string
+          ejecutada_en: string
+          geo: string
+          id: string
+          raw_serpapi: Json | null
+          related: Json | null
+          serie_temporal: Json | null
+          termino: string
+          tipo: string
+          valor_interes: number | null
+          variacion_pct: number | null
+        }
+        Insert: {
+          batch_id: string
+          citas?: Json | null
+          contexto_narrativo?: string | null
+          created_at?: string
+          ejecutada_en?: string
+          geo?: string
+          id?: string
+          raw_serpapi?: Json | null
+          related?: Json | null
+          serie_temporal?: Json | null
+          termino: string
+          tipo: string
+          valor_interes?: number | null
+          variacion_pct?: number | null
+        }
+        Update: {
+          batch_id?: string
+          citas?: Json | null
+          contexto_narrativo?: string | null
+          created_at?: string
+          ejecutada_en?: string
+          geo?: string
+          id?: string
+          raw_serpapi?: Json | null
+          related?: Json | null
+          serie_temporal?: Json | null
+          termino?: string
+          tipo?: string
+          valor_interes?: number | null
+          variacion_pct?: number | null
+        }
+        Relationships: []
+      }
+      trends_runs: {
+        Row: {
+          batch_id: string | null
+          duracion_ms: number | null
+          ejecutada_en: string
+          error: string | null
+          id: string
+          total_terminos: number
+          trigger: string
+        }
+        Insert: {
+          batch_id?: string | null
+          duracion_ms?: number | null
+          ejecutada_en?: string
+          error?: string | null
+          id?: string
+          total_terminos?: number
+          trigger?: string
+        }
+        Update: {
+          batch_id?: string | null
+          duracion_ms?: number | null
+          ejecutada_en?: string
+          error?: string | null
+          id?: string
+          total_terminos?: number
+          trigger?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
