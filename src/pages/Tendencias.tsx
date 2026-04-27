@@ -2,6 +2,7 @@ import { TendenciasHistoricas } from "@/components/TendenciasHistoricas";
 import { SimuladorEscenarios } from "@/components/SimuladorEscenarios";
 import { ProyeccionEstatal2027 } from "@/components/ProyeccionEstatal2027";
 import { ProyeccionDistrital2027 } from "@/components/ProyeccionDistrital2027";
+import { TrendsEstatalPanel } from "@/components/TrendsEstatalPanel";
 import { NivelSelector } from "@/components/NivelSelector";
 import { Link } from "react-router-dom";
 import { BookOpen } from "lucide-react";
@@ -26,6 +27,8 @@ export default function Tendencias() {
 
       <ProyeccionEstatal2027 />
       <ProyeccionDistrital2027 />
+
+      <TrendsEstatalPanel />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <TendenciasHistoricas />
