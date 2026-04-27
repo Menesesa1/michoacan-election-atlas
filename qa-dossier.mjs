@@ -6,7 +6,7 @@ import { pathToFileURL } from "node:url";
 const { default: jsPDF } = await import("jspdf");
 
 // Cargamos el módulo TS via tsx
-const { generarDossierComercial } = await import("/dev-server/src/lib/pdf-dossier-comercial.ts");
+const { generarDossierComercial } = await import("./src/lib/pdf-dossier-comercial.ts");
 
 // jsPDF en Node guarda con .save() llamando a fs en algunos entornos; no es fiable.
 // Mejor: replicar la firma manualmente — pero como save() fuerza descarga browser,
