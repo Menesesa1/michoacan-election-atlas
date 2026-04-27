@@ -240,20 +240,21 @@ Deno.serve(async (req) => {
 
     const filas: Record<string, unknown>[] = [];
     const ahora = new Date().toISOString();
-    for (const termino of topTerminos) {
-      filas.push({
-        batch_id,
-        geo: GEO,
-        tipo: "rising_searches",
-        termino,
-        valor_interes: null,
-        variacion_pct: null,
-        ejecutada_en: ahora,
-      });
-    }
 
-    // 2. Interest over time + related queries para los 5 términos top en geo Michoacán
-    for (const termino of topTerminos.slice(0, 5)) {
+    // 2. Medir interés con SerpApi para CADA término (TIMESERIES + RELATED_QUERIES).
+    //    Guardamos el pico de interés (0-100) en valor_interes para que rising_searches
+    //    no quede en null. Para los primeros 5 además persistimos serie + related.
+    const medidos: Record<string, {
+      pico: number | null;
+      promedio: number | null;
+      serie: { fecha?: string; valor: number | null }[];
+      top: SerpRelatedQuery[];
+      rising: SerpRelatedQuery[];
+    }> = {};
+
+    for (let i = 0; i < topTerminos.length; i++) {
+      const termino = topTerminos[i];
+      const conRelated = i < 5;
       try {
         const iot = await fetchSerpapi({
           data_type: "TIMESERIES",
@@ -268,30 +269,62 @@ Deno.serve(async (req) => {
         }));
         const valores = serie.map((s) => s.valor).filter((v): v is number => typeof v === "number");
         const pico = valores.length ? Math.max(...valores) : null;
+        const promedio = valores.length
+          ? Math.round((valores.reduce((a, b) => a + b, 0) / valores.length) * 10) / 10
+          : null;
 
-        const rq = await fetchSerpapi({
-          data_type: "RELATED_QUERIES",
-          q: termino,
-          date: "today 3-m",
-          geo: GEO,
-        }) as { related_queries?: { top?: SerpRelatedQuery[]; rising?: SerpRelatedQuery[] } };
+        let top: SerpRelatedQuery[] = [];
+        let rising: SerpRelatedQuery[] = [];
+        if (conRelated) {
+          try {
+            const rq = await fetchSerpapi({
+              data_type: "RELATED_QUERIES",
+              q: termino,
+              date: "today 3-m",
+              geo: GEO,
+            }) as { related_queries?: { top?: SerpRelatedQuery[]; rising?: SerpRelatedQuery[] } };
+            top = rq.related_queries?.top ?? [];
+            rising = rq.related_queries?.rising ?? [];
+          } catch (e) {
+            console.warn(`RELATED_QUERIES falló para ${termino}:`, e instanceof Error ? e.message : e);
+          }
+        }
 
-        filas.push({
-          batch_id,
-          geo: GEO,
-          tipo: "interest_over_time",
-          termino,
-          valor_interes: pico,
-          serie_temporal: serie,
-          related: {
-            top: rq.related_queries?.top ?? [],
-            rising: rq.related_queries?.rising ?? [],
-          },
-          ejecutada_en: ahora,
-        });
+        medidos[termino] = { pico, promedio, serie, top, rising };
       } catch (e) {
-        console.error(`Error consultando ${termino}:`, e);
+        console.error(`Error TIMESERIES ${termino}:`, e instanceof Error ? e.message : e);
+        medidos[termino] = { pico: null, promedio: null, serie: [], top: [], rising: [] };
       }
+    }
+
+    // 3. rising_searches (uno por término) ya con valor_interes medido
+    for (const termino of topTerminos) {
+      const m = medidos[termino];
+      filas.push({
+        batch_id,
+        geo: GEO,
+        tipo: "rising_searches",
+        termino,
+        valor_interes: m?.pico ?? null,
+        variacion_pct: m?.promedio ?? null,
+        ejecutada_en: ahora,
+      });
+    }
+
+    // 4. interest_over_time detallado (top 5)
+    for (const termino of topTerminos.slice(0, 5)) {
+      const m = medidos[termino];
+      if (!m || (m.serie.length === 0 && m.top.length === 0 && m.rising.length === 0)) continue;
+      filas.push({
+        batch_id,
+        geo: GEO,
+        tipo: "interest_over_time",
+        termino,
+        valor_interes: m.pico,
+        serie_temporal: m.serie,
+        related: { top: m.top, rising: m.rising },
+        ejecutada_en: ahora,
+      });
     }
 
     // 3. Contexto narrativo + citas (Perplexity)
