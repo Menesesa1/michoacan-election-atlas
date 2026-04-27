@@ -389,19 +389,20 @@ export function generarDossierComercial({ candidato, consultor = "Job Meneses", 
   });
   y += 150;
 
-  // Bloque cita
-  setF(C_PANEL_2);
-  doc.rect(margin, y, contentW, 90, "F");
-  setF(C_DORADO);
-  doc.rect(margin, y, 3, 90, "F");
+  // Bloque cita — altura dinámica para que el texto no sobresalga
   doc.setFont("helvetica", "bolditalic");
-  doc.setFontSize(13);
-  setT(C_TEXTO);
+  doc.setFontSize(12);
   const cita = doc.splitTextToSize(
     `"Mientras usted lee esto, el equipo de su adversario ya está priorizando estas mismas secciones. La diferencia entre ganar y perder no es el dinero — es quién tiene el mapa primero."`,
-    contentW - 30,
+    contentW - 40,
   );
-  doc.text(cita, margin + 18, y + 32, { lineHeightFactor: 1.4 });
+  const citaH = Math.max(80, 28 + cita.length * 12 * 1.45 + 22);
+  setF(C_PANEL_2);
+  doc.rect(margin, y, contentW, citaH, "F");
+  setF(C_DORADO);
+  doc.rect(margin, y, 3, citaH, "F");
+  setT(C_TEXTO);
+  doc.text(cita, margin + 20, y + 30, { lineHeightFactor: 1.45 });
   footer(3);
 
   // ============= P4: COSTO DE LA INACCIÓN =============
