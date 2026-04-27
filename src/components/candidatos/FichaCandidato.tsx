@@ -411,36 +411,102 @@ function PerfilView({ data }: { data: AnalisisPerfil }) {
 }
 
 function OsintView({ data }: { data: AnalisisOSINT }) {
+  // Compatibilidad: análisis legacy pueden no traer citas/cargos/etc.
+  const citas: OsintFuente[] = Array.isArray(data.citas) ? data.citas : [];
+  const cargos: OsintItem[] = data.cargos_publicos_detectados ?? [];
+  const menciones: OsintItemMencion[] = data.menciones_prensa ?? [];
+  const red: OsintItem[] = data.red_de_relaciones ?? [];
+  const territorial: OsintItem[] = data.actividad_territorial ?? [];
+  const controversias: OsintControversia[] = (data.controversias ?? []).map((c) => ({
+    ...c,
+    fuentes: "fuentes" in c && Array.isArray((c as OsintControversia).fuentes) ? (c as OsintControversia).fuentes : [],
+  }));
+  // Fallback legacy: si no hay menciones_prensa nuevas pero sí menciones_recientes viejas
+  const mencionesLegacy = (!menciones.length && data.menciones_recientes?.length)
+    ? data.menciones_recientes.map((m) => ({ ...m, fuentes: [] as number[] }))
+    : menciones;
+  const aliadosLegacy = (!red.length && data.aliados_clave?.length)
+    ? data.aliados_clave.map((a) => ({ resumen: a, fuentes: [] as number[] }))
+    : red;
+
   return (
     <div className="space-y-3">
-      <ListaCard titulo="Aliados clave" items={data.aliados_clave} color="border-sky-500/40" />
-      <ListaCard titulo="Temas recurrentes" items={data.temas_recurrentes} color="border-violet-500/40" />
+      {data.resumen_ejecutivo && (
+        <Card className="p-4 bg-primary/5 border-primary/30">
+          <div className="text-xs font-mono uppercase tracking-widest text-muted-foreground mb-1.5">
+            Resumen ejecutivo
+          </div>
+          <p className="text-sm leading-relaxed">{data.resumen_ejecutivo}</p>
+        </Card>
+      )}
+
+      {data.presencia_digital && (
+        <Card className="p-3 bg-card/60 border-sky-500/40">
+          <div className="flex items-center justify-between mb-1.5">
+            <div className="text-xs font-mono uppercase tracking-widest">Presencia digital</div>
+            <Badge variant="outline" className="text-[10px] uppercase">{data.presencia_digital.nivel}</Badge>
+          </div>
+          {data.presencia_digital.plataformas_fuertes?.length > 0 && (
+            <div className="flex flex-wrap gap-1 mb-1.5">
+              {data.presencia_digital.plataformas_fuertes.map((p, i) => (
+                <Badge key={i} variant="secondary" className="text-[10px]">{p}</Badge>
+              ))}
+            </div>
+          )}
+          <p className="text-xs text-muted-foreground">{data.presencia_digital.observaciones}</p>
+        </Card>
+      )}
+
+      <OsintItemsCard titulo="Cargos y candidaturas detectados" items={cargos} citas={citas} color="border-emerald-500/40" />
+
       <Card className="p-3 bg-card/60 border-rose-500/40">
-        <div className="text-xs font-mono uppercase tracking-widest mb-2">Controversias</div>
-        {data.controversias.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Sin controversias públicas conocidas.</p>
+        <div className="text-xs font-mono uppercase tracking-widest mb-2">Controversias y riesgos</div>
+        {controversias.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Sin controversias detectadas en fuentes verificables.</p>
         ) : (
-          <ul className="space-y-2 text-sm">
-            {data.controversias.map((c, i) => (
-              <li key={i}>
-                <Badge variant="outline" className="text-[10px] mr-2">{c.gravedad}</Badge>
-                <strong>{c.tema}:</strong> <span className="text-muted-foreground">{c.descripcion}</span>
+          <ul className="space-y-2.5 text-sm">
+            {controversias.map((c, i) => (
+              <li key={i} className="space-y-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Badge variant="outline" className={`text-[10px] ${c.gravedad === "alta" ? "border-rose-500/60 text-rose-300" : c.gravedad === "media" ? "border-amber-500/60 text-amber-300" : "border-muted-foreground/40"}`}>
+                    {c.gravedad}
+                  </Badge>
+                  <strong>{c.tema}</strong>
+                </div>
+                <p className="text-muted-foreground">{c.descripcion}</p>
+                <FuentesInline indices={c.fuentes} citas={citas} />
               </li>
             ))}
           </ul>
         )}
       </Card>
+
       <Card className="p-3 bg-card/60">
-        <div className="text-xs font-mono uppercase tracking-widest mb-2">Menciones recientes</div>
-        <ul className="space-y-1.5 text-sm">
-          {data.menciones_recientes.map((m, i) => (
-            <li key={i} className="flex gap-2">
-              <Badge variant="outline" className={`text-[10px] ${m.tono === "positivo" ? "text-emerald-400" : m.tono === "negativo" ? "text-rose-400" : ""}`}>{m.tono}</Badge>
-              <span><strong>{m.fuente}:</strong> {m.titular}</span>
-            </li>
-          ))}
-        </ul>
+        <div className="text-xs font-mono uppercase tracking-widest mb-2">Menciones en prensa</div>
+        {mencionesLegacy.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Sin menciones recientes en medios monitoreados.</p>
+        ) : (
+          <ul className="space-y-1.5 text-sm">
+            {mencionesLegacy.map((m, i) => (
+              <li key={i} className="space-y-0.5">
+                <div className="flex gap-2 items-start">
+                  <Badge variant="outline" className={`text-[10px] shrink-0 ${m.tono === "positivo" ? "text-emerald-400" : m.tono === "negativo" ? "text-rose-400" : ""}`}>{m.tono}</Badge>
+                  <span><strong>{m.fuente}:</strong> {m.titular}</span>
+                </div>
+                <FuentesInline indices={m.fuentes} citas={citas} />
+              </li>
+            ))}
+          </ul>
+        )}
       </Card>
+
+      <OsintItemsCard titulo="Red de relaciones" items={aliadosLegacy} citas={citas} color="border-violet-500/40" />
+      <OsintItemsCard titulo="Actividad territorial" items={territorial} citas={citas} color="border-amber-500/40" />
+
+      {data.temas_recurrentes?.length > 0 && (
+        <ListaCard titulo="Temas recurrentes" items={data.temas_recurrentes} color="border-violet-500/40" />
+      )}
+
       {data.war_room_resumen && (
         <Card className="p-3 bg-card/60 border-amber-500/40">
           <div className="text-xs font-mono uppercase tracking-widest mb-2 flex items-center gap-1.5">
@@ -463,6 +529,47 @@ function OsintView({ data }: { data: AnalisisOSINT }) {
           {data.war_room_resumen.observaciones && (
             <p className="text-xs text-muted-foreground italic border-t border-border/40 pt-2">{data.war_room_resumen.observaciones}</p>
           )}
+        </Card>
+      )}
+
+      {data.vacios_informacion && data.vacios_informacion.length > 0 && (
+        <Card className="p-3 bg-card/60 border-muted">
+          <div className="text-xs font-mono uppercase tracking-widest mb-2 text-muted-foreground">Vacíos de información</div>
+          <ul className="space-y-1 text-sm">
+            {data.vacios_informacion.map((v, i) => (
+              <li key={i} className="flex gap-2"><span className="text-muted-foreground">·</span><span>{v}</span></li>
+            ))}
+          </ul>
+        </Card>
+      )}
+
+      {data.recomendaciones_busqueda_adicional && data.recomendaciones_busqueda_adicional.length > 0 && (
+        <Card className="p-3 bg-card/60 border-primary/30">
+          <div className="text-xs font-mono uppercase tracking-widest mb-2 text-primary">Líneas de búsqueda adicional</div>
+          <ul className="space-y-1 text-sm">
+            {data.recomendaciones_busqueda_adicional.map((r, i) => (
+              <li key={i} className="flex gap-2"><span className="text-primary">→</span><span>{r}</span></li>
+            ))}
+          </ul>
+        </Card>
+      )}
+
+      {citas.length > 0 && (
+        <Card className="p-3 bg-card/40 border-border/60">
+          <div className="text-xs font-mono uppercase tracking-widest mb-2 flex items-center gap-1.5">
+            <ExternalLink className="w-3.5 h-3.5" /> Fuentes ({citas.length})
+          </div>
+          <ol className="space-y-1.5 text-xs">
+            {citas.map((f, i) => (
+              <li key={i} className="flex gap-2">
+                <span className="text-muted-foreground font-mono shrink-0">[{i}]</span>
+                <a href={f.url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline break-all">
+                  {f.titulo || f.medio || f.url}
+                </a>
+                {f.fecha && <span className="text-muted-foreground shrink-0">· {f.fecha}</span>}
+              </li>
+            ))}
+          </ol>
         </Card>
       )}
     </div>
