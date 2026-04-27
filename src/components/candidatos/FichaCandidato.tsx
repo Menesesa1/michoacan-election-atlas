@@ -9,7 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
-import { Sparkles, AlertTriangle, RotateCcw, Search, MessageSquare, User, Users2, History, Radar, ExternalLink } from "lucide-react";
+import { Sparkles, AlertTriangle, RotateCcw, Search, MessageSquare, User, Users2, History, Radar, ExternalLink, TrendingUp } from "lucide-react";
 import type {
   Candidato, TipoAnalisis, AnalisisPerfil, AnalisisOSINT, AnalisisDiscurso,
   OsintItem, OsintItemMencion, OsintControversia, OsintFuente,
@@ -20,6 +20,7 @@ import { WarRoomEditor } from "./WarRoomEditor";
 import { TrayectoriaEditor } from "./TrayectoriaEditor";
 import { PrecargaFirecrawl } from "./PrecargaFirecrawl";
 import { EvaluacionDigitalTab } from "./EvaluacionDigitalTab";
+import { TrendsCandidatoTab } from "./TrendsCandidatoTab";
 import { generarTodosLosAnalisis } from "@/lib/candidatos/auto-analisis";
 
 interface Props {
@@ -160,10 +161,11 @@ export function FichaCandidato({ candidato, open, onClose }: Props) {
         </div>
 
         <Tabs value={tab} onValueChange={(v) => setTab(v as TabKey)}>
-          <TabsList className="grid grid-cols-3 md:grid-cols-6 w-full h-auto">
+          <TabsList className="grid grid-cols-4 md:grid-cols-7 w-full h-auto">
             <TabsTrigger value="perfil"><User className="w-3.5 h-3.5 mr-1.5" />Perfil</TabsTrigger>
             <TabsTrigger value="osint"><Search className="w-3.5 h-3.5 mr-1.5" />OSINT</TabsTrigger>
             <TabsTrigger value="discurso"><MessageSquare className="w-3.5 h-3.5 mr-1.5" />Discurso</TabsTrigger>
+            <TabsTrigger value="trends"><TrendingUp className="w-3.5 h-3.5 mr-1.5" />Trends</TabsTrigger>
             <TabsTrigger value="trayectoria"><History className="w-3.5 h-3.5 mr-1.5" />Trayectoria</TabsTrigger>
             <TabsTrigger value="eval_digital"><Radar className="w-3.5 h-3.5 mr-1.5" />Eval. digital</TabsTrigger>
             <TabsTrigger value="war_room"><Users2 className="w-3.5 h-3.5 mr-1.5" />War Room</TabsTrigger>
@@ -179,6 +181,10 @@ export function FichaCandidato({ candidato, open, onClose }: Props) {
               />
             </TabsContent>
           ))}
+
+          <TabsContent value="trends">
+            <TrendsCandidatoTab candidato={candidato} />
+          </TabsContent>
 
           <TabsContent value="trayectoria">
             <TrayectoriaTab candidato={candidato} />
