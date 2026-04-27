@@ -152,16 +152,17 @@ export function FichaCandidato({ candidato, open, onClose }: Props) {
         </div>
 
         <Tabs value={tab} onValueChange={(v) => setTab(v as TabKey)}>
-          <TabsList className="grid grid-cols-3 md:grid-cols-6 w-full h-auto">
+          <TabsList className="grid grid-cols-3 md:grid-cols-7 w-full h-auto">
             <TabsTrigger value="perfil"><User className="w-3.5 h-3.5 mr-1.5" />Perfil</TabsTrigger>
             <TabsTrigger value="osint"><Search className="w-3.5 h-3.5 mr-1.5" />OSINT</TabsTrigger>
+            <TabsTrigger value="osint_profundo"><ScanSearch className="w-3.5 h-3.5 mr-1.5" />OSINT+</TabsTrigger>
             <TabsTrigger value="discurso"><MessageSquare className="w-3.5 h-3.5 mr-1.5" />Discurso</TabsTrigger>
             <TabsTrigger value="trayectoria"><History className="w-3.5 h-3.5 mr-1.5" />Trayectoria</TabsTrigger>
             <TabsTrigger value="eval_digital"><Radar className="w-3.5 h-3.5 mr-1.5" />Eval. digital</TabsTrigger>
             <TabsTrigger value="war_room"><Users2 className="w-3.5 h-3.5 mr-1.5" />War Room</TabsTrigger>
           </TabsList>
 
-          {(["perfil", "osint", "discurso"] as TipoAnalisis[]).map((t) => (
+          {(["perfil", "osint", "discurso"] as const).map((t) => (
             <TabsContent key={t} value={t}>
               <SeccionAnalisis
                 tipo={t}
@@ -171,6 +172,14 @@ export function FichaCandidato({ candidato, open, onClose }: Props) {
               />
             </TabsContent>
           ))}
+
+          <TabsContent value="osint_profundo">
+            <SeccionOsintProfundo
+              data={analisis.osint_profundo}
+              loading={loadingTipo === "osint_profundo"}
+              onGenerar={() => generar("osint_profundo")}
+            />
+          </TabsContent>
 
           <TabsContent value="trayectoria">
             <TrayectoriaTab candidato={candidato} />
