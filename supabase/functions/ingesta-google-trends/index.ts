@@ -125,29 +125,42 @@ Deno.serve(async (req) => {
       if (body?.trigger) trigger = String(body.trigger);
     } catch { /* sin body */ }
 
-    // 1. Trending searches en MX (no hay scope estatal directo en SerpApi)
+    // 1. Daily search trends en MX (no hay scope estatal directo en SerpApi).
+    // DAILY_SEARCH_TRENDS no requiere `q`; devuelve daily_searches[].searches[].
     const trending = await fetchSerpapi({
-      data_type: "TRENDING_SEARCHES",
-      geo: "MX", // SerpApi limita TRENDING_SEARCHES a país
-    }) as { trending_searches?: { query: string; search_volume?: number; increase_percentage?: number; categories?: string[] }[] };
+      data_type: "DAILY_SEARCH_TRENDS",
+      geo: "MX",
+    }) as {
+      daily_searches?: {
+        date?: string;
+        searches?: { query: string; traffic?: string | number }[];
+      }[];
+    };
 
     const topTerminos: string[] = [];
     const filas: Record<string, unknown>[] = [];
     const ahora = new Date().toISOString();
 
-    if (Array.isArray(trending.trending_searches)) {
-      for (const t of trending.trending_searches.slice(0, 20)) {
-        topTerminos.push(t.query);
+    const dias = trending.daily_searches ?? [];
+    for (const dia of dias) {
+      for (const s of dia.searches ?? []) {
+        if (topTerminos.length >= 20) break;
+        if (topTerminos.includes(s.query)) continue;
+        topTerminos.push(s.query);
+        const trafficNum = typeof s.traffic === "number"
+          ? s.traffic
+          : Number(String(s.traffic ?? "").replace(/[^\d]/g, "")) || null;
         filas.push({
           batch_id,
           geo: "MX",
           tipo: "rising_searches",
-          termino: t.query,
-          valor_interes: t.search_volume ?? null,
-          variacion_pct: t.increase_percentage ?? null,
+          termino: s.query,
+          valor_interes: trafficNum,
+          variacion_pct: null,
           ejecutada_en: ahora,
         });
       }
+      if (topTerminos.length >= 20) break;
     }
 
     // 2. Interest over time + related queries para los 5 términos top en geo Michoacán
