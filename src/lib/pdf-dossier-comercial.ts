@@ -583,7 +583,7 @@ export function generarDossierComercial({ candidato, consultor = "Job Meneses", 
   doc.setFontSize(7);
   setT(C_MUTED);
   doc.text(
-    "Documento estrictamente confidencial. Métricas estimadas a partir de modelos internos EME y datos públicos de Michoacán 2018-2024.",
+    `Fuente: ${m.origen}. ${m.esEstimacion ? "Métricas estimadas con modelo interno EME" : "Métricas oficiales INE/IEM/INEGI ajustadas con modelo EME"}.`,
     pageW / 2,
     pageH - 24,
     { align: "center" },
