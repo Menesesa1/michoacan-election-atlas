@@ -106,6 +106,7 @@ function calcularMetricas(c: Candidato, oficial?: MetricasOficiales | null): Met
     fuentePadron: oficial?.fuentePadron ?? null,
     origen: oficial?.origen ?? "Estimación EME",
     esEstimacion: oficial?.esEstimacion ?? true,
+    fragmentacion: oficial?.fragmentacion ?? null,
   };
 }
 
