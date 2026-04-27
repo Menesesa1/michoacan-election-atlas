@@ -2,39 +2,7 @@
 
 import type { NivelEstrategia } from "@/data/estrategia-templates";
 
-export type TipoAnalisis = "perfil" | "osint" | "discurso" | "osint_profundo";
-
-// ===== OSINT Profundo (Perplexity con citas) =====
-export interface OsintFuente {
-  url: string;
-  titulo?: string;
-  fecha?: string;
-  medio?: string;
-}
-
-export interface OsintItem {
-  resumen: string;
-  fuentes: number[]; // índices a citas[]
-}
-
-export interface OsintControversia {
-  tema: string;
-  gravedad: "alta" | "media" | "baja";
-  descripcion: string;
-  fuentes: number[];
-}
-
-export interface AnalisisOsintProfundo {
-  resumen_ejecutivo: string;
-  cargos_publicos_detectados: OsintItem[];
-  menciones_prensa: OsintItem[];
-  controversias_y_riesgos: OsintControversia[];
-  red_de_relaciones: OsintItem[];
-  actividad_territorial: OsintItem[];
-  vacios_informacion: string[];
-  recomendaciones_busqueda_adicional: string[];
-  citas: OsintFuente[];
-}
+export type TipoAnalisis = "perfil" | "osint" | "discurso";
 
 export interface CandidatoRedes {
   twitter?: string;
