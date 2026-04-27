@@ -1,5 +1,5 @@
 // src/lib/pdf-dossier-comercial.ts
-import { jsPDF } from "jspdf";
+import "./dossier-runner.mjs"; const jsPDF = globalThis.__WrappedJsPDF;
 var NIVEL_LABEL = {
   gobernador: "Gubernatura del Estado",
   diputados_federales: "Diputaci\xF3n Federal",
