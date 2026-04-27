@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Users, GitCompare, Search, Layers, Star, Swords, Trophy, ListFilter } from "lucide-react";
 import { CandidatoCard } from "@/components/candidatos/CandidatoCard";
+import { DossierComercialSelector } from "@/components/candidatos/DossierComercialSelector";
 import { CandidatoForm } from "@/components/candidatos/CandidatoForm";
 import { FichaCandidato } from "@/components/candidatos/FichaCandidato";
 import { ComparadorCandidatos } from "@/components/candidatos/ComparadorCandidatos";
@@ -247,6 +248,8 @@ export default function Candidatos() {
       </div>
 
       <BannerFaseActiva />
+
+      <DossierComercialSelector candidatos={candidatos} />
 
       <Tabs defaultValue="lista" className="space-y-4">
         <TabsList>
