@@ -34,7 +34,6 @@ const TIPO_LABEL: Record<TipoAnalisis, string> = {
   perfil: "Perfil",
   osint: "OSINT",
   discurso: "Discurso",
-  osint_profundo: "OSINT+",
 };
 
 export function CandidatoCard({
