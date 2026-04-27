@@ -14,7 +14,21 @@ import { GOBERNADOR_RESULTADOS } from "@/data/locales/gobernador";
 import type { PartidoSigla } from "@/data/locales/partidos";
 import { MUNICIPIOS_MICHOACAN_113 } from "@/data/locales/municipios-catalogo";
 import { loadPadronOficial } from "@/lib/padron-loader";
+import { loadCatalogo, type SeccionCat } from "@/lib/secciones-catalogo";
 import type { Candidato } from "@/lib/candidatos/types";
+
+export interface FragmentacionTerritorial {
+  total: number;
+  urbanas: number;
+  mixtas: number;
+  rurales: number;
+  pctUrbano: number;
+  pctMixto: number;
+  pctRural: number;
+  perfil: "urbano" | "rural" | "mixto" | "balanceado";
+  /** Secciones que requieren operación NO digital (rural + mixta). */
+  noDigitales: number;
+}
 
 export interface MetricasOficiales {
   brechaPp: number | null;
