@@ -56,9 +56,9 @@ export function FichaCandidato({ candidato, open, onClose }: Props) {
     if (!data) return;
     const next: AnalisisState = {};
     for (const row of data) {
-      if (!next[row.tipo as TipoAnalisis]) {
-        // @ts-expect-error - dynamic key, output_json es JSON validado por la edge function
-        next[row.tipo as TipoAnalisis] = row.output_json;
+      const tipo = row.tipo as TipoAnalisis;
+      if (!(tipo in next)) {
+        (next as Record<TipoAnalisis, unknown>)[tipo] = row.output_json;
       }
     }
     setAnalisis(next);
