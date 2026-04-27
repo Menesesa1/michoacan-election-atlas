@@ -417,20 +417,21 @@ export function generarDossierComercial({ candidato, consultor = "Job Meneses", 
   y += 36;
 
   // Costo semanal grande
+  const panelCostoH = 175;
   setF(C_PANEL);
-  doc.rect(margin, y, contentW, 160, "F");
+  doc.rect(margin, y, contentW, panelCostoH, "F");
   setF(C_ROJO);
-  doc.rect(margin, y, 3, 160, "F");
+  doc.rect(margin, y, 3, panelCostoH, "F");
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
   setT(C_ROJO);
-  doc.text("COSTO ESTIMADO POR SEMANA SIN WAR ROOM ACTIVO", margin + 18, y + 24);
+  doc.text("COSTO ESTIMADO POR SEMANA SIN WAR ROOM ACTIVO", margin + 20, y + 26);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(54);
+  doc.setFontSize(46);
   setT(C_TEXTO);
   doc.text(
     `$${m.costoSemanal.toLocaleString("es-MX")} MXN`,
-    margin + 18,
+    margin + 20,
     y + 90,
   );
   doc.setFont("helvetica", "normal");
@@ -438,35 +439,36 @@ export function generarDossierComercial({ candidato, consultor = "Job Meneses", 
   setT(C_MUTED);
   const c1 = doc.splitTextToSize(
     "Equivale a contenidos no producidos, brigadistas no entrenados, prensa no atendida y crisis no contenidas. No es un gasto teórico: es voto que se va al adversario.",
-    contentW - 36,
+    contentW - 40,
   );
-  doc.text(c1, margin + 18, y + 118, { lineHeightFactor: 1.45 });
-  y += 180;
+  doc.text(c1, margin + 20, y + 122, { lineHeightFactor: 1.5 });
+  y += panelCostoH + 20;
 
   // Proyección a la jornada
   const semanas = Math.max(1, Math.ceil(m.diasRestantes / 7));
   const acumulado = m.costoSemanal * semanas;
+  const panelProyH = 110;
   setF(C_PANEL_2);
-  doc.rect(margin, y, contentW, 100, "F");
+  doc.rect(margin, y, contentW, panelProyH, "F");
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
   setT(C_AMBAR);
-  doc.text(`PROYECCIÓN ACUMULADA A LA JORNADA (${semanas} semanas restantes)`, margin + 18, y + 22);
+  doc.text(`PROYECCIÓN ACUMULADA A LA JORNADA (${semanas} semanas restantes)`, margin + 20, y + 24);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(32);
+  doc.setFontSize(30);
   setT(C_AMBAR);
   doc.text(
     `$${(acumulado / 1_000_000).toFixed(1)}M MXN`,
-    margin + 18,
-    y + 62,
+    margin + 20,
+    y + 64,
   );
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9.5);
   setT(C_TEXTO);
   doc.text(
     "Equivalente en valor de oportunidad perdido si la decisión se posterga.",
-    margin + 18,
-    y + 84,
+    margin + 20,
+    y + 90,
   );
   footer(4);
 
