@@ -488,30 +488,33 @@ export function generarDossierComercial({ candidato, consultor = "Job Meneses", 
   doc.text("Si nada cambia hoy", margin, y);
   y += 36;
 
-  // Probabilidad gigante
+  // Probabilidad gigante — altura dinámica para acomodar el texto explicativo
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(11);
+  const e1 = doc.splitTextToSize(
+    `Modelo basado en brecha actual (-${m.brechaPp.toFixed(1)} pp), participación esperada (${m.participacionEsperada.toFixed(1)}%) y comportamiento histórico de ${candidato.territorio}. La probabilidad sube cada semana sin intervención estructurada.`,
+    contentW - 40,
+  );
+  const probH = 150 + e1.length * 11 * 1.5 + 24;
   setF(C_PANEL);
-  doc.rect(margin, y, contentW, 200, "F");
+  doc.rect(margin, y, contentW, probH, "F");
   setF(C_ROJO);
-  doc.rect(margin, y, 3, 200, "F");
+  doc.rect(margin, y, 3, probH, "F");
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
   setT(C_ROJO);
-  doc.text("PROBABILIDAD ESTIMADA DE DERROTA", margin + 18, y + 24);
+  doc.text("PROBABILIDAD ESTIMADA DE DERROTA", margin + 20, y + 26);
 
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(120);
+  doc.setFontSize(96);
   setT(C_ROJO);
-  doc.text(`${m.probDerrota}%`, margin + 18, y + 130);
+  doc.text(`${m.probDerrota}%`, margin + 20, y + 130);
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(11);
   setT(C_TEXTO);
-  const e1 = doc.splitTextToSize(
-    `Modelo basado en brecha actual (-${m.brechaPp.toFixed(1)} pp), participación esperada (${m.participacionEsperada.toFixed(1)}%) y comportamiento histórico de ${candidato.territorio}. La probabilidad sube cada semana sin intervención estructurada.`,
-    contentW - 36,
-  );
-  doc.text(e1, margin + 18, y + 158, { lineHeightFactor: 1.45 });
-  y += 220;
+  doc.text(e1, margin + 20, y + 160, { lineHeightFactor: 1.5 });
+  y += probH + 18;
 
   // Línea pivote
   setF(C_PANEL_2);
