@@ -470,6 +470,7 @@ async function resolverAyuntamiento(c: Candidato, padron: PadronCache | null): P
   const lista = padM?.listaNominal ?? null;
   const secT = padM?.secciones ?? null;
   const sec = estimarSecciones(secT, brechaPp);
+  const fragmentacion = await fragMunicipio(muni.clave);
 
   return {
     brechaPp,
@@ -486,6 +487,7 @@ async function resolverAyuntamiento(c: Candidato, padron: PadronCache | null): P
     origen: `IEM · Ayuntamiento ${muni.nombre} · cómputo ${cicloRef}${padM ? " + padrón INE 2026" : ""}`,
     fuenteResultados: "IEM",
     fuentePadron: padM ? "INE-DERFE 2026" : null,
+    fragmentacion,
     esEstimacion: false,
   };
 }
