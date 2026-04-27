@@ -259,41 +259,67 @@ const PARTIDO_CANONICO: Record<string, string> = {
   PRI: "PRI",
   PRD: "PRD",
   PVEM: "PVEM",
+  PVM: "PVEM",
+  VERDE: "PVEM",
   PT: "PT",
   MC: "MC",
+  MOVIMIENTO_CIUDADANO: "MC",
   MORENA: "MORENA",
   // 2021
   FXM: "FXM",
+  FUERZA_POR_MEXICO: "FXM",
   RSP: "RSP",
+  REDES_SOCIALES_PROGRESISTAS: "RSP",
   PES: "PES",
   // 2018
   NA: "NA",
   PANAL: "NA",
+  NUEVA_ALIANZA: "NA",
   ENCUENTRO_SOCIAL: "PES",
+  ES: "PES",
   // CI/independientes
   CAND_IND_1: "INDEP",
+  CAND_IND_2: "INDEP",
   CI_1: "INDEP",
+  CI_2: "INDEP",
   INDEPENDIENTE: "INDEP",
-  // No registrados / nulos (los tratamos aparte si quieres)
+  CANDIDATO_INDEPENDIENTE: "INDEP",
+  // Local Michoacán específicos
+  PRMI: "PRMI",                  // Partido Renovación Michoacán
+  PRM: "PRMI",
+  MAS: "MAS_MICH",               // Más por Michoacán (efímero)
+  // No registrados / nulos
   NO_REGISTRADOS: "NO_REG",
   CNR: "NO_REG",
+  CANDIDATOS_NO_REGISTRADOS: "NO_REG",
   NULOS: "NULOS",
   VOTOS_NULOS: "NULOS",
+  VN: "NULOS",
 };
 
 // Coaliciones 2024 → distribuir voto (estrategia: contar a partido líder, simple)
 // Para análisis fino, el usuario puede des-coalicionar después.
 const COALICION_LIDER: Record<string, string> = {
-  // Frente Amplio por México
+  // Frente Amplio por México (FAM 2024) / Va por México (2021)
   PAN_PRI_PRD: "PAN",
   PAN_PRI: "PAN",
   PAN_PRD: "PAN",
   PRI_PRD: "PRI",
-  // Sigamos Haciendo Historia
+  PRI_PAN: "PAN",
+  PRD_PAN: "PAN",
+  PRD_PRI: "PRI",
+  // Sigamos Haciendo Historia (SHH 2024) / Juntos Hacemos Historia (2021/2018)
   MORENA_PT_PVEM: "MORENA",
   MORENA_PT: "MORENA",
   MORENA_PVEM: "MORENA",
   PT_PVEM: "MORENA",
+  PT_MORENA: "MORENA",
+  PVEM_MORENA: "MORENA",
+  PVEM_PT_MORENA: "MORENA",
+  // 2018 Por México al Frente (PAN-PRD-MC)
+  PAN_PRD_MC: "PAN",
+  PRD_MC: "PRD",
+  PAN_MC: "PAN",
 };
 
 // ---------- Utilidades ----------
