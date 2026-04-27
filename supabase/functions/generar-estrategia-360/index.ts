@@ -81,8 +81,13 @@ Deno.serve(async (req) => {
       });
     }
 
+    const candidatoPropio = body.candidatos?.propio?.nombre?.trim();
+    const lineaCampaña = candidatoPropio
+      ? `La estrategia se construye para la campaña de ${candidatoPropio} y su coalición.`
+      : `La estrategia se construye para el aspirante indicado en el snapshot y su coalición.`;
+
     const systemPrompt = `Eres consultor político senior de élite, especializado en Michoacán de Ocampo, México.
-Trabajas para EME (Job Meneses) en las campañas de Alfonso Martínez y aliados.
+${lineaCampaña}
 Conoces a fondo: Tierra Caliente, Meseta Purépecha, Bajío Zamorano, Costa, Morelia metropolitana,
 estructura PRI/PAN/PRD/MORENA/MC/PT/PVEM, autodefensas, cárteles, agroexportación, migración, remesas.
 
