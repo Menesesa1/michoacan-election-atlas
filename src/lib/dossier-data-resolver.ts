@@ -390,6 +390,18 @@ async function resolverLocal(c: Candidato, padron: PadronCache | null): Promise<
       }
     : METRICAS_VACIAS.demografia;
 
+  // Fragmentación: cruzar municipios del distrito local con catálogo INE
+  let fragmentacion: FragmentacionTerritorial | null = null;
+  if (distLocMeta) {
+    const claves: number[] = [];
+    for (const muniNombre of distLocMeta.municipios) {
+      const mn = norm(muniNombre);
+      const cm = MUNICIPIOS_MICHOACAN_113.find((x) => norm(x.nombre) === mn);
+      if (cm) claves.push(cm.clave);
+    }
+    if (claves.length > 0) fragmentacion = await fragMunicipios(claves);
+  }
+
   return {
     brechaPp,
     intencionPropia: Math.round(propioPct * 10) / 10,
@@ -405,6 +417,7 @@ async function resolverLocal(c: Candidato, padron: PadronCache | null): Promise<
     origen: `IEM · Distrito Local ${num}${distLocMeta ? " · " + distLocMeta.cabecera : ""} · cómputos ${ult.anio}${listaFinal ? " + padrón INE 2026 (agregado municipal)" : ""}`,
     fuenteResultados: "IEM",
     fuentePadron: listaFinal ? "INE-DERFE 2026" : null,
+    fragmentacion,
     esEstimacion: false,
   };
 }
