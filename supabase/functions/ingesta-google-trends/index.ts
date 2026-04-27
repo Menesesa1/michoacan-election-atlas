@@ -132,46 +132,12 @@ Deno.serve(async (req) => {
     if (!PERPLEXITY_API_KEY) {
       throw new Error("PERPLEXITY_API_KEY no configurada para descubrir tendencias");
     }
-    const descubrirResp = await fetch("https://api.perplexity.ai/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${PERPLEXITY_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "sonar",
-        messages: [
-          { role: "system", content: "Devuelve solo JSON válido, sin texto extra." },
-          {
-            role: "user",
-            content: `Identifica los 10 temas/personas/eventos que están generando MÁS búsquedas y conversación pública esta semana específicamente en Michoacán, México.
-Responde EXACTAMENTE con este JSON:
-{"terminos":["término 1","término 2",...,"término 10"]}
-Cada término debe ser corto (1-4 palabras), sin comillas internas, ideal para una búsqueda de Google. Prioriza nombres propios de políticos michoacanos, municipios en crisis, eventos noticiosos del estado, no temas nacionales genéricos.`,
-          },
-        ],
-        search_recency_filter: "week",
-        temperature: 0.1,
-      }),
-    });
-    if (!descubrirResp.ok) {
-      throw new Error(`Perplexity descubrimiento error [${descubrirResp.status}]`);
-    }
-    const descubrirData = await descubrirResp.json();
-    const rawContent: string = descubrirData?.choices?.[0]?.message?.content ?? "{}";
-    const jsonMatch = rawContent.match(/\{[\s\S]*\}/);
-    let topTerminos: string[] = [];
-    try {
-      const parsed = JSON.parse(jsonMatch?.[0] ?? "{}");
-      topTerminos = Array.isArray(parsed.terminos)
-        ? parsed.terminos.filter((t: unknown): t is string => typeof t === "string" && t.length > 0).slice(0, 10)
-        : [];
-    } catch (e) {
-      console.error("Error parseando terminos perplexity:", e, rawContent);
-    }
+
+    const topTerminos = await descubrirTerminosConReintentos(PERPLEXITY_API_KEY, 3);
     if (topTerminos.length === 0) {
-      throw new Error("Perplexity no devolvió términos tendencia parseables");
+      throw new Error("Perplexity no devolvió términos tendencia parseables tras varios intentos");
     }
+    console.log(`Términos descubiertos (${topTerminos.length}):`, topTerminos.join(", "));
 
     const filas: Record<string, unknown>[] = [];
     const ahora = new Date().toISOString();
