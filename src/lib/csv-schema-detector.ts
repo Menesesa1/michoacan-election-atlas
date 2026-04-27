@@ -401,15 +401,34 @@ function findCol(headers: string[], candidates: string[]): string | null {
 // ---------- Parser principal ----------
 
 export async function detectAndParse(file: File): Promise<ParsedDataset> {
+  // 1) Leer texto con encoding inteligente (UTF-8 con fallback a Windows-1252)
+  const { text: raw, encoding } = await readFileSmart(file);
+  // 2) Detectar delimitador (, ; \t |)
+  const delim = detectDelimiter(raw);
+  // 3) Saltar líneas de metadatos típicas de exports INE/IEM/Excel
+  const headerLine = findHeaderLine(raw, delim);
+  const text =
+    headerLine > 0 ? raw.split(/\r?\n/).slice(headerLine).join("\n") : raw;
+
+  const preWarnings: string[] = [];
+  if (encoding !== "UTF-8") preWarnings.push(`Encoding: ${encoding}`);
+  if (delim !== ",")
+    preWarnings.push(`Delimitador: "${delim === "\t" ? "TAB" : delim}"`);
+  if (headerLine > 0)
+    preWarnings.push(`Saltadas ${headerLine} líneas de metadatos antes del encabezado`);
+
   return new Promise((resolve) => {
-    Papa.parse<Record<string, unknown>>(file, {
+    Papa.parse<Record<string, unknown>>(text, {
       header: true,
-      skipEmptyLines: true,
-      encoding: "UTF-8",
+      skipEmptyLines: "greedy",
+      delimiter: delim,
+      transformHeader: (h) => h.trim(),
       complete: (results) => {
-        const headers = results.meta.fields ?? [];
+        const headers = (results.meta.fields ?? [])
+          .map((h) => h.trim())
+          .filter(Boolean);
         const errores: string[] = [];
-        const warnings: string[] = [];
+        const warnings: string[] = [...preWarnings];
 
         if (headers.length === 0) {
           resolve(emptyResult(["No se encontraron encabezados en el CSV"]));
