@@ -276,7 +276,12 @@ export function generarDossierComercial({ candidato, consultor = "Job Meneses", 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
   setT(C_ROJO);
-  doc.text("INTENCIÓN ESTIMADA · ADVERSARIO DOMINANTE", xR + 16, y + 22);
+  doc.text(
+    m.rivalPartido
+      ? `INTENCIÓN HISTÓRICA · ADVERSARIO DOMINANTE (${m.rivalPartido})`
+      : "INTENCIÓN ESTIMADA · ADVERSARIO DOMINANTE",
+    xR + 16, y + 22,
+  );
   doc.setFont("helvetica", "bold");
   doc.setFontSize(40);
   setT(C_TEXTO);
@@ -284,8 +289,18 @@ export function generarDossierComercial({ candidato, consultor = "Job Meneses", 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
   setT(C_MUTED);
-  doc.text(`Construyendo ventaja desde hace meses`, xR + 16, y + 92);
-  doc.text(`Con narrativa instalada en medios locales`, xR + 16, y + 108);
+  doc.text(
+    m.cicloRef
+      ? `Resultado real ciclo ${m.cicloRef} en este territorio`
+      : "Construyendo ventaja desde hace meses",
+    xR + 16, y + 92,
+  );
+  doc.text(
+    m.listaNominal
+      ? `Lista nominal oficial: ${m.listaNominal.toLocaleString("es-MX")}`
+      : "Con narrativa instalada en medios locales",
+    xR + 16, y + 108,
+  );
   y += 150;
 
   // Brecha grande
