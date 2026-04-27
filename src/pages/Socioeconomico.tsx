@@ -25,6 +25,8 @@ import {
 import { loadECEG, resumir, agruparPor, type SeccionCenso, type GrupoCenso } from "@/lib/eceg-loader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Database, GraduationCap, Home, Users, Wifi, Briefcase } from "lucide-react";
+import { EleccionTerritorioSelector } from "@/components/EleccionTerritorioSelector";
+import type { TerritorioResuelto } from "@/lib/territorio-cruzado";
 
 const fmt = (n: number) => new Intl.NumberFormat("es-MX").format(Math.round(n));
 const pct = (n: number) => `${n.toFixed(1)}%`;
@@ -33,6 +35,7 @@ export default function Socioeconomico() {
   const [data, setData] = useState<SeccionCenso[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [filtro, setFiltro] = useState("");
+  const [territorio, setTerritorio] = useState<TerritorioResuelto | null>(null);
 
   useEffect(() => {
     loadECEG()
@@ -40,10 +43,17 @@ export default function Socioeconomico() {
       .catch((e) => setError(e.message));
   }, []);
 
-  const resumen = useMemo(() => (data ? resumir(data) : null), [data]);
-  const porMunicipio = useMemo<GrupoCenso[]>(() => (data ? agruparPor(data, "municipio") : []), [data]);
-  const porDistrito = useMemo<GrupoCenso[]>(() => (data ? agruparPor(data, "distrito") : []), [data]);
-  const porDistritoLocal = useMemo<GrupoCenso[]>(() => (data ? agruparPor(data, "distritoLocal") : []), [data]);
+  // Filtra el dataset al territorio seleccionado (suma de secciones del catálogo INE).
+  const dataFiltrada = useMemo<SeccionCenso[] | null>(() => {
+    if (!data) return null;
+    if (!territorio || territorio.tipo === "gobernador") return data;
+    return data.filter((r) => territorio.secciones.has(Number(r.seccion)));
+  }, [data, territorio]);
+
+  const resumen = useMemo(() => (dataFiltrada ? resumir(dataFiltrada) : null), [dataFiltrada]);
+  const porMunicipio = useMemo<GrupoCenso[]>(() => (dataFiltrada ? agruparPor(dataFiltrada, "municipio") : []), [dataFiltrada]);
+  const porDistrito = useMemo<GrupoCenso[]>(() => (dataFiltrada ? agruparPor(dataFiltrada, "distrito") : []), [dataFiltrada]);
+  const porDistritoLocal = useMemo<GrupoCenso[]>(() => (dataFiltrada ? agruparPor(dataFiltrada, "distritoLocal") : []), [dataFiltrada]);
 
   const seccionesFiltradas = useMemo(() => {
     if (!data) return [];
