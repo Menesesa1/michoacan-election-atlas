@@ -254,70 +254,75 @@ export function generarDossierComercial({ candidato, consultor = "Job Meneses", 
   doc.text(subt, margin, y + 14, { lineHeightFactor: 1.5 });
   y += subt.length * 11 * 1.5 + 30;
 
-  // Dos paneles comparativos
+  // Dos paneles comparativos — altura mayor para acomodar líneas extra
+  const panelH = 145;
   const panelW = (contentW - 16) / 2;
   // Propio
   setF(C_PANEL);
-  doc.rect(margin, y, panelW, 130, "F");
+  doc.rect(margin, y, panelW, panelH, "F");
   setF(c_color(candidato.es_propio ? C_DORADO : C_MUTED));
-  doc.rect(margin, y, 3, 130, "F");
+  doc.rect(margin, y, 3, panelH, "F");
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
   setT(C_MUTED);
-  doc.text("INTENCIÓN ESTIMADA · USTED", margin + 16, y + 22);
+  doc.text("INTENCIÓN ESTIMADA · USTED", margin + 18, y + 24);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(40);
+  doc.setFontSize(38);
   setT(C_TEXTO);
-  doc.text(`${m.intencionPropia.toFixed(1)}%`, margin + 16, y + 70);
+  doc.text(`${m.intencionPropia.toFixed(1)}%`, margin + 18, y + 78);
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(9);
+  doc.setFontSize(8.5);
   setT(C_MUTED);
-  doc.text(`Base: voto duro de ${candidato.partido} en ${candidato.territorio}`, margin + 16, y + 92);
-  doc.text(`Sin movilización adicional al ${(m.participacionEsperada).toFixed(1)}%`, margin + 16, y + 108);
+  const baseTxt = doc.splitTextToSize(
+    `Base: voto duro de ${candidato.partido} en ${candidato.territorio}`,
+    panelW - 32,
+  );
+  doc.text(baseTxt, margin + 18, y + 100, { lineHeightFactor: 1.4 });
+  doc.text(
+    `Sin movilización adicional al ${m.participacionEsperada.toFixed(1)}%`,
+    margin + 18,
+    y + 100 + baseTxt.length * 11,
+  );
 
   // Rival
   const xR = margin + panelW + 16;
   setF(C_PANEL);
-  doc.rect(xR, y, panelW, 130, "F");
+  doc.rect(xR, y, panelW, panelH, "F");
   setF(C_ROJO);
-  doc.rect(xR, y, 3, 130, "F");
+  doc.rect(xR, y, 3, panelH, "F");
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
   setT(C_ROJO);
-  doc.text(
-    m.rivalPartido
-      ? `INTENCIÓN HISTÓRICA · ADVERSARIO DOMINANTE (${m.rivalPartido})`
-      : "INTENCIÓN ESTIMADA · ADVERSARIO DOMINANTE",
-    xR + 16, y + 22,
-  );
+  const labelRival = m.rivalPartido
+    ? `INTENCIÓN HISTÓRICA · ADVERSARIO (${m.rivalPartido})`
+    : "INTENCIÓN ESTIMADA · ADVERSARIO";
+  doc.text(labelRival, xR + 18, y + 24);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(40);
+  doc.setFontSize(38);
   setT(C_TEXTO);
-  doc.text(`${m.intencionRival.toFixed(1)}%`, xR + 16, y + 70);
+  doc.text(`${m.intencionRival.toFixed(1)}%`, xR + 18, y + 78);
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(9);
+  doc.setFontSize(8.5);
   setT(C_MUTED);
   doc.text(
     m.cicloRef
       ? `Resultado real ciclo ${m.cicloRef} en este territorio`
       : "Construyendo ventaja desde hace meses",
-    xR + 16, y + 92,
+    xR + 18, y + 100,
   );
   doc.text(
     m.listaNominal
-      ? `Lista nominal oficial: ${m.listaNominal.toLocaleString("es-MX")}`
-      : "Con narrativa instalada en medios locales",
-    xR + 16, y + 108,
+      ? `Lista nominal: ${m.listaNominal.toLocaleString("es-MX")}`
+      : "Narrativa instalada en medios locales",
+    xR + 18, y + 115,
   );
-  // Línea adicional con composición demográfica si está disponible
   if (m.pctJovenes != null && m.pctMayores != null) {
-    setT(C_MUTED);
     doc.text(
-      `Padrón: ${m.pctJovenes.toFixed(0)}% jóvenes 18-29 · ${m.pctMayores.toFixed(0)}% adulto mayor 60+`,
-      xR + 16, y + 122,
+      `${m.pctJovenes.toFixed(0)}% jóvenes 18-29 · ${m.pctMayores.toFixed(0)}% adulto mayor 60+`,
+      xR + 18, y + 130,
     );
   }
-  y += 150;
+  y += panelH + 18;
 
   // Brecha grande
   setF(C_PANEL_2);
@@ -389,19 +394,20 @@ export function generarDossierComercial({ candidato, consultor = "Job Meneses", 
   });
   y += 150;
 
-  // Bloque cita
-  setF(C_PANEL_2);
-  doc.rect(margin, y, contentW, 90, "F");
-  setF(C_DORADO);
-  doc.rect(margin, y, 3, 90, "F");
+  // Bloque cita — altura dinámica para que el texto no sobresalga
   doc.setFont("helvetica", "bolditalic");
-  doc.setFontSize(13);
-  setT(C_TEXTO);
+  doc.setFontSize(12);
   const cita = doc.splitTextToSize(
     `"Mientras usted lee esto, el equipo de su adversario ya está priorizando estas mismas secciones. La diferencia entre ganar y perder no es el dinero — es quién tiene el mapa primero."`,
-    contentW - 30,
+    contentW - 40,
   );
-  doc.text(cita, margin + 18, y + 32, { lineHeightFactor: 1.4 });
+  const citaH = Math.max(80, 28 + cita.length * 12 * 1.45 + 22);
+  setF(C_PANEL_2);
+  doc.rect(margin, y, contentW, citaH, "F");
+  setF(C_DORADO);
+  doc.rect(margin, y, 3, citaH, "F");
+  setT(C_TEXTO);
+  doc.text(cita, margin + 20, y + 30, { lineHeightFactor: 1.45 });
   footer(3);
 
   // ============= P4: COSTO DE LA INACCIÓN =============
@@ -416,20 +422,21 @@ export function generarDossierComercial({ candidato, consultor = "Job Meneses", 
   y += 36;
 
   // Costo semanal grande
+  const panelCostoH = 175;
   setF(C_PANEL);
-  doc.rect(margin, y, contentW, 160, "F");
+  doc.rect(margin, y, contentW, panelCostoH, "F");
   setF(C_ROJO);
-  doc.rect(margin, y, 3, 160, "F");
+  doc.rect(margin, y, 3, panelCostoH, "F");
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
   setT(C_ROJO);
-  doc.text("COSTO ESTIMADO POR SEMANA SIN WAR ROOM ACTIVO", margin + 18, y + 24);
+  doc.text("COSTO ESTIMADO POR SEMANA SIN WAR ROOM ACTIVO", margin + 20, y + 26);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(54);
+  doc.setFontSize(46);
   setT(C_TEXTO);
   doc.text(
     `$${m.costoSemanal.toLocaleString("es-MX")} MXN`,
-    margin + 18,
+    margin + 20,
     y + 90,
   );
   doc.setFont("helvetica", "normal");
@@ -437,35 +444,36 @@ export function generarDossierComercial({ candidato, consultor = "Job Meneses", 
   setT(C_MUTED);
   const c1 = doc.splitTextToSize(
     "Equivale a contenidos no producidos, brigadistas no entrenados, prensa no atendida y crisis no contenidas. No es un gasto teórico: es voto que se va al adversario.",
-    contentW - 36,
+    contentW - 40,
   );
-  doc.text(c1, margin + 18, y + 118, { lineHeightFactor: 1.45 });
-  y += 180;
+  doc.text(c1, margin + 20, y + 122, { lineHeightFactor: 1.5 });
+  y += panelCostoH + 20;
 
   // Proyección a la jornada
   const semanas = Math.max(1, Math.ceil(m.diasRestantes / 7));
   const acumulado = m.costoSemanal * semanas;
+  const panelProyH = 110;
   setF(C_PANEL_2);
-  doc.rect(margin, y, contentW, 100, "F");
+  doc.rect(margin, y, contentW, panelProyH, "F");
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
   setT(C_AMBAR);
-  doc.text(`PROYECCIÓN ACUMULADA A LA JORNADA (${semanas} semanas restantes)`, margin + 18, y + 22);
+  doc.text(`PROYECCIÓN ACUMULADA A LA JORNADA (${semanas} semanas restantes)`, margin + 20, y + 24);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(32);
+  doc.setFontSize(30);
   setT(C_AMBAR);
   doc.text(
     `$${(acumulado / 1_000_000).toFixed(1)}M MXN`,
-    margin + 18,
-    y + 62,
+    margin + 20,
+    y + 64,
   );
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9.5);
   setT(C_TEXTO);
   doc.text(
     "Equivalente en valor de oportunidad perdido si la decisión se posterga.",
-    margin + 18,
-    y + 84,
+    margin + 20,
+    y + 90,
   );
   footer(4);
 
@@ -480,30 +488,33 @@ export function generarDossierComercial({ candidato, consultor = "Job Meneses", 
   doc.text("Si nada cambia hoy", margin, y);
   y += 36;
 
-  // Probabilidad gigante
+  // Probabilidad gigante — altura dinámica para acomodar el texto explicativo
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(11);
+  const e1 = doc.splitTextToSize(
+    `Modelo basado en brecha actual (-${m.brechaPp.toFixed(1)} pp), participación esperada (${m.participacionEsperada.toFixed(1)}%) y comportamiento histórico de ${candidato.territorio}. La probabilidad sube cada semana sin intervención estructurada.`,
+    contentW - 40,
+  );
+  const probH = 150 + e1.length * 11 * 1.5 + 24;
   setF(C_PANEL);
-  doc.rect(margin, y, contentW, 200, "F");
+  doc.rect(margin, y, contentW, probH, "F");
   setF(C_ROJO);
-  doc.rect(margin, y, 3, 200, "F");
+  doc.rect(margin, y, 3, probH, "F");
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
   setT(C_ROJO);
-  doc.text("PROBABILIDAD ESTIMADA DE DERROTA", margin + 18, y + 24);
+  doc.text("PROBABILIDAD ESTIMADA DE DERROTA", margin + 20, y + 26);
 
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(120);
+  doc.setFontSize(96);
   setT(C_ROJO);
-  doc.text(`${m.probDerrota}%`, margin + 18, y + 130);
+  doc.text(`${m.probDerrota}%`, margin + 20, y + 130);
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(11);
   setT(C_TEXTO);
-  const e1 = doc.splitTextToSize(
-    `Modelo basado en brecha actual (-${m.brechaPp.toFixed(1)} pp), participación esperada (${m.participacionEsperada.toFixed(1)}%) y comportamiento histórico de ${candidato.territorio}. La probabilidad sube cada semana sin intervención estructurada.`,
-    contentW - 36,
-  );
-  doc.text(e1, margin + 18, y + 158, { lineHeightFactor: 1.45 });
-  y += 220;
+  doc.text(e1, margin + 20, y + 160, { lineHeightFactor: 1.5 });
+  y += probH + 18;
 
   // Línea pivote
   setF(C_PANEL_2);
@@ -536,33 +547,36 @@ export function generarDossierComercial({ candidato, consultor = "Job Meneses", 
   doc.text(tFin, margin, y);
   y += tFin.length * 28 + 24;
 
-  // Escasez
+  // Escasez — altura dinámica para no overflow
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  const cupoTxt1 = doc.splitTextToSize(
+    `Operamos con número limitado de candidaturas para garantizar profundidad. ${candidato.partido} en ${candidato.territorio} sigue abierto — por ahora.`,
+    contentW - 40,
+  );
+  const cupoTxt2 = doc.splitTextToSize(
+    "Una vez asignados los cupos, la siguiente ventana abre después de la jornada.",
+    contentW - 40,
+  );
+  const cupoH = 70 + (cupoTxt1.length + cupoTxt2.length) * 14 + 18;
   setF(C_PANEL);
-  doc.rect(margin, y, contentW, 110, "F");
+  doc.rect(margin, y, contentW, cupoH, "F");
   setF(C_DORADO);
-  doc.rect(margin, y, 3, 110, "F");
+  doc.rect(margin, y, 3, cupoH, "F");
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
   setT(C_DORADO);
-  doc.text("CUPO EME · CICLO 2027", margin + 18, y + 22);
+  doc.text("CUPO EME · CICLO 2027", margin + 20, y + 24);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(20);
+  doc.setFontSize(18);
   setT(C_TEXTO);
-  doc.text("2 contiendas disponibles este trimestre", margin + 18, y + 50);
+  doc.text("2 contiendas disponibles este trimestre", margin + 20, y + 52);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
   setT(C_MUTED);
-  doc.text(
-    `Operamos con número limitado de candidaturas para garantizar profundidad. ${candidato.partido} en ${candidato.territorio} sigue abierto — por ahora.`,
-    margin + 18,
-    y + 75,
-  );
-  doc.text(
-    "Una vez asignados los cupos, la siguiente ventana abre después de la jornada.",
-    margin + 18,
-    y + 92,
-  );
-  y += 130;
+  doc.text(cupoTxt1, margin + 20, y + 78, { lineHeightFactor: 1.45 });
+  doc.text(cupoTxt2, margin + 20, y + 78 + cupoTxt1.length * 14 + 8, { lineHeightFactor: 1.45 });
+  y += cupoH + 20;
 
   // CTA destacado
   setF([28, 30, 42]);
