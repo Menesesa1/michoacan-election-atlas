@@ -1,7 +1,7 @@
 // Construye el SnapshotPayload completo a partir de los parámetros del wizard
 import type { DistritoFederal, DistritoLocal } from "@/data/electoral-data";
 import type { NivelEstrategia, Posicion } from "@/data/estrategia-templates";
-import { MUNICIPIOS_ESTRATEGICOS } from "@/data/locales/ayuntamientos";
+import { MUNICIPIOS_MICHOACAN_113 } from "@/data/locales/municipios-catalogo";
 import {
   getCatalogoSync,
   getDistritosLocales,
@@ -209,7 +209,7 @@ export function buildSnapshot(params: BuildSnapshotParams): SnapshotPayload {
     }
   } else if (nivel === "ayuntamientos" && territorio.startsWith("mun-")) {
     const clave = parseInt(territorio.replace("mun-", ""), 10);
-    const mun = MUNICIPIOS_ESTRATEGICOS.find((m) => m.clave === clave);
+    const mun = MUNICIPIOS_MICHOACAN_113.find((m) => m.clave === clave);
     if (mun) {
       const ln = Math.round(mun.poblacion * 0.72);
       demografia = { lista_nominal: ln };
