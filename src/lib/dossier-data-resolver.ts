@@ -223,6 +223,63 @@ function estimarSecciones(seccionesTotal: number | null, brechaPp: number) {
   return { riesgo: Math.round(seccionesTotal * fr), pivote: Math.round(seccionesTotal * fp) };
 }
 
+// ─────────── Fragmentación territorial INE (catálogo SECCION.dbf) ───────────
+let catalogoCache: SeccionCat[] | null = null;
+async function getCatalogo(): Promise<SeccionCat[] | null> {
+  if (catalogoCache) return catalogoCache;
+  try {
+    catalogoCache = await loadCatalogo();
+    return catalogoCache;
+  } catch {
+    return null;
+  }
+}
+
+function fragmentar(subset: SeccionCat[]): FragmentacionTerritorial | null {
+  const total = subset.length;
+  if (total === 0) return null;
+  const urb = subset.filter((s) => s.tipo === 2).length;
+  const mix = subset.filter((s) => s.tipo === 3).length;
+  const rur = subset.filter((s) => s.tipo === 4).length;
+  const pctU = +((urb / total) * 100).toFixed(1);
+  const pctM = +((mix / total) * 100).toFixed(1);
+  const pctR = +((rur / total) * 100).toFixed(1);
+  let perfil: FragmentacionTerritorial["perfil"] = "balanceado";
+  if (pctU >= 60) perfil = "urbano";
+  else if (pctR >= 60) perfil = "rural";
+  else if (pctM >= 50) perfil = "mixto";
+  return {
+    total,
+    urbanas: urb,
+    mixtas: mix,
+    rurales: rur,
+    pctUrbano: pctU,
+    pctMixto: pctM,
+    pctRural: pctR,
+    perfil,
+    noDigitales: mix + rur,
+  };
+}
+
+async function fragEstatal(): Promise<FragmentacionTerritorial | null> {
+  const cat = await getCatalogo();
+  return cat ? fragmentar(cat) : null;
+}
+async function fragDistritoFederal(num: number): Promise<FragmentacionTerritorial | null> {
+  const cat = await getCatalogo();
+  return cat ? fragmentar(cat.filter((s) => s.dis === num)) : null;
+}
+async function fragMunicipio(claveMun: number): Promise<FragmentacionTerritorial | null> {
+  const cat = await getCatalogo();
+  return cat ? fragmentar(cat.filter((s) => s.mun === claveMun)) : null;
+}
+async function fragMunicipios(claves: number[]): Promise<FragmentacionTerritorial | null> {
+  const cat = await getCatalogo();
+  if (!cat) return null;
+  const set = new Set(claves);
+  return fragmentar(cat.filter((s) => set.has(s.mun)));
+}
+
 // ─────────── Resolución por nivel ───────────
 async function resolverFederal(c: Candidato, padron: PadronCache | null): Promise<MetricasOficiales | null> {
   const num = extraerNumDistrito(c.territorio);
