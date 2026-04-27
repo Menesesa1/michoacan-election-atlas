@@ -243,6 +243,8 @@ export default function Socioeconomico() {
             </TabsContent>
           </Tabs>
 
+          <SeccionValidator />
+
           <Card className="p-4 bg-muted/30">
             <p className="text-xs text-muted-foreground">
               <span className="text-primary font-mono">FUENTES:</span> INEGI · ECEG Censo 2020 (192 indicadores × 2,694 secciones) ·
