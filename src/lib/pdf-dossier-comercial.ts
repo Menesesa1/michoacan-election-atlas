@@ -539,33 +539,36 @@ export function generarDossierComercial({ candidato, consultor = "Job Meneses", 
   doc.text(tFin, margin, y);
   y += tFin.length * 28 + 24;
 
-  // Escasez
+  // Escasez — altura dinámica para no overflow
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  const cupoTxt1 = doc.splitTextToSize(
+    `Operamos con número limitado de candidaturas para garantizar profundidad. ${candidato.partido} en ${candidato.territorio} sigue abierto — por ahora.`,
+    contentW - 40,
+  );
+  const cupoTxt2 = doc.splitTextToSize(
+    "Una vez asignados los cupos, la siguiente ventana abre después de la jornada.",
+    contentW - 40,
+  );
+  const cupoH = 70 + (cupoTxt1.length + cupoTxt2.length) * 14 + 18;
   setF(C_PANEL);
-  doc.rect(margin, y, contentW, 110, "F");
+  doc.rect(margin, y, contentW, cupoH, "F");
   setF(C_DORADO);
-  doc.rect(margin, y, 3, 110, "F");
+  doc.rect(margin, y, 3, cupoH, "F");
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
   setT(C_DORADO);
-  doc.text("CUPO EME · CICLO 2027", margin + 18, y + 22);
+  doc.text("CUPO EME · CICLO 2027", margin + 20, y + 24);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(20);
+  doc.setFontSize(18);
   setT(C_TEXTO);
-  doc.text("2 contiendas disponibles este trimestre", margin + 18, y + 50);
+  doc.text("2 contiendas disponibles este trimestre", margin + 20, y + 52);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
   setT(C_MUTED);
-  doc.text(
-    `Operamos con número limitado de candidaturas para garantizar profundidad. ${candidato.partido} en ${candidato.territorio} sigue abierto — por ahora.`,
-    margin + 18,
-    y + 75,
-  );
-  doc.text(
-    "Una vez asignados los cupos, la siguiente ventana abre después de la jornada.",
-    margin + 18,
-    y + 92,
-  );
-  y += 130;
+  doc.text(cupoTxt1, margin + 20, y + 78, { lineHeightFactor: 1.45 });
+  doc.text(cupoTxt2, margin + 20, y + 78 + cupoTxt1.length * 14 + 8, { lineHeightFactor: 1.45 });
+  y += cupoH + 20;
 
   // CTA destacado
   setF([28, 30, 42]);
