@@ -62,6 +62,7 @@ export function ExportarPDF({ snapshot, data }: Props) {
     };
 
     // Portada
+    const candidatoNombre = snapshot.candidatos?.propio?.nombre?.trim() || "Aspirante sin definir";
     doc.setFillColor(20, 15, 40);
     doc.rect(0, 0, pageW, 110, "F");
     doc.setFont("helvetica", "bold");
@@ -73,7 +74,7 @@ export function ExportarPDF({ snapshot, data }: Props) {
     doc.text(`${snapshot.nivelLabel} · ${snapshot.territorio}`, margin, 72);
     doc.setFontSize(9);
     doc.setTextColor(200, 180, 240);
-    doc.text(`EME · Job Meneses · Campaña Alfonso Martínez · Horizonte ${snapshot.horizonte}`, margin, 92);
+    doc.text(`EME · Campaña ${candidatoNombre} · Horizonte ${snapshot.horizonte}`, margin, 92);
     y = 140;
 
     heading("Resumen ejecutivo");
