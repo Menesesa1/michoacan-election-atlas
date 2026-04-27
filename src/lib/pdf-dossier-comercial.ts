@@ -46,6 +46,10 @@ interface MetricasLocales {
   probDerrota: number;         // %
   amenazasDigitales: number;   // narrativas adversas activas
   participacionEsperada: number;
+  pctJovenes: number | null;
+  pctMayores: number | null;
+  fuenteResultados: string | null;
+  fuentePadron: string | null;
   origen: string;
   esEstimacion: boolean;
 }
@@ -95,6 +99,10 @@ function calcularMetricas(c: Candidato, oficial?: MetricasOficiales | null): Met
     probDerrota,
     amenazasDigitales: Math.round(3 + r() * 6),
     participacionEsperada: oficial?.participacionHist ?? Math.round((52 + r() * 14) * 10) / 10,
+    pctJovenes: oficial?.demografia?.pctJovenes18a29 ?? null,
+    pctMayores: oficial?.demografia?.pctAdultoMayor60mas ?? null,
+    fuenteResultados: oficial?.fuenteResultados ?? null,
+    fuentePadron: oficial?.fuentePadron ?? null,
     origen: oficial?.origen ?? "Estimación EME",
     esEstimacion: oficial?.esEstimacion ?? true,
   };
@@ -301,6 +309,14 @@ export function generarDossierComercial({ candidato, consultor = "Job Meneses", 
       : "Con narrativa instalada en medios locales",
     xR + 16, y + 108,
   );
+  // Línea adicional con composición demográfica si está disponible
+  if (m.pctJovenes != null && m.pctMayores != null) {
+    setT(C_MUTED);
+    doc.text(
+      `Padrón: ${m.pctJovenes.toFixed(0)}% jóvenes 18-29 · ${m.pctMayores.toFixed(0)}% adulto mayor 60+`,
+      xR + 16, y + 122,
+    );
+  }
   y += 150;
 
   // Brecha grande
@@ -582,8 +598,11 @@ export function generarDossierComercial({ candidato, consultor = "Job Meneses", 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7);
   setT(C_MUTED);
+  const fuentesEtiqueta = m.esEstimacion
+    ? "Métricas estimadas con modelo interno EME"
+    : `Cómputos: ${m.fuenteResultados ?? "—"} · Padrón: ${m.fuentePadron ?? "—"} · Modelo EME`;
   doc.text(
-    `Fuente: ${m.origen}. ${m.esEstimacion ? "Métricas estimadas con modelo interno EME" : "Métricas oficiales INE/IEM/INEGI ajustadas con modelo EME"}.`,
+    `Fuente: ${m.origen}. ${fuentesEtiqueta}.`,
     pageW / 2,
     pageH - 24,
     { align: "center" },
