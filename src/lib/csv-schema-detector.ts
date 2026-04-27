@@ -531,7 +531,12 @@ export async function detectAndParse(file: File): Promise<ParsedDataset> {
         const totalFilas = rows.length;
         if (colEntidad) {
           const before = rows.length;
-          rows = rows.filter((r) => safeNum(r[colEntidad]) === 16);
+          rows = rows.filter((r) => {
+            const v = r[colEntidad];
+            if (safeNum(v) === 16) return true;
+            const s = String(v ?? "").toUpperCase();
+            return s.includes("MICHOACAN") || s.includes("MICHOACÁN");
+          });
           if (rows.length === 0) {
             warnings.push(
               `${before} filas tenían entidad ≠ 16; usando todas (puede no ser Michoacán)`,
