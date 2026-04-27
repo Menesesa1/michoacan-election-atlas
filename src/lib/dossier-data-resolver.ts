@@ -51,6 +51,8 @@ export interface MetricasOficiales {
   origen: string;
   fuenteResultados: "INE" | "IEM" | null;
   fuentePadron: "INE-DERFE 2026" | null;
+  /** Fragmentación territorial INE (catálogo SECCION.dbf). */
+  fragmentacion: FragmentacionTerritorial | null;
   esEstimacion: boolean;
 }
 
@@ -69,6 +71,7 @@ export const METRICAS_VACIAS: MetricasOficiales = {
   origen: "Estimación EME (no se halló territorio oficial)",
   fuenteResultados: null,
   fuentePadron: null,
+  fragmentacion: null,
   esEstimacion: true,
 };
 
