@@ -1,10 +1,11 @@
-// Loader para padrón electoral oficial INE-DERFE Michoacán (cortes 2026)
-// Combina datasets: rangos de edad (19-mar-2026) + sexo (09-abr-2026)
+// Loader para padrón electoral oficial INE-DERFE Michoacán (corte 2026)
+// Fuente: CSV oficial INE con desglose por sección, edad, sexo y no binario.
+// Estructura jerárquica: sección → municipio / distrito federal → estado.
 
 import type { DemograficoDistrito, RangoEdad } from "@/data/demographic-types";
 import { RANGOS_EDAD_INE } from "@/data/demographic-types";
 
-// Mapeo de buckets INE → rangos UI
+// Mapeo buckets oficiales INE → rangos UI
 const BUCKET_MAP: Record<string, string> = {
   "18": "18-19",
   "19": "18-19",
@@ -21,44 +22,51 @@ const BUCKET_MAP: Record<string, string> = {
 };
 
 interface PadronBucket { h: number; m: number; nb: number; total: number }
-interface PadronDistrito {
+
+interface PadronAggBase {
+  secciones: number;
+  lista_hombres: number;
+  lista_mujeres: number;
+  lista_no_binario: number;
+  lista_total: number;
+  padron_hombres: number;
+  padron_mujeres: number;
+  padron_no_binario: number;
+  padron_total: number;
+  por_edad: Record<string, PadronBucket>;
+}
+
+interface PadronDistrito extends PadronAggBase {
   CLAVE_DISTRITO: number;
   CABECERA_DISTRITAL: string;
-  secciones: number;
-  lista_hombres: number;
-  lista_mujeres: number;
-  lista_no_binario: number;
-  lista_total: number;
-  por_edad: Record<string, PadronBucket>;
 }
-interface PadronMunicipio {
+interface PadronMunicipio extends PadronAggBase {
   CLAVE_MUNICIPIO: number;
   NOMBRE_MUNICIPIO: string;
-  secciones: number;
-  lista_hombres: number;
-  lista_mujeres: number;
-  lista_no_binario: number;
-  lista_total: number;
-  por_edad: Record<string, PadronBucket>;
 }
+
 export interface PadronOficial {
   fuente: string;
   cortes: { edad_rangos: string; sexo: string };
   entidad: { clave: number; nombre: string };
   buckets_edad: string[];
-  estado: {
-    lista_hombres: number;
-    lista_mujeres: number;
-    lista_no_binario: number;
-    lista_total: number;
-    secciones: number;
-    por_edad: Record<string, PadronBucket>;
-  };
+  estado: PadronAggBase;
   distritos: PadronDistrito[];
   municipios: PadronMunicipio[];
 }
 
+// Detalle por sección (archivo separado)
+export interface PadronSeccion {
+  sec: number;        // Clave de sección
+  dis: number;        // Distrito federal (1-11)
+  mun: number;        // Clave INEGI municipio
+  lh: number; lm: number; lnb: number; lt: number; // Lista nominal
+  ph: number; pm: number; pnb: number; pt: number; // Padrón electoral
+}
+
 let cached: PadronOficial | null = null;
+let cachedSecciones: PadronSeccion[] | null = null;
+let bySec: Map<number, PadronSeccion> | null = null;
 
 export async function loadPadronOficial(): Promise<PadronOficial> {
   if (cached) return cached;
@@ -68,11 +76,43 @@ export async function loadPadronOficial(): Promise<PadronOficial> {
   return cached;
 }
 
+/** Detalle por sección — usar para agregaciones libres por distrito local, polígonos, etc. */
+export async function loadPadronSecciones(): Promise<PadronSeccion[]> {
+  if (cachedSecciones) return cachedSecciones;
+  const res = await fetch("/data/padron-secciones-2026.json");
+  if (!res.ok) throw new Error("No se pudo cargar el detalle por sección");
+  cachedSecciones = (await res.json()) as PadronSeccion[];
+  bySec = new Map(cachedSecciones.map((s) => [s.sec, s]));
+  return cachedSecciones;
+}
+
+export async function getSeccionPadron(sec: number): Promise<PadronSeccion | null> {
+  if (!bySec) await loadPadronSecciones();
+  return bySec?.get(sec) ?? null;
+}
+
+/** Agregación arbitraria (suma) sobre un conjunto de secciones — núcleo de la jerarquía cruzada. */
+export async function agregarPorSecciones(secciones: number[]): Promise<{
+  lista_hombres: number; lista_mujeres: number; lista_no_binario: number; lista_total: number;
+  padron_hombres: number; padron_mujeres: number; padron_no_binario: number; padron_total: number;
+  secciones: number;
+}> {
+  if (!bySec) await loadPadronSecciones();
+  const acc = { lista_hombres:0, lista_mujeres:0, lista_no_binario:0, lista_total:0,
+                padron_hombres:0, padron_mujeres:0, padron_no_binario:0, padron_total:0,
+                secciones: 0 };
+  for (const s of secciones) {
+    const r = bySec!.get(s); if (!r) continue;
+    acc.lista_hombres += r.lh; acc.lista_mujeres += r.lm; acc.lista_no_binario += r.lnb; acc.lista_total += r.lt;
+    acc.padron_hombres += r.ph; acc.padron_mujeres += r.pm; acc.padron_no_binario += r.pnb; acc.padron_total += r.pt;
+    acc.secciones += 1;
+  }
+  return acc;
+}
+
 function bucketsToRangos(porEdad: Record<string, PadronBucket>): RangoEdad[] {
-  // Agregar buckets a rangos UI (ej: 18 + 19 → "18-19")
   const acc: Record<string, RangoEdad> = {};
   RANGOS_EDAD_INE.forEach((r) => (acc[r] = { rango: r, hombres: 0, mujeres: 0, total: 0 }));
-
   for (const [bucket, vals] of Object.entries(porEdad)) {
     const target = BUCKET_MAP[bucket];
     if (!target || !acc[target]) continue;
@@ -91,7 +131,7 @@ function poblacionPrincipal(rangos: RangoEdad[]): string {
 
 /**
  * Convierte el padrón oficial a estructura DemograficoDistrito para el panel.
- * Filtra distrito 12 (residentes en el extranjero) por defecto.
+ * Filtra a distritos federales válidos 1-11 (Michoacán post-distritación 2022).
  */
 export function padronToDistritosFederales(p: PadronOficial): DemograficoDistrito[] {
   return p.distritos
