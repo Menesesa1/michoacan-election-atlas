@@ -172,7 +172,7 @@ const SIGNATURES: SchemaSignature[] = [
     pista: "IEM 2021 gobernatura",
   },
 
-  // ----- INE Padrón / Lista Nominal -----
+// ----- INE Padrón / Lista Nominal -----
   {
     origen: "INE_PADRON",
     tipo_eleccion: "padron_lista_nominal",
@@ -184,6 +184,74 @@ const SIGNATURES: SchemaSignature[] = [
   },
 ];
 
+// ---------- Detección de delimitador y encoding ----------
+
+const DELIMITERS = [",", ";", "\t", "|"] as const;
+type Delim = (typeof DELIMITERS)[number];
+
+/** Quita BOM (UTF-8 / UTF-16) si existe. */
+function stripBOM(s: string): string {
+  if (s.charCodeAt(0) === 0xfeff) return s.slice(1);
+  return s;
+}
+
+/** Detecta el delimitador más probable en las primeras N líneas no vacías. */
+function detectDelimiter(text: string): Delim {
+  const lines = text
+    .split(/\r?\n/)
+    .filter((l) => l.trim().length > 0)
+    .slice(0, 15);
+  let best: { d: Delim; score: number } = { d: ",", score: -1 };
+  for (const d of DELIMITERS) {
+    const counts = lines.map((l) => l.split(d).length);
+    if (counts.length === 0 || counts[0] < 2) continue;
+    const first = counts[0];
+    // Estabilidad: # de líneas con el mismo conteo + magnitud
+    const stable = counts.filter((c) => c === first).length;
+    const score = stable * 10 + first;
+    if (score > best.score) best = { d, score };
+  }
+  return best.d;
+}
+
+/**
+ * INE/IEM a veces exportan archivos con metadatos arriba del header
+ * (líneas con título, fecha, "REPORTE DE...", etc.). Detecta la primera línea
+ * que parece ser encabezado real: contiene varios delimitadores Y al menos
+ * una palabra clave electoral conocida.
+ */
+function findHeaderLine(text: string, delim: Delim): number {
+  const lines = text.split(/\r?\n/);
+  const KEYS = [
+    "SECCION", "SECCIÓN", "CASILLA", "DISTRITO", "MUNICIPIO",
+    "MORENA", "PAN", "PRI", "LISTA_NOMINAL", "LISTA NOMINAL",
+    "ENTIDAD", "ESTADO",
+  ];
+  for (let i = 0; i < Math.min(lines.length, 30); i++) {
+    const l = lines[i];
+    if (l.split(delim).length < 3) continue;
+    const upper = l.toUpperCase();
+    if (KEYS.some((k) => upper.includes(k))) return i;
+  }
+  return 0;
+}
+
+/** Lee el archivo como texto probando UTF-8 y, si hay caracteres de reemplazo, latin1. */
+async function readFileSmart(file: File): Promise<{ text: string; encoding: string }> {
+  // Intento 1: UTF-8
+  const utf8 = stripBOM(await file.text());
+  // El "replacement character" U+FFFD aparece cuando UTF-8 falla
+  if (!utf8.includes("\uFFFD")) return { text: utf8, encoding: "UTF-8" };
+  // Intento 2: latin1 (windows-1252) — común en exports gubernamentales MX
+  try {
+    const buf = await file.arrayBuffer();
+    const text = new TextDecoder("windows-1252").decode(buf);
+    return { text: stripBOM(text), encoding: "Windows-1252" };
+  } catch {
+    return { text: utf8, encoding: "UTF-8 (con caracteres inválidos)" };
+  }
+}
+
 // ---------- Mapas canónicos de partidos ----------
 
 const PARTIDO_CANONICO: Record<string, string> = {
@@ -191,41 +259,67 @@ const PARTIDO_CANONICO: Record<string, string> = {
   PRI: "PRI",
   PRD: "PRD",
   PVEM: "PVEM",
+  PVM: "PVEM",
+  VERDE: "PVEM",
   PT: "PT",
   MC: "MC",
+  MOVIMIENTO_CIUDADANO: "MC",
   MORENA: "MORENA",
   // 2021
   FXM: "FXM",
+  FUERZA_POR_MEXICO: "FXM",
   RSP: "RSP",
+  REDES_SOCIALES_PROGRESISTAS: "RSP",
   PES: "PES",
   // 2018
   NA: "NA",
   PANAL: "NA",
+  NUEVA_ALIANZA: "NA",
   ENCUENTRO_SOCIAL: "PES",
+  ES: "PES",
   // CI/independientes
   CAND_IND_1: "INDEP",
+  CAND_IND_2: "INDEP",
   CI_1: "INDEP",
+  CI_2: "INDEP",
   INDEPENDIENTE: "INDEP",
-  // No registrados / nulos (los tratamos aparte si quieres)
+  CANDIDATO_INDEPENDIENTE: "INDEP",
+  // Local Michoacán específicos
+  PRMI: "PRMI",                  // Partido Renovación Michoacán
+  PRM: "PRMI",
+  MAS: "MAS_MICH",               // Más por Michoacán (efímero)
+  // No registrados / nulos
   NO_REGISTRADOS: "NO_REG",
   CNR: "NO_REG",
+  CANDIDATOS_NO_REGISTRADOS: "NO_REG",
   NULOS: "NULOS",
   VOTOS_NULOS: "NULOS",
+  VN: "NULOS",
 };
 
 // Coaliciones 2024 → distribuir voto (estrategia: contar a partido líder, simple)
 // Para análisis fino, el usuario puede des-coalicionar después.
 const COALICION_LIDER: Record<string, string> = {
-  // Frente Amplio por México
+  // Frente Amplio por México (FAM 2024) / Va por México (2021)
   PAN_PRI_PRD: "PAN",
   PAN_PRI: "PAN",
   PAN_PRD: "PAN",
   PRI_PRD: "PRI",
-  // Sigamos Haciendo Historia
+  PRI_PAN: "PAN",
+  PRD_PAN: "PAN",
+  PRD_PRI: "PRI",
+  // Sigamos Haciendo Historia (SHH 2024) / Juntos Hacemos Historia (2021/2018)
   MORENA_PT_PVEM: "MORENA",
   MORENA_PT: "MORENA",
   MORENA_PVEM: "MORENA",
   PT_PVEM: "MORENA",
+  PT_MORENA: "MORENA",
+  PVEM_MORENA: "MORENA",
+  PVEM_PT_MORENA: "MORENA",
+  // 2018 Por México al Frente (PAN-PRD-MC)
+  PAN_PRD_MC: "PAN",
+  PRD_MC: "PRD",
+  PAN_MC: "PAN",
 };
 
 // ---------- Utilidades ----------
@@ -333,15 +427,34 @@ function findCol(headers: string[], candidates: string[]): string | null {
 // ---------- Parser principal ----------
 
 export async function detectAndParse(file: File): Promise<ParsedDataset> {
+  // 1) Leer texto con encoding inteligente (UTF-8 con fallback a Windows-1252)
+  const { text: raw, encoding } = await readFileSmart(file);
+  // 2) Detectar delimitador (, ; \t |)
+  const delim = detectDelimiter(raw);
+  // 3) Saltar líneas de metadatos típicas de exports INE/IEM/Excel
+  const headerLine = findHeaderLine(raw, delim);
+  const text =
+    headerLine > 0 ? raw.split(/\r?\n/).slice(headerLine).join("\n") : raw;
+
+  const preWarnings: string[] = [];
+  if (encoding !== "UTF-8") preWarnings.push(`Encoding: ${encoding}`);
+  if (delim !== ",")
+    preWarnings.push(`Delimitador: "${delim === "\t" ? "TAB" : delim}"`);
+  if (headerLine > 0)
+    preWarnings.push(`Saltadas ${headerLine} líneas de metadatos antes del encabezado`);
+
   return new Promise((resolve) => {
-    Papa.parse<Record<string, unknown>>(file, {
+    Papa.parse<Record<string, unknown>>(text, {
       header: true,
-      skipEmptyLines: true,
-      encoding: "UTF-8",
+      skipEmptyLines: "greedy",
+      delimiter: delim,
+      transformHeader: (h) => h.trim(),
       complete: (results) => {
-        const headers = results.meta.fields ?? [];
+        const headers = (results.meta.fields ?? [])
+          .map((h) => h.trim())
+          .filter(Boolean);
         const errores: string[] = [];
-        const warnings: string[] = [];
+        const warnings: string[] = [...preWarnings];
 
         if (headers.length === 0) {
           resolve(emptyResult(["No se encontraron encabezados en el CSV"]));
@@ -362,42 +475,37 @@ export async function detectAndParse(file: File): Promise<ParsedDataset> {
         const partidoCols = detectPartidoColumns(headers);
         const partidosDetectados = [...new Set(partidoCols.map((p) => p.partido))];
 
-        const colSeccion = findCol(headers, ["SECCION", "SECCIÓN", "ID_SECCION"]);
+        const colSeccion = findCol(headers, [
+          "SECCION", "SECCIÓN", "ID_SECCION", "CVE_SECCION", "CLAVE_SECCION",
+          "NUM_SECCION", "NO_SECCION", "SECC", "SECC_ELECTORAL",
+        ]);
         const colDistFed = findCol(headers, [
-          "ID_DISTRITO_FEDERAL",
-          "DISTRITO_FEDERAL",
-          "ID_DISTRITO",
-          "DISTRITO",
+          "ID_DISTRITO_FEDERAL", "DISTRITO_FEDERAL", "DISTRITO_FED",
+          "ID_DISTRITO_FED", "DTTO_FEDERAL", "ID_DTTO_FEDERAL",
+          "ID_DISTRITO", "DISTRITO", "CLAVE_DISTRITO_FEDERAL", "CVE_DISTRITO_FED",
         ]);
         const colDistLoc = findCol(headers, [
-          "DISTRITO_LOCAL",
-          "ID_DISTRITO_LOCAL",
-          "DTTO_LOCAL",
-          "ID_DTTO_LOCAL",
+          "DISTRITO_LOCAL", "ID_DISTRITO_LOCAL", "DTTO_LOCAL", "ID_DTTO_LOCAL",
+          "DISTRITO_LOC", "CLAVE_DISTRITO_LOCAL", "CVE_DISTRITO_LOC",
+          "DIP_LOCAL", "ID_DIP_LOCAL",
         ]);
         const colMpio = findCol(headers, [
-          "MUNICIPIO",
-          "ID_MUNICIPIO",
-          "CLAVE_MUNICIPIO",
-          "CVE_MUN",
+          "MUNICIPIO", "ID_MUNICIPIO", "CLAVE_MUNICIPIO", "CVE_MUN",
+          "CVE_MUNICIPIO", "ID_MPIO", "MPIO", "NOMBRE_MUNICIPIO",
+          "MUNICIPIO_CLAVE",
         ]);
         const colEntidad = findCol(headers, [
-          "ID_ESTADO",
-          "ID_ENTIDAD",
-          "CLAVE_ENTIDAD",
-          "CVE_ENTIDAD",
-          "ENTIDAD",
+          "ID_ESTADO", "ID_ENTIDAD", "CLAVE_ENTIDAD", "CVE_ENTIDAD",
+          "CVE_ENT", "ENTIDAD", "ESTADO", "NOMBRE_ESTADO", "NOMBRE_ENTIDAD",
         ]);
         const colLN = findCol(headers, [
-          "LISTA_NOMINAL",
-          "LISTA_NOMINAL_CASILLA",
-          "LN",
+          "LISTA_NOMINAL", "LISTA_NOMINAL_CASILLA", "LN", "LISTA_NOM",
+          "LISTA_NOMINAL_SECCION", "LISTA_NOMINAL_TOTAL",
         ]);
         const colTotal = findCol(headers, [
-          "TOTAL_VOTOS",
-          "TOTAL_VOTOS_CALCULADOS",
-          "VOTACION_TOTAL",
-          "TOTAL_VOTOS_VALIDOS",
+          "TOTAL_VOTOS", "TOTAL_VOTOS_CALCULADOS", "VOTACION_TOTAL",
+          "TOTAL_VOTOS_VALIDOS", "TOTAL_VOTOS_ASENTADO",
+          "VOTOS_TOTALES", "TOTAL_BOLETAS", "TOTAL_VOTACION",
         ]);
 
         if (!colSeccion) {
@@ -423,7 +531,12 @@ export async function detectAndParse(file: File): Promise<ParsedDataset> {
         const totalFilas = rows.length;
         if (colEntidad) {
           const before = rows.length;
-          rows = rows.filter((r) => safeNum(r[colEntidad]) === 16);
+          rows = rows.filter((r) => {
+            const v = r[colEntidad];
+            if (safeNum(v) === 16) return true;
+            const s = String(v ?? "").toUpperCase();
+            return s.includes("MICHOACAN") || s.includes("MICHOACÁN");
+          });
           if (rows.length === 0) {
             warnings.push(
               `${before} filas tenían entidad ≠ 16; usando todas (puede no ser Michoacán)`,
