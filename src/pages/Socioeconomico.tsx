@@ -56,11 +56,11 @@ export default function Socioeconomico() {
   const porDistritoLocal = useMemo<GrupoCenso[]>(() => (dataFiltrada ? agruparPor(dataFiltrada, "distritoLocal") : []), [dataFiltrada]);
 
   const seccionesFiltradas = useMemo(() => {
-    if (!data) return [];
+    if (!dataFiltrada) return [];
     const q = filtro.trim();
-    const base = q ? data.filter((r) => String(r.seccion).includes(q)) : data;
+    const base = q ? dataFiltrada.filter((r) => String(r.seccion).includes(q)) : dataFiltrada;
     return base.slice(0, 50);
-  }, [data, filtro]);
+  }, [dataFiltrada, filtro]);
 
   const piramide = useMemo(() => {
     if (!resumen) return [];
@@ -98,10 +98,16 @@ export default function Socioeconomico() {
         <h1 className="text-2xl font-bold text-foreground">Perfil socioeconómico Michoacán</h1>
         <p className="text-sm text-muted-foreground mt-1">
           {resumen
-            ? `${fmt(resumen.totalSecciones)} secciones electorales · ${fmt(resumen.POBTOT)} habitantes · 192 indicadores censales`
+            ? `${territorio?.label ?? "Estatal · Michoacán"} · ${fmt(resumen.totalSecciones)} secciones · ${fmt(resumen.POBTOT)} habitantes · 192 indicadores censales`
             : "Cargando dataset INEGI..."}
         </p>
       </div>
+
+      <EleccionTerritorioSelector
+        defaultTipo="gobernador"
+        defaultClave={0}
+        onChange={setTerritorio}
+      />
 
       {!resumen ? (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
