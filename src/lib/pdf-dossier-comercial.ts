@@ -254,70 +254,75 @@ export function generarDossierComercial({ candidato, consultor = "Job Meneses", 
   doc.text(subt, margin, y + 14, { lineHeightFactor: 1.5 });
   y += subt.length * 11 * 1.5 + 30;
 
-  // Dos paneles comparativos
+  // Dos paneles comparativos — altura mayor para acomodar líneas extra
+  const panelH = 145;
   const panelW = (contentW - 16) / 2;
   // Propio
   setF(C_PANEL);
-  doc.rect(margin, y, panelW, 130, "F");
+  doc.rect(margin, y, panelW, panelH, "F");
   setF(c_color(candidato.es_propio ? C_DORADO : C_MUTED));
-  doc.rect(margin, y, 3, 130, "F");
+  doc.rect(margin, y, 3, panelH, "F");
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
   setT(C_MUTED);
-  doc.text("INTENCIÓN ESTIMADA · USTED", margin + 16, y + 22);
+  doc.text("INTENCIÓN ESTIMADA · USTED", margin + 18, y + 24);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(40);
+  doc.setFontSize(38);
   setT(C_TEXTO);
-  doc.text(`${m.intencionPropia.toFixed(1)}%`, margin + 16, y + 70);
+  doc.text(`${m.intencionPropia.toFixed(1)}%`, margin + 18, y + 78);
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(9);
+  doc.setFontSize(8.5);
   setT(C_MUTED);
-  doc.text(`Base: voto duro de ${candidato.partido} en ${candidato.territorio}`, margin + 16, y + 92);
-  doc.text(`Sin movilización adicional al ${(m.participacionEsperada).toFixed(1)}%`, margin + 16, y + 108);
+  const baseTxt = doc.splitTextToSize(
+    `Base: voto duro de ${candidato.partido} en ${candidato.territorio}`,
+    panelW - 32,
+  );
+  doc.text(baseTxt, margin + 18, y + 100, { lineHeightFactor: 1.4 });
+  doc.text(
+    `Sin movilización adicional al ${m.participacionEsperada.toFixed(1)}%`,
+    margin + 18,
+    y + 100 + baseTxt.length * 11,
+  );
 
   // Rival
   const xR = margin + panelW + 16;
   setF(C_PANEL);
-  doc.rect(xR, y, panelW, 130, "F");
+  doc.rect(xR, y, panelW, panelH, "F");
   setF(C_ROJO);
-  doc.rect(xR, y, 3, 130, "F");
+  doc.rect(xR, y, 3, panelH, "F");
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
   setT(C_ROJO);
-  doc.text(
-    m.rivalPartido
-      ? `INTENCIÓN HISTÓRICA · ADVERSARIO DOMINANTE (${m.rivalPartido})`
-      : "INTENCIÓN ESTIMADA · ADVERSARIO DOMINANTE",
-    xR + 16, y + 22,
-  );
+  const labelRival = m.rivalPartido
+    ? `INTENCIÓN HISTÓRICA · ADVERSARIO (${m.rivalPartido})`
+    : "INTENCIÓN ESTIMADA · ADVERSARIO";
+  doc.text(labelRival, xR + 18, y + 24);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(40);
+  doc.setFontSize(38);
   setT(C_TEXTO);
-  doc.text(`${m.intencionRival.toFixed(1)}%`, xR + 16, y + 70);
+  doc.text(`${m.intencionRival.toFixed(1)}%`, xR + 18, y + 78);
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(9);
+  doc.setFontSize(8.5);
   setT(C_MUTED);
   doc.text(
     m.cicloRef
       ? `Resultado real ciclo ${m.cicloRef} en este territorio`
       : "Construyendo ventaja desde hace meses",
-    xR + 16, y + 92,
+    xR + 18, y + 100,
   );
   doc.text(
     m.listaNominal
-      ? `Lista nominal oficial: ${m.listaNominal.toLocaleString("es-MX")}`
-      : "Con narrativa instalada en medios locales",
-    xR + 16, y + 108,
+      ? `Lista nominal: ${m.listaNominal.toLocaleString("es-MX")}`
+      : "Narrativa instalada en medios locales",
+    xR + 18, y + 115,
   );
-  // Línea adicional con composición demográfica si está disponible
   if (m.pctJovenes != null && m.pctMayores != null) {
-    setT(C_MUTED);
     doc.text(
-      `Padrón: ${m.pctJovenes.toFixed(0)}% jóvenes 18-29 · ${m.pctMayores.toFixed(0)}% adulto mayor 60+`,
-      xR + 16, y + 122,
+      `${m.pctJovenes.toFixed(0)}% jóvenes 18-29 · ${m.pctMayores.toFixed(0)}% adulto mayor 60+`,
+      xR + 18, y + 130,
     );
   }
-  y += 150;
+  y += panelH + 18;
 
   // Brecha grande
   setF(C_PANEL_2);
