@@ -125,42 +125,66 @@ Deno.serve(async (req) => {
       if (body?.trigger) trigger = String(body.trigger);
     } catch { /* sin body */ }
 
-    // 1. Daily search trends en MX (no hay scope estatal directo en SerpApi).
-    // DAILY_SEARCH_TRENDS no requiere `q`; devuelve daily_searches[].searches[].
-    const trending = await fetchSerpapi({
-      data_type: "DAILY_SEARCH_TRENDS",
-      geo: "MX",
-    }) as {
-      daily_searches?: {
-        date?: string;
-        searches?: { query: string; traffic?: string | number }[];
-      }[];
-    };
+    // 1. Descubrir términos tendencia en Michoacán via Perplexity
+    //    (SerpApi/Google Trends ya no expone TRENDING/DAILY_SEARCH_TRENDS;
+    //    todos los data_type vigentes requieren `q`).
+    const PERPLEXITY_API_KEY = Deno.env.get("PERPLEXITY_API_KEY");
+    if (!PERPLEXITY_API_KEY) {
+      throw new Error("PERPLEXITY_API_KEY no configurada para descubrir tendencias");
+    }
+    const descubrirResp = await fetch("https://api.perplexity.ai/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${PERPLEXITY_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "sonar",
+        messages: [
+          { role: "system", content: "Devuelve solo JSON válido, sin texto extra." },
+          {
+            role: "user",
+            content: `Identifica los 10 temas/personas/eventos que están generando MÁS búsquedas y conversación pública esta semana específicamente en Michoacán, México.
+Responde EXACTAMENTE con este JSON:
+{"terminos":["término 1","término 2",...,"término 10"]}
+Cada término debe ser corto (1-4 palabras), sin comillas internas, ideal para una búsqueda de Google. Prioriza nombres propios de políticos michoacanos, municipios en crisis, eventos noticiosos del estado, no temas nacionales genéricos.`,
+          },
+        ],
+        search_recency_filter: "week",
+        temperature: 0.1,
+      }),
+    });
+    if (!descubrirResp.ok) {
+      throw new Error(`Perplexity descubrimiento error [${descubrirResp.status}]`);
+    }
+    const descubrirData = await descubrirResp.json();
+    const rawContent: string = descubrirData?.choices?.[0]?.message?.content ?? "{}";
+    const jsonMatch = rawContent.match(/\{[\s\S]*\}/);
+    let topTerminos: string[] = [];
+    try {
+      const parsed = JSON.parse(jsonMatch?.[0] ?? "{}");
+      topTerminos = Array.isArray(parsed.terminos)
+        ? parsed.terminos.filter((t: unknown): t is string => typeof t === "string" && t.length > 0).slice(0, 10)
+        : [];
+    } catch (e) {
+      console.error("Error parseando terminos perplexity:", e, rawContent);
+    }
+    if (topTerminos.length === 0) {
+      throw new Error("Perplexity no devolvió términos tendencia parseables");
+    }
 
-    const topTerminos: string[] = [];
     const filas: Record<string, unknown>[] = [];
     const ahora = new Date().toISOString();
-
-    const dias = trending.daily_searches ?? [];
-    for (const dia of dias) {
-      for (const s of dia.searches ?? []) {
-        if (topTerminos.length >= 20) break;
-        if (topTerminos.includes(s.query)) continue;
-        topTerminos.push(s.query);
-        const trafficNum = typeof s.traffic === "number"
-          ? s.traffic
-          : Number(String(s.traffic ?? "").replace(/[^\d]/g, "")) || null;
-        filas.push({
-          batch_id,
-          geo: "MX",
-          tipo: "rising_searches",
-          termino: s.query,
-          valor_interes: trafficNum,
-          variacion_pct: null,
-          ejecutada_en: ahora,
-        });
-      }
-      if (topTerminos.length >= 20) break;
+    for (const termino of topTerminos) {
+      filas.push({
+        batch_id,
+        geo: GEO,
+        tipo: "rising_searches",
+        termino,
+        valor_interes: null,
+        variacion_pct: null,
+        ejecutada_en: ahora,
+      });
     }
 
     // 2. Interest over time + related queries para los 5 términos top en geo Michoacán
