@@ -148,6 +148,14 @@ export function DossierComercialSelector({ candidatos }: Props) {
                 <Metric label="Jóvenes 18-29" value={metricas.demografia.pctJovenes18a29 != null ? `${metricas.demografia.pctJovenes18a29.toFixed(1)}%` : "—"} />
                 <Metric label="60+ años" value={metricas.demografia.pctAdultoMayor60mas != null ? `${metricas.demografia.pctAdultoMayor60mas.toFixed(1)}%` : "—"} />
               </div>
+              {metricas.fragmentacion && (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs pt-1 border-t border-border/40">
+                  <Metric label={`Urbanas (${metricas.fragmentacion.pctUrbano.toFixed(0)}%)`} value={metricas.fragmentacion.urbanas.toLocaleString("es-MX")} tone="ok" />
+                  <Metric label={`Mixtas (${metricas.fragmentacion.pctMixto.toFixed(0)}%)`} value={metricas.fragmentacion.mixtas.toLocaleString("es-MX")} />
+                  <Metric label={`Rurales (${metricas.fragmentacion.pctRural.toFixed(0)}%)`} value={metricas.fragmentacion.rurales.toLocaleString("es-MX")} tone="danger" />
+                  <Metric label="Perfil INE" value={metricas.fragmentacion.perfil.toUpperCase()} />
+                </div>
+              )}
               <div className="flex flex-wrap gap-1.5 pt-1">
                 {metricas.fuenteResultados && (
                   <span className="text-[9px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30">
@@ -157,6 +165,11 @@ export function DossierComercialSelector({ candidatos }: Props) {
                 {metricas.fuentePadron && (
                   <span className="text-[9px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
                     Padrón: {metricas.fuentePadron}
+                  </span>
+                )}
+                {metricas.fragmentacion && (
+                  <span className="text-[9px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                    Catálogo INE: SECCION.dbf
                   </span>
                 )}
               </div>
