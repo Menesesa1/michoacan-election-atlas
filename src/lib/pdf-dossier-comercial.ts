@@ -46,6 +46,10 @@ interface MetricasLocales {
   probDerrota: number;         // %
   amenazasDigitales: number;   // narrativas adversas activas
   participacionEsperada: number;
+  pctJovenes: number | null;
+  pctMayores: number | null;
+  fuenteResultados: string | null;
+  fuentePadron: string | null;
   origen: string;
   esEstimacion: boolean;
 }
