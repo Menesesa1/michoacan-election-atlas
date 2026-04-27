@@ -142,6 +142,24 @@ export function DossierComercialSelector({ candidatos }: Props) {
                 <Metric label="Secciones" value={metricas.seccionesTotal ? `${metricas.seccionesTotal} (${metricas.seccionesRiesgo ?? "—"} rojas)` : "—"} />
                 <Metric label="Ciclo ref." value={metricas.cicloRef ? `${metricas.cicloRef} · ${metricas.rivalPartido ?? "—"}` : "—"} />
               </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs pt-1 border-t border-border/40">
+                <Metric label="Hombres" value={metricas.demografia.hombres != null ? metricas.demografia.hombres.toLocaleString("es-MX") : "—"} />
+                <Metric label="Mujeres" value={metricas.demografia.mujeres != null ? metricas.demografia.mujeres.toLocaleString("es-MX") : "—"} />
+                <Metric label="Jóvenes 18-29" value={metricas.demografia.pctJovenes18a29 != null ? `${metricas.demografia.pctJovenes18a29.toFixed(1)}%` : "—"} />
+                <Metric label="60+ años" value={metricas.demografia.pctAdultoMayor60mas != null ? `${metricas.demografia.pctAdultoMayor60mas.toFixed(1)}%` : "—"} />
+              </div>
+              <div className="flex flex-wrap gap-1.5 pt-1">
+                {metricas.fuenteResultados && (
+                  <span className="text-[9px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                    Cómputos: {metricas.fuenteResultados}
+                  </span>
+                )}
+                {metricas.fuentePadron && (
+                  <span className="text-[9px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                    Padrón: {metricas.fuentePadron}
+                  </span>
+                )}
+              </div>
               <p className="text-[10px] text-muted-foreground leading-snug">
                 {metricas.origen}
               </p>

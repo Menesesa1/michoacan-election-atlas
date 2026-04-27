@@ -301,6 +301,14 @@ export function generarDossierComercial({ candidato, consultor = "Job Meneses", 
       : "Con narrativa instalada en medios locales",
     xR + 16, y + 108,
   );
+  // Línea adicional con composición demográfica si está disponible
+  if (oficial?.demografia.pctJovenes18a29 != null && oficial?.demografia.pctAdultoMayor60mas != null) {
+    setT(C_MUTED);
+    doc.text(
+      `Padrón: ${oficial.demografia.pctJovenes18a29.toFixed(0)}% jóvenes 18-29 · ${oficial.demografia.pctAdultoMayor60mas.toFixed(0)}% adulto mayor 60+`,
+      xR + 16, y + 122,
+    );
+  }
   y += 150;
 
   // Brecha grande
