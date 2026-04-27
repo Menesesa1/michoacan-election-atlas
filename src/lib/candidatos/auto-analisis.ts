@@ -36,24 +36,26 @@ export async function generarYGuardarAnalisis(
   userId: string,
 ): Promise<{ ok: boolean; error?: string }> {
   try {
-    const { data, error } = await supabase.functions.invoke("analizar-candidato", {
-      body: {
-        tipo,
-        candidato: {
-          nombre: candidato.nombre,
-          partido: candidato.partido,
-          nivel: candidato.nivel,
-          territorio: candidato.territorio,
-          cargo_buscado: candidato.cargo_buscado ?? undefined,
-          bio_breve: candidato.bio_breve ?? undefined,
-          redes: candidato.redes ?? undefined,
-          notas: candidato.notas ?? undefined,
-          war_room: candidato.war_room ?? undefined,
-          trayectoria: candidato.trayectoria ?? undefined,
-          metricas_redes: candidato.metricas_redes ?? undefined,
-        },
-      },
-    });
+    // OSINT usa el pipeline unificado (Perplexity + Lovable AI con war room/trayectoria).
+    // perfil y discurso siguen en analizar-candidato.
+    const fnName = tipo === "osint" ? "osint-unificado-candidato" : "analizar-candidato";
+    const candidatoPayload = {
+      nombre: candidato.nombre,
+      partido: candidato.partido,
+      nivel: candidato.nivel,
+      territorio: candidato.territorio,
+      cargo_buscado: candidato.cargo_buscado ?? undefined,
+      bio_breve: candidato.bio_breve ?? undefined,
+      redes: candidato.redes ?? undefined,
+      notas: candidato.notas ?? undefined,
+      war_room: candidato.war_room ?? undefined,
+      trayectoria: candidato.trayectoria ?? undefined,
+      metricas_redes: candidato.metricas_redes ?? undefined,
+    };
+    const body = tipo === "osint"
+      ? { candidato: candidatoPayload }
+      : { tipo, candidato: candidatoPayload };
+    const { data, error } = await supabase.functions.invoke(fnName, { body });
     if (error) throw error;
     const payload = data as { output?: unknown; model?: string; error?: string };
     if (payload.error) throw new Error(payload.error);
