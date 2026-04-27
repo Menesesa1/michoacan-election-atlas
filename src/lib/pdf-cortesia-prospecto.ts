@@ -192,7 +192,7 @@ export function generarDossierCortesia({ candidato, consultor = "Job Meneses" }:
     pageH - 50,
   );
   setText(COLOR_DORADO);
-  doc.text("emedesarrolloelectoral.com", pageW - margin, pageH - 50, { align: "right" });
+  doc.text("WhatsApp +52 443 528 1340", pageW - margin, pageH - 50, { align: "right" });
 
   // ============= PÁGINA 2: CARTA DE INTENCIÓN =============
   doc.addPage();
@@ -445,7 +445,7 @@ export function generarDossierCortesia({ candidato, consultor = "Job Meneses" }:
   doc.setFontSize(10);
   setText([200, 195, 180]);
   doc.text("Director de Estrategia · EME Desarrollo Electoral", margin + 18, pageH - 134);
-  doc.text("emedesarrolloelectoral.com", margin + 18, pageH - 116);
+  doc.text("WhatsApp +52 443 528 1340", margin + 18, pageH - 116);
 
   // Footer confidencial
   doc.setFont("helvetica", "normal");
