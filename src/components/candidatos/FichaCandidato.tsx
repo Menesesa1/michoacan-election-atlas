@@ -72,9 +72,10 @@ export function FichaCandidato({ candidato, open, onClose }: Props) {
       const { data: authData } = await supabase.auth.getUser();
       if (!authData?.user) throw new Error("No autenticado");
 
-      const esOsintProfundo = tipo === "osint_profundo";
-      const fnName = esOsintProfundo ? "osint-profundo-candidato" : "analizar-candidato";
-      const body = esOsintProfundo
+      // OSINT ahora es UNIFICADO: Perplexity (evidencia web + citas) +
+      // Lovable AI (síntesis estructurada con war room/trayectoria/métricas).
+      const fnName = tipo === "osint" ? "osint-unificado-candidato" : "analizar-candidato";
+      const body = tipo === "osint"
         ? {
             candidato: {
               nombre: candidato.nombre,
@@ -83,6 +84,11 @@ export function FichaCandidato({ candidato, open, onClose }: Props) {
               territorio: candidato.territorio,
               cargo_buscado: candidato.cargo_buscado ?? undefined,
               bio_breve: candidato.bio_breve ?? undefined,
+              redes: candidato.redes,
+              notas: candidato.notas ?? undefined,
+              war_room: candidato.war_room ?? undefined,
+              trayectoria: candidato.trayectoria ?? undefined,
+              metricas_redes: candidato.metricas_redes ?? undefined,
             },
           }
         : {
@@ -118,8 +124,8 @@ export function FichaCandidato({ candidato, open, onClose }: Props) {
 
       setAnalisis((prev) => ({ ...prev, [tipo]: payload.output as never }));
       toast({
-        title: esOsintProfundo ? "OSINT Profundo generado" : `Análisis de ${tipo} generado`,
-        description: esOsintProfundo ? "Dossier con citas verificables listo." : undefined,
+        title: tipo === "osint" ? "Dossier OSINT generado" : `Análisis de ${tipo} generado`,
+        description: tipo === "osint" ? "Evidencia web + razonamiento IA con citas verificables." : undefined,
       });
     } catch (err) {
       toast({
