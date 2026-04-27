@@ -302,6 +302,7 @@ async function resolverFederal(c: Candidato, padron: PadronCache | null): Promis
   const padronD = padron?.distritosFed.get(num) ?? null;
   const secT = padronD?.secciones ?? null;
   const sec = estimarSecciones(secT, brechaPp);
+  const fragmentacion = await fragDistritoFederal(num);
   return {
     brechaPp,
     intencionPropia: Math.round(propioPct * 10) / 10,
@@ -317,6 +318,7 @@ async function resolverFederal(c: Candidato, padron: PadronCache | null): Promis
     origen: `INE · Distrito Federal ${num} · ${distrito.cabecera} · cómputos ${r.año}${padronD ? " + padrón INE 2026" : ""}`,
     fuenteResultados: "INE",
     fuentePadron: padronD ? "INE-DERFE 2026" : null,
+    fragmentacion,
     esEstimacion: false,
   };
 }
