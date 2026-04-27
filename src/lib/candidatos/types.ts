@@ -2,39 +2,7 @@
 
 import type { NivelEstrategia } from "@/data/estrategia-templates";
 
-export type TipoAnalisis = "perfil" | "osint" | "discurso" | "osint_profundo";
-
-// ===== OSINT Profundo (Perplexity con citas) =====
-export interface OsintFuente {
-  url: string;
-  titulo?: string;
-  fecha?: string;
-  medio?: string;
-}
-
-export interface OsintItem {
-  resumen: string;
-  fuentes: number[]; // índices a citas[]
-}
-
-export interface OsintControversia {
-  tema: string;
-  gravedad: "alta" | "media" | "baja";
-  descripcion: string;
-  fuentes: number[];
-}
-
-export interface AnalisisOsintProfundo {
-  resumen_ejecutivo: string;
-  cargos_publicos_detectados: OsintItem[];
-  menciones_prensa: OsintItem[];
-  controversias_y_riesgos: OsintControversia[];
-  red_de_relaciones: OsintItem[];
-  actividad_territorial: OsintItem[];
-  vacios_informacion: string[];
-  recomendaciones_busqueda_adicional: string[];
-  citas: OsintFuente[];
-}
+export type TipoAnalisis = "perfil" | "osint" | "discurso";
 
 export interface CandidatoRedes {
   twitter?: string;
@@ -168,22 +136,64 @@ export interface AnalisisPerfil {
   perfil_votante_natural: string;
 }
 
+// ===== Tipos auxiliares para OSINT con citas =====
+export interface OsintFuente {
+  url: string;
+  titulo?: string;
+  fecha?: string;
+  medio?: string;
+}
+
+export interface OsintItem {
+  resumen: string;
+  fuentes: number[]; // índices a citas[]
+}
+
+export interface OsintItemMencion {
+  fuente: string;
+  titular: string;
+  tono: "positivo" | "neutral" | "negativo";
+  fuentes: number[]; // índices a citas[]
+}
+
+export interface OsintControversia {
+  tema: string;
+  gravedad: "alta" | "media" | "baja";
+  descripcion: string;
+  fuentes: number[]; // índices a citas[]
+}
+
+/**
+ * OSINT unificado: combina razonamiento IA sobre el contexto interno
+ * (war room, trayectoria, métricas verificadas) CON búsqueda web en vivo
+ * (Perplexity sobre medios MX) y entrega un dossier único con citas.
+ */
 export interface AnalisisOSINT {
+  resumen_ejecutivo: string;
   presencia_digital: {
-    nivel: "alta" | "media" | "baja";
+    nivel: "alta" | "media" | "baja" | "inexistente";
     plataformas_fuertes: string[];
     observaciones: string;
   };
-  controversias: { tema: string; gravedad: "alta" | "media" | "baja"; descripcion: string }[];
-  aliados_clave: string[];
+  cargos_publicos_detectados: OsintItem[];
+  menciones_prensa: OsintItemMencion[];
+  controversias: OsintControversia[];
+  red_de_relaciones: OsintItem[];
+  actividad_territorial: OsintItem[];
   temas_recurrentes: string[];
-  menciones_recientes: { fuente: string; titular: string; tono: "positivo" | "neutral" | "negativo" }[];
-  /** Análisis del War Room capturado por el consultor: coherencia con narrativa pública + alertas reputacionales por miembro. */
+  /** Análisis del War Room capturado por el consultor: coherencia con narrativa pública + alertas reputacionales. */
   war_room_resumen?: {
     coherencia_con_narrativa: string;
     alertas_reputacionales: { miembro: string; alerta: string; gravedad: "alta" | "media" | "baja" }[];
     observaciones: string;
   };
+  vacios_informacion: string[];
+  recomendaciones_busqueda_adicional: string[];
+  citas: OsintFuente[];
+  /** Compatibilidad con análisis legacy: lista plana de aliados (si no hay red_de_relaciones detallada). */
+  aliados_clave?: string[];
+  /** Compatibilidad con análisis legacy: menciones sin citas indexadas. */
+  menciones_recientes?: { fuente: string; titular: string; tono: "positivo" | "neutral" | "negativo" }[];
 }
 
 export interface AnalisisDiscurso {

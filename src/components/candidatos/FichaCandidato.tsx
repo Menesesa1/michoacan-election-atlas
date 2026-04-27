@@ -9,10 +9,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
-import { Sparkles, AlertTriangle, RotateCcw, Search, MessageSquare, User, Users2, History, Radar, ScanSearch, ExternalLink } from "lucide-react";
+import { Sparkles, AlertTriangle, RotateCcw, Search, MessageSquare, User, Users2, History, Radar, ExternalLink } from "lucide-react";
 import type {
   Candidato, TipoAnalisis, AnalisisPerfil, AnalisisOSINT, AnalisisDiscurso,
-  AnalisisOsintProfundo, OsintItem, OsintControversia, OsintFuente,
+  OsintItem, OsintItemMencion, OsintControversia, OsintFuente,
   WarRoomMiembro, TrayectoriaHito,
 } from "@/lib/candidatos/types";
 import { PartidoBadges } from "./PartidoBadges";
@@ -32,7 +32,6 @@ interface AnalisisState {
   perfil?: AnalisisPerfil;
   osint?: AnalisisOSINT;
   discurso?: AnalisisDiscurso;
-  osint_profundo?: AnalisisOsintProfundo;
 }
 
 export function FichaCandidato({ candidato, open, onClose }: Props) {
@@ -58,7 +57,10 @@ export function FichaCandidato({ candidato, open, onClose }: Props) {
     if (!data) return;
     const next: AnalisisState = {};
     for (const row of data) {
-      const tipo = row.tipo as TipoAnalisis;
+      // Compatibilidad: si hay análisis legacy con tipo "osint_profundo", lo
+      // mostramos en la pestaña OSINT unificada. Gana el más reciente.
+      const tipo = (row.tipo === "osint_profundo" ? "osint" : row.tipo) as TipoAnalisis;
+      if (tipo !== "perfil" && tipo !== "osint" && tipo !== "discurso") continue;
       if (!(tipo in next)) {
         (next as Record<TipoAnalisis, unknown>)[tipo] = row.output_json;
       }
@@ -73,9 +75,10 @@ export function FichaCandidato({ candidato, open, onClose }: Props) {
       const { data: authData } = await supabase.auth.getUser();
       if (!authData?.user) throw new Error("No autenticado");
 
-      const esOsintProfundo = tipo === "osint_profundo";
-      const fnName = esOsintProfundo ? "osint-profundo-candidato" : "analizar-candidato";
-      const body = esOsintProfundo
+      // OSINT ahora es UNIFICADO: Perplexity (evidencia web + citas) +
+      // Lovable AI (síntesis estructurada con war room/trayectoria/métricas).
+      const fnName = tipo === "osint" ? "osint-unificado-candidato" : "analizar-candidato";
+      const body = tipo === "osint"
         ? {
             candidato: {
               nombre: candidato.nombre,
@@ -84,6 +87,11 @@ export function FichaCandidato({ candidato, open, onClose }: Props) {
               territorio: candidato.territorio,
               cargo_buscado: candidato.cargo_buscado ?? undefined,
               bio_breve: candidato.bio_breve ?? undefined,
+              redes: candidato.redes,
+              notas: candidato.notas ?? undefined,
+              war_room: candidato.war_room ?? undefined,
+              trayectoria: candidato.trayectoria ?? undefined,
+              metricas_redes: candidato.metricas_redes ?? undefined,
             },
           }
         : {
@@ -119,8 +127,8 @@ export function FichaCandidato({ candidato, open, onClose }: Props) {
 
       setAnalisis((prev) => ({ ...prev, [tipo]: payload.output as never }));
       toast({
-        title: esOsintProfundo ? "OSINT Profundo generado" : `Análisis de ${tipo} generado`,
-        description: esOsintProfundo ? "Dossier con citas verificables listo." : undefined,
+        title: tipo === "osint" ? "Dossier OSINT generado" : `Análisis de ${tipo} generado`,
+        description: tipo === "osint" ? "Evidencia web + razonamiento IA con citas verificables." : undefined,
       });
     } catch (err) {
       toast({
@@ -152,10 +160,9 @@ export function FichaCandidato({ candidato, open, onClose }: Props) {
         </div>
 
         <Tabs value={tab} onValueChange={(v) => setTab(v as TabKey)}>
-          <TabsList className="grid grid-cols-3 md:grid-cols-7 w-full h-auto">
+          <TabsList className="grid grid-cols-3 md:grid-cols-6 w-full h-auto">
             <TabsTrigger value="perfil"><User className="w-3.5 h-3.5 mr-1.5" />Perfil</TabsTrigger>
             <TabsTrigger value="osint"><Search className="w-3.5 h-3.5 mr-1.5" />OSINT</TabsTrigger>
-            <TabsTrigger value="osint_profundo"><ScanSearch className="w-3.5 h-3.5 mr-1.5" />OSINT+</TabsTrigger>
             <TabsTrigger value="discurso"><MessageSquare className="w-3.5 h-3.5 mr-1.5" />Discurso</TabsTrigger>
             <TabsTrigger value="trayectoria"><History className="w-3.5 h-3.5 mr-1.5" />Trayectoria</TabsTrigger>
             <TabsTrigger value="eval_digital"><Radar className="w-3.5 h-3.5 mr-1.5" />Eval. digital</TabsTrigger>
@@ -172,14 +179,6 @@ export function FichaCandidato({ candidato, open, onClose }: Props) {
               />
             </TabsContent>
           ))}
-
-          <TabsContent value="osint_profundo">
-            <SeccionOsintProfundo
-              data={analisis.osint_profundo}
-              loading={loadingTipo === "osint_profundo"}
-              onGenerar={() => generar("osint_profundo")}
-            />
-          </TabsContent>
 
           <TabsContent value="trayectoria">
             <TrayectoriaTab candidato={candidato} />
@@ -412,36 +411,102 @@ function PerfilView({ data }: { data: AnalisisPerfil }) {
 }
 
 function OsintView({ data }: { data: AnalisisOSINT }) {
+  // Compatibilidad: análisis legacy pueden no traer citas/cargos/etc.
+  const citas: OsintFuente[] = Array.isArray(data.citas) ? data.citas : [];
+  const cargos: OsintItem[] = data.cargos_publicos_detectados ?? [];
+  const menciones: OsintItemMencion[] = data.menciones_prensa ?? [];
+  const red: OsintItem[] = data.red_de_relaciones ?? [];
+  const territorial: OsintItem[] = data.actividad_territorial ?? [];
+  const controversias: OsintControversia[] = (data.controversias ?? []).map((c) => ({
+    ...c,
+    fuentes: "fuentes" in c && Array.isArray((c as OsintControversia).fuentes) ? (c as OsintControversia).fuentes : [],
+  }));
+  // Fallback legacy: si no hay menciones_prensa nuevas pero sí menciones_recientes viejas
+  const mencionesLegacy = (!menciones.length && data.menciones_recientes?.length)
+    ? data.menciones_recientes.map((m) => ({ ...m, fuentes: [] as number[] }))
+    : menciones;
+  const aliadosLegacy = (!red.length && data.aliados_clave?.length)
+    ? data.aliados_clave.map((a) => ({ resumen: a, fuentes: [] as number[] }))
+    : red;
+
   return (
     <div className="space-y-3">
-      <ListaCard titulo="Aliados clave" items={data.aliados_clave} color="border-sky-500/40" />
-      <ListaCard titulo="Temas recurrentes" items={data.temas_recurrentes} color="border-violet-500/40" />
+      {data.resumen_ejecutivo && (
+        <Card className="p-4 bg-primary/5 border-primary/30">
+          <div className="text-xs font-mono uppercase tracking-widest text-muted-foreground mb-1.5">
+            Resumen ejecutivo
+          </div>
+          <p className="text-sm leading-relaxed">{data.resumen_ejecutivo}</p>
+        </Card>
+      )}
+
+      {data.presencia_digital && (
+        <Card className="p-3 bg-card/60 border-sky-500/40">
+          <div className="flex items-center justify-between mb-1.5">
+            <div className="text-xs font-mono uppercase tracking-widest">Presencia digital</div>
+            <Badge variant="outline" className="text-[10px] uppercase">{data.presencia_digital.nivel}</Badge>
+          </div>
+          {data.presencia_digital.plataformas_fuertes?.length > 0 && (
+            <div className="flex flex-wrap gap-1 mb-1.5">
+              {data.presencia_digital.plataformas_fuertes.map((p, i) => (
+                <Badge key={i} variant="secondary" className="text-[10px]">{p}</Badge>
+              ))}
+            </div>
+          )}
+          <p className="text-xs text-muted-foreground">{data.presencia_digital.observaciones}</p>
+        </Card>
+      )}
+
+      <OsintItemsCard titulo="Cargos y candidaturas detectados" items={cargos} citas={citas} color="border-emerald-500/40" />
+
       <Card className="p-3 bg-card/60 border-rose-500/40">
-        <div className="text-xs font-mono uppercase tracking-widest mb-2">Controversias</div>
-        {data.controversias.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Sin controversias públicas conocidas.</p>
+        <div className="text-xs font-mono uppercase tracking-widest mb-2">Controversias y riesgos</div>
+        {controversias.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Sin controversias detectadas en fuentes verificables.</p>
         ) : (
-          <ul className="space-y-2 text-sm">
-            {data.controversias.map((c, i) => (
-              <li key={i}>
-                <Badge variant="outline" className="text-[10px] mr-2">{c.gravedad}</Badge>
-                <strong>{c.tema}:</strong> <span className="text-muted-foreground">{c.descripcion}</span>
+          <ul className="space-y-2.5 text-sm">
+            {controversias.map((c, i) => (
+              <li key={i} className="space-y-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Badge variant="outline" className={`text-[10px] ${c.gravedad === "alta" ? "border-rose-500/60 text-rose-300" : c.gravedad === "media" ? "border-amber-500/60 text-amber-300" : "border-muted-foreground/40"}`}>
+                    {c.gravedad}
+                  </Badge>
+                  <strong>{c.tema}</strong>
+                </div>
+                <p className="text-muted-foreground">{c.descripcion}</p>
+                <FuentesInline indices={c.fuentes} citas={citas} />
               </li>
             ))}
           </ul>
         )}
       </Card>
+
       <Card className="p-3 bg-card/60">
-        <div className="text-xs font-mono uppercase tracking-widest mb-2">Menciones recientes</div>
-        <ul className="space-y-1.5 text-sm">
-          {data.menciones_recientes.map((m, i) => (
-            <li key={i} className="flex gap-2">
-              <Badge variant="outline" className={`text-[10px] ${m.tono === "positivo" ? "text-emerald-400" : m.tono === "negativo" ? "text-rose-400" : ""}`}>{m.tono}</Badge>
-              <span><strong>{m.fuente}:</strong> {m.titular}</span>
-            </li>
-          ))}
-        </ul>
+        <div className="text-xs font-mono uppercase tracking-widest mb-2">Menciones en prensa</div>
+        {mencionesLegacy.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Sin menciones recientes en medios monitoreados.</p>
+        ) : (
+          <ul className="space-y-1.5 text-sm">
+            {mencionesLegacy.map((m, i) => (
+              <li key={i} className="space-y-0.5">
+                <div className="flex gap-2 items-start">
+                  <Badge variant="outline" className={`text-[10px] shrink-0 ${m.tono === "positivo" ? "text-emerald-400" : m.tono === "negativo" ? "text-rose-400" : ""}`}>{m.tono}</Badge>
+                  <span><strong>{m.fuente}:</strong> {m.titular}</span>
+                </div>
+                <FuentesInline indices={m.fuentes} citas={citas} />
+              </li>
+            ))}
+          </ul>
+        )}
       </Card>
+
+      <OsintItemsCard titulo="Red de relaciones" items={aliadosLegacy} citas={citas} color="border-violet-500/40" />
+      <OsintItemsCard titulo="Actividad territorial" items={territorial} citas={citas} color="border-amber-500/40" />
+
+      {data.temas_recurrentes?.length > 0 && (
+        <ListaCard titulo="Temas recurrentes" items={data.temas_recurrentes} color="border-violet-500/40" />
+      )}
+
       {data.war_room_resumen && (
         <Card className="p-3 bg-card/60 border-amber-500/40">
           <div className="text-xs font-mono uppercase tracking-widest mb-2 flex items-center gap-1.5">
@@ -464,6 +529,47 @@ function OsintView({ data }: { data: AnalisisOSINT }) {
           {data.war_room_resumen.observaciones && (
             <p className="text-xs text-muted-foreground italic border-t border-border/40 pt-2">{data.war_room_resumen.observaciones}</p>
           )}
+        </Card>
+      )}
+
+      {data.vacios_informacion && data.vacios_informacion.length > 0 && (
+        <Card className="p-3 bg-card/60 border-muted">
+          <div className="text-xs font-mono uppercase tracking-widest mb-2 text-muted-foreground">Vacíos de información</div>
+          <ul className="space-y-1 text-sm">
+            {data.vacios_informacion.map((v, i) => (
+              <li key={i} className="flex gap-2"><span className="text-muted-foreground">·</span><span>{v}</span></li>
+            ))}
+          </ul>
+        </Card>
+      )}
+
+      {data.recomendaciones_busqueda_adicional && data.recomendaciones_busqueda_adicional.length > 0 && (
+        <Card className="p-3 bg-card/60 border-primary/30">
+          <div className="text-xs font-mono uppercase tracking-widest mb-2 text-primary">Líneas de búsqueda adicional</div>
+          <ul className="space-y-1 text-sm">
+            {data.recomendaciones_busqueda_adicional.map((r, i) => (
+              <li key={i} className="flex gap-2"><span className="text-primary">→</span><span>{r}</span></li>
+            ))}
+          </ul>
+        </Card>
+      )}
+
+      {citas.length > 0 && (
+        <Card className="p-3 bg-card/40 border-border/60">
+          <div className="text-xs font-mono uppercase tracking-widest mb-2 flex items-center gap-1.5">
+            <ExternalLink className="w-3.5 h-3.5" /> Fuentes ({citas.length})
+          </div>
+          <ol className="space-y-1.5 text-xs">
+            {citas.map((f, i) => (
+              <li key={i} className="flex gap-2">
+                <span className="text-muted-foreground font-mono shrink-0">[{i}]</span>
+                <a href={f.url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline break-all">
+                  {f.titulo || f.medio || f.url}
+                </a>
+                {f.fecha && <span className="text-muted-foreground shrink-0">· {f.fecha}</span>}
+              </li>
+            ))}
+          </ol>
         </Card>
       )}
     </div>
@@ -495,172 +601,7 @@ function DiscursoView({ data }: { data: AnalisisDiscurso }) {
   );
 }
 
-// ===================== OSINT Profundo (Perplexity) =====================
-
-function SeccionOsintProfundo({
-  data, loading, onGenerar,
-}: {
-  data: AnalisisOsintProfundo | undefined;
-  loading: boolean;
-  onGenerar: () => void;
-}) {
-  if (loading) {
-    return (
-      <div className="space-y-2 py-4">
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <ScanSearch className="w-3.5 h-3.5 animate-pulse" />
-          Buscando huella en medios MX, registros públicos y prensa michoacana…
-        </div>
-        <Skeleton className="h-6 w-1/2" />
-        <Skeleton className="h-32 w-full" />
-        <Skeleton className="h-24 w-full" />
-        <Skeleton className="h-24 w-full" />
-      </div>
-    );
-  }
-  if (!data) {
-    return (
-      <div className="text-center py-10 space-y-3">
-        <div className="flex flex-col items-center gap-1.5">
-          <ScanSearch className="w-8 h-8 text-primary" />
-          <p className="text-sm font-medium">OSINT Profundo</p>
-          <p className="text-xs text-muted-foreground max-w-md">
-            Para candidatos sin presencia digital. Rastrea prensa local de Michoacán, periódicos oficiales,
-            registros del INE/IEM y medios nacionales. Devuelve dossier con citas verificables.
-          </p>
-        </div>
-        <Button onClick={onGenerar}>
-          <Sparkles className="w-4 h-4 mr-1.5" /> Generar dossier OSINT
-        </Button>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-3 pt-3">
-      <div className="flex justify-end">
-        <Button size="sm" variant="outline" onClick={onGenerar}>
-          <RotateCcw className="w-3.5 h-3.5 mr-1.5" /> Regenerar
-        </Button>
-      </div>
-
-      <Card className="p-4 bg-primary/5 border-primary/30">
-        <div className="text-xs font-mono uppercase tracking-widest text-muted-foreground mb-1.5">
-          Resumen ejecutivo
-        </div>
-        <p className="text-sm leading-relaxed">{data.resumen_ejecutivo || "Sin resumen disponible."}</p>
-      </Card>
-
-      <OsintItemsCard
-        titulo="Cargos públicos detectados"
-        items={data.cargos_publicos_detectados}
-        citas={data.citas}
-        color="border-emerald-500/40"
-      />
-
-      <OsintItemsCard
-        titulo="Menciones en prensa"
-        items={data.menciones_prensa}
-        citas={data.citas}
-        color="border-sky-500/40"
-      />
-
-      <Card className="p-3 bg-card/60 border-rose-500/40">
-        <div className="text-xs font-mono uppercase tracking-widest mb-2">Controversias y riesgos</div>
-        {(!data.controversias_y_riesgos || data.controversias_y_riesgos.length === 0) ? (
-          <p className="text-sm text-muted-foreground">Sin controversias detectadas en fuentes verificables.</p>
-        ) : (
-          <ul className="space-y-2.5 text-sm">
-            {data.controversias_y_riesgos.map((c, i) => (
-              <li key={i} className="space-y-1">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <Badge
-                    variant="outline"
-                    className={`text-[10px] ${
-                      c.gravedad === "alta" ? "border-rose-500/60 text-rose-300"
-                      : c.gravedad === "media" ? "border-amber-500/60 text-amber-300"
-                      : "border-muted-foreground/40"
-                    }`}
-                  >
-                    {c.gravedad}
-                  </Badge>
-                  <strong>{c.tema}</strong>
-                </div>
-                <p className="text-muted-foreground">{c.descripcion}</p>
-                <FuentesInline indices={c.fuentes} citas={data.citas} />
-              </li>
-            ))}
-          </ul>
-        )}
-      </Card>
-
-      <OsintItemsCard
-        titulo="Red de relaciones"
-        items={data.red_de_relaciones}
-        citas={data.citas}
-        color="border-violet-500/40"
-      />
-
-      <OsintItemsCard
-        titulo="Actividad territorial"
-        items={data.actividad_territorial}
-        citas={data.citas}
-        color="border-amber-500/40"
-      />
-
-      {data.vacios_informacion?.length > 0 && (
-        <Card className="p-3 bg-card/60 border-muted">
-          <div className="text-xs font-mono uppercase tracking-widest mb-2 text-muted-foreground">
-            Vacíos de información
-          </div>
-          <ul className="space-y-1 text-sm">
-            {data.vacios_informacion.map((v, i) => (
-              <li key={i} className="flex gap-2"><span className="text-muted-foreground">·</span><span>{v}</span></li>
-            ))}
-          </ul>
-        </Card>
-      )}
-
-      {data.recomendaciones_busqueda_adicional?.length > 0 && (
-        <Card className="p-3 bg-card/60 border-primary/30">
-          <div className="text-xs font-mono uppercase tracking-widest mb-2 text-primary">
-            Líneas de búsqueda adicional
-          </div>
-          <ul className="space-y-1 text-sm">
-            {data.recomendaciones_busqueda_adicional.map((r, i) => (
-              <li key={i} className="flex gap-2"><span className="text-primary">→</span><span>{r}</span></li>
-            ))}
-          </ul>
-        </Card>
-      )}
-
-      {data.citas?.length > 0 && (
-        <Card className="p-3 bg-card/40 border-border/60">
-          <div className="text-xs font-mono uppercase tracking-widest mb-2 flex items-center gap-1.5">
-            <ExternalLink className="w-3.5 h-3.5" />
-            Fuentes ({data.citas.length})
-          </div>
-          <ol className="space-y-1.5 text-xs">
-            {data.citas.map((f, i) => (
-              <li key={i} className="flex gap-2">
-                <span className="text-muted-foreground font-mono shrink-0">[{i}]</span>
-                <a
-                  href={f.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary hover:underline break-all"
-                >
-                  {f.titulo || f.medio || f.url}
-                </a>
-                {f.fecha && <span className="text-muted-foreground shrink-0">· {f.fecha}</span>}
-              </li>
-            ))}
-          </ol>
-        </Card>
-      )}
-    </div>
-  );
-}
+// (SeccionOsintProfundo eliminada — ahora OSINT es unificado, ver OsintView abajo)
 
 function OsintItemsCard({
   titulo, items, citas, color,
