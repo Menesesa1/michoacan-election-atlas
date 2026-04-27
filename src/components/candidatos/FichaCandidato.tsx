@@ -339,7 +339,7 @@ function WarRoomTab({
 }
 
 function SeccionAnalisis({ tipo, data, loading, onGenerar }: {
-  tipo: TipoAnalisis;
+  tipo: "perfil" | "osint" | "discurso";
   data: AnalisisPerfil | AnalisisOSINT | AnalisisDiscurso | undefined;
   loading: boolean;
   onGenerar: () => void;
