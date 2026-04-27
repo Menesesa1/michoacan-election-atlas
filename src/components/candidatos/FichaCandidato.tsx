@@ -57,7 +57,10 @@ export function FichaCandidato({ candidato, open, onClose }: Props) {
     if (!data) return;
     const next: AnalisisState = {};
     for (const row of data) {
-      const tipo = row.tipo as TipoAnalisis;
+      // Compatibilidad: si hay análisis legacy con tipo "osint_profundo", lo
+      // mostramos en la pestaña OSINT unificada. Gana el más reciente.
+      const tipo = (row.tipo === "osint_profundo" ? "osint" : row.tipo) as TipoAnalisis;
+      if (tipo !== "perfil" && tipo !== "osint" && tipo !== "discurso") continue;
       if (!(tipo in next)) {
         (next as Record<TipoAnalisis, unknown>)[tipo] = row.output_json;
       }
