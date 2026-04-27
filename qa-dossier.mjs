@@ -3,7 +3,8 @@ import { writeFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 
 // Stub jsdom-free: jsPDF funciona en Node sin DOM.
-const { default: jsPDF } = await import("jspdf");
+const jspdfMod = await import("jspdf");
+const jsPDF = jspdfMod.jsPDF;
 
 // Cargamos el módulo TS via tsx
 const { generarDossierComercial } = await import("./src/lib/pdf-dossier-comercial.ts");
