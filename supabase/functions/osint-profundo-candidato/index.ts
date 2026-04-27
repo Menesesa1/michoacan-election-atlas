@@ -42,31 +42,29 @@ interface DossierOSINT {
   citas: DossierFuente[];
 }
 
+// Perplexity acepta máximo 20 dominios en search_domain_filter.
+// Priorizamos prensa michoacana + registros oficiales + 3 nacionales clave.
 const MEDIOS_MICHOACAN = [
   "cambiodemichoacan.com.mx",
   "quadratin.com.mx",
   "lavozdemichoacan.com.mx",
   "provincia.com.mx",
-  "respuesta.com.mx",
   "mimorelia.com",
   "contramuro.com",
   "monitorexpresso.com",
   "atiempo.mx",
   "changoonga.com",
-  "indiciopolitico.com",
+  "respuesta.com.mx",
   "revolucion3-0.mx",
   "elsoldemorelia.com.mx",
-  "elsoldezamora.com.mx",
+  "periodicooficial.michoacan.gob.mx",
+  "iem.org.mx",
+  "ine.mx",
   "milenio.com",
   "eluniversal.com.mx",
   "jornada.com.mx",
   "proceso.com.mx",
   "animalpolitico.com",
-  "expansion.mx",
-  "infobae.com",
-  "periodicooficial.michoacan.gob.mx",
-  "iem.org.mx",
-  "ine.mx",
 ];
 
 Deno.serve(async (req) => {
