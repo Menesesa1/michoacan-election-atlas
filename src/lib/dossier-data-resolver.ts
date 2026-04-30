@@ -16,6 +16,27 @@ import { MUNICIPIOS_MICHOACAN_113 } from "@/data/locales/municipios-catalogo";
 import { loadPadronOficial } from "@/lib/padron-loader";
 import { loadCatalogo, type SeccionCat } from "@/lib/secciones-catalogo";
 import type { Candidato } from "@/lib/candidatos/types";
+import { supabase } from "@/integrations/supabase/client";
+
+interface HistoricoMuniDB {
+  anio: number;
+  partido_ganador: string | null;
+  candidato_ganador: string | null;
+  pct_ganador: number | null;
+  partido_segundo: string | null;
+  pct_segundo: number | null;
+  participacion_pct: number | null;
+}
+
+async function fetchHistoricoMuniDB(clave: number): Promise<HistoricoMuniDB[]> {
+  const { data, error } = await supabase
+    .from("historico_municipios")
+    .select("anio,partido_ganador,candidato_ganador,pct_ganador,partido_segundo,pct_segundo,participacion_pct")
+    .eq("municipio_clave", clave)
+    .order("anio", { ascending: false });
+  if (error || !data) return [];
+  return data as HistoricoMuniDB[];
+}
 
 export interface FragmentacionTerritorial {
   total: number;
