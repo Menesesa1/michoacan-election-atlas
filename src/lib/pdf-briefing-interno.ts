@@ -311,7 +311,7 @@ export async function generarBriefingInterno({ candidato }: BriefingInput): Prom
     .join("  ·  ");
   doc.text(headerMeta, margin, 90 + nombreLines.length * 30 + 26);
 
-  y = 230;
+  y = 248;
 
   // ───────── BLOQUE 1 — IDENTIDAD + OSINT DIGITAL ─────────
   sectionTitle("1 · Identidad y radar digital", "OSINT");
