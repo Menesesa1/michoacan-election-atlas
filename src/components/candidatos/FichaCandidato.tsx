@@ -9,7 +9,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
-import { Sparkles, AlertTriangle, RotateCcw, Search, MessageSquare, User, Users2, History, Radar, ExternalLink, TrendingUp } from "lucide-react";
+import { Sparkles, AlertTriangle, RotateCcw, Search, MessageSquare, User, Users2, History, Radar, ExternalLink, TrendingUp, FileText } from "lucide-react";
+import { generarBriefingInterno } from "@/lib/pdf-briefing-interno";
+import { toast as sonnerToast } from "sonner";
 import type {
   Candidato, TipoAnalisis, AnalisisPerfil, AnalisisOSINT, AnalisisDiscurso,
   OsintItem, OsintItemMencion, OsintControversia, OsintFuente,
@@ -40,6 +42,24 @@ export function FichaCandidato({ candidato, open, onClose }: Props) {
   const [analisis, setAnalisis] = useState<AnalisisState>({});
   const [loadingTipo, setLoadingTipo] = useState<TipoAnalisis | null>(null);
   const [tab, setTab] = useState<TabKey>("perfil");
+  const [generandoBriefing, setGenerandoBriefing] = useState(false);
+
+  const descargarBriefing = async () => {
+    if (!candidato) return;
+    setGenerandoBriefing(true);
+    try {
+      await generarBriefingInterno({ candidato });
+      sonnerToast.success("Briefing interno generado", {
+        description: `Ficha técnica de ${candidato.nombre} lista para la reunión.`,
+      });
+    } catch (e) {
+      sonnerToast.error("No se pudo generar el briefing", {
+        description: e instanceof Error ? e.message : String(e),
+      });
+    } finally {
+      setGenerandoBriefing(false);
+    }
+  };
 
   useEffect(() => {
     if (!candidato || !open) return;
@@ -158,6 +178,19 @@ export function FichaCandidato({ candidato, open, onClose }: Props) {
         <div className="flex items-start gap-2 p-2 rounded-md bg-amber-500/10 border border-amber-500/30 text-xs text-amber-200">
           <AlertTriangle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
           <span>Análisis basado en información pública conocida por el modelo IA — verifica fuentes antes de tomar decisiones.</span>
+        </div>
+
+        <div className="flex justify-end">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={descargarBriefing}
+            disabled={generandoBriefing}
+            className="border-primary/40 text-primary hover:bg-primary/10"
+          >
+            <FileText className="w-3.5 h-3.5 mr-1.5" />
+            {generandoBriefing ? "Generando…" : "Briefing PDF para reunión"}
+          </Button>
         </div>
 
         <Tabs value={tab} onValueChange={(v) => setTab(v as TabKey)}>
