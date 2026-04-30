@@ -57,9 +57,9 @@ async function cargarAnalisis(candidatoId: string): Promise<{
       | "perfil"
       | "osint"
       | "discurso";
-    if (tipo === "perfil" && !out.perfil) out.perfil = row.output_json as AnalisisPerfil;
-    else if (tipo === "osint" && !out.osint) out.osint = row.output_json as AnalisisOSINT;
-    else if (tipo === "discurso" && !out.discurso) out.discurso = row.output_json as AnalisisDiscurso;
+    if (tipo === "perfil" && !out.perfil) out.perfil = row.output_json as unknown as AnalisisPerfil;
+    else if (tipo === "osint" && !out.osint) out.osint = row.output_json as unknown as AnalisisOSINT;
+    else if (tipo === "discurso" && !out.discurso) out.discurso = row.output_json as unknown as AnalisisDiscurso;
   }
   return out;
 }
