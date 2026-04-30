@@ -244,46 +244,38 @@ export async function generarBriefingInterno({ candidato }: BriefingInput): Prom
 
     ensure(60);
     const top = y;
-    // Reservamos espacio para el título antes de ejecutar el body
-    y = top + padTop;
 
-    // Sangra el contenido del panel desde el margen del panel
-    const prevMargin = innerMarginRef.value;
-    innerMarginRef.value = margin + padX;
+    // Pintamos primero un fondo provisional NO — necesitamos primero medir el body.
+    // Render del body con offset desde el top: dejamos espacio para el título.
+    y = top + padTop;
     body();
-    innerMarginRef.value = prevMargin;
 
     const bottom = y + padBottom;
-    // Fondo sutil
-    doc.setFillColor(
-      tone === "warn" ? 252 : tone === "ok" ? 244 : 250,
-      tone === "warn" ? 244 : tone === "ok" ? 250 : 247,
-      tone === "warn" ? 244 : tone === "ok" ? 246 : 235,
-    );
-    doc.roundedRect(margin, top, contentW, bottom - top, 4, 4, "F");
-    // Borde lateral acentuado
+    const height = bottom - top;
+
+    // Fondo sutil del panel
+    const bg: [number, number, number] =
+      tone === "warn" ? [252, 244, 244] : tone === "ok" ? [244, 250, 246] : [250, 247, 235];
+    doc.setFillColor(...bg);
+    doc.roundedRect(margin, top, contentW, height, 4, 4, "F");
+    // Barra lateral acentuada
     doc.setFillColor(...toneColor);
-    doc.rect(margin, top, 3, bottom - top, "F");
+    doc.rect(margin, top, 3, height, "F");
     // Borde fino
     doc.setDrawColor(...toneColor);
-    doc.setLineWidth(0.5);
-    doc.roundedRect(margin, top, contentW, bottom - top, 4, 4, "S");
+    doc.setLineWidth(0.4);
+    doc.roundedRect(margin, top, contentW, height, 4, 4, "S");
 
-    // Título encima del contenido (lo escribimos al final para que quede sobre el fondo)
+    // Título — lo escribimos sobre el fondo (jsPDF dibuja en orden secuencial,
+    // así que repintamos el título por encima ahora para que quede arriba).
     doc.setFont("helvetica", "bold");
     doc.setFontSize(8);
     doc.setTextColor(...toneColor);
     doc.text(title.toUpperCase(), margin + padX, top + 14);
 
-    y = bottom + 10;
+    y = bottom + 12;
+    void padX;
   };
-
-  // Permite que bullet/para dentro de panel respeten un margen interno
-  const innerMarginRef = { value: margin };
-  const _origText = doc.text.bind(doc);
-  // No mutamos doc.text: en su lugar, bullet/para usan margin directamente.
-  // Para sangría dentro de panel, reescribimos bullet/para para leer innerMarginRef.
-  void _origText;
 
   // ───────── PORTADA ─────────
   doc.setFillColor(...COLOR.bgPanelDark);
