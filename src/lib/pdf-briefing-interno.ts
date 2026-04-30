@@ -353,8 +353,13 @@ export async function generarBriefingInterno({ candidato }: BriefingInput): Prom
         value:
           metricas.brechaPp != null
             ? `${metricas.brechaPp > 0 ? "-" : "+"}${Math.abs(metricas.brechaPp).toFixed(1)} pp`
-            : "—",
-        tone: metricas.brechaPp != null && metricas.brechaPp > 0 ? "danger" : "ok",
+            : "s/d",
+        tone:
+          metricas.brechaPp == null
+            ? "muted"
+            : metricas.brechaPp > 0
+              ? "danger"
+              : "ok",
       },
       { label: "Lista nominal", value: fmtNum(metricas.listaNominal) },
       {
@@ -391,10 +396,16 @@ export async function generarBriefingInterno({ candidato }: BriefingInput): Prom
       y += 4;
     }
 
-    if (metricas.rivalPartido) {
+    if (metricas.rivalPartido && metricas.intencionRival != null) {
       para(
-        `Rival dominante en ${metricas.cicloRef}: ${metricas.rivalPartido} (${fmtPct(metricas.intencionRival)} vs ${fmtPct(metricas.intencionPropia)} propio)`,
+        `Rival dominante en ${metricas.cicloRef ?? "ciclo previo"}: ${metricas.rivalPartido} (${fmtPct(metricas.intencionRival)}${metricas.intencionPropia != null ? ` vs ${fmtPct(metricas.intencionPropia)} propio` : ""})`,
         { bold: true, color: COLOR.danger, size: 9 },
+      );
+      y += 2;
+    } else if (metricas.fuenteResultados == null) {
+      para(
+        "Sin histórico IEM cargado para este municipio (no entra en los 21 municipios estratégicos). Bloque territorial y demografía vienen del padrón INE 2026.",
+        { color: COLOR.muted, size: 8 },
       );
       y += 2;
     }
@@ -412,9 +423,15 @@ export async function generarBriefingInterno({ candidato }: BriefingInput): Prom
   sectionTitle("3 · Histórico electoral y demografía", "PADRÓN INE 2026");
 
   if (metricas && !metricas.esEstimacion) {
-    if (metricas.cicloRef) {
+    if (metricas.cicloRef && metricas.rivalPartido) {
       para(
-        `Resultado de referencia (${metricas.cicloRef}): ${metricas.rivalPartido ?? "—"} ganó con ${fmtPct(metricas.intencionRival)}. Participación histórica: ${fmtPct(metricas.participacionHist)}.`,
+        `Resultado de referencia (${metricas.cicloRef}): ${metricas.rivalPartido} ganó con ${fmtPct(metricas.intencionRival)}. Participación histórica: ${fmtPct(metricas.participacionHist)}.`,
+      );
+      y += 2;
+    } else {
+      para(
+        "Sin cómputo IEM histórico cargado para este territorio. Los escenarios usan tendencia estatal y padrón INE 2026.",
+        { color: COLOR.muted, size: 9 },
       );
       y += 2;
     }
