@@ -81,6 +81,7 @@ export async function generarBriefingInterno({ candidato }: BriefingInput): Prom
   ]);
 
   const doc = new jsPDF({ unit: "pt", format: "letter" });
+  registerMontserrat(doc);
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
   const margin = 48;
