@@ -122,7 +122,7 @@ export function IngestaHistoricoIEM() {
 
       <div className="flex flex-col md:flex-row gap-2">
         <Button
-          onClick={() => ejecutar(20, true)}
+          onClick={() => ejecutar(10, true)}
           disabled={cargando}
           variant="default"
           size="sm"
@@ -135,7 +135,7 @@ export function IngestaHistoricoIEM() {
           {cargando ? "Cargando lote a lote…" : "Ingerir municipios faltantes"}
         </Button>
         <Button
-          onClick={() => ejecutar(20, false)}
+          onClick={() => ejecutar(10, false)}
           disabled={cargando}
           variant="outline"
           size="sm"
