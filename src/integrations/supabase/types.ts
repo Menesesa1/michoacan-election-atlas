@@ -301,6 +301,7 @@ export type Database = {
           duracion_ms: number | null
           ejecutada_en: string
           error: string | null
+          finalizado_en: string | null
           id: string
           total_exitosos: number
           total_fallidos: number
@@ -312,6 +313,7 @@ export type Database = {
           duracion_ms?: number | null
           ejecutada_en?: string
           error?: string | null
+          finalizado_en?: string | null
           id?: string
           total_exitosos?: number
           total_fallidos?: number
@@ -323,6 +325,7 @@ export type Database = {
           duracion_ms?: number | null
           ejecutada_en?: string
           error?: string | null
+          finalizado_en?: string | null
           id?: string
           total_exitosos?: number
           total_fallidos?: number

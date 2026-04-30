@@ -24,7 +24,24 @@ export function IngestaHistoricoIEM() {
     void cargarCobertura();
   }, []);
 
-  const ejecutar = async (loteSize = 20, soloFaltantes = true) => {
+  const esperarRun = async (runId: string, timeoutMs = 240_000): Promise<{ exitosos: number; fallidos: number }> => {
+    const inicio = Date.now();
+    while (Date.now() - inicio < timeoutMs) {
+      await new Promise((r) => setTimeout(r, 4000));
+      const { data } = await supabase
+        .from("historico_municipios_runs")
+        .select("finalizado_en, total_exitosos, total_fallidos")
+        .eq("id", runId)
+        .maybeSingle();
+      if (data?.finalizado_en) {
+        return { exitosos: data.total_exitosos ?? 0, fallidos: data.total_fallidos ?? 0 };
+      }
+      await cargarCobertura();
+    }
+    throw new Error("Timeout esperando finalización del lote");
+  };
+
+  const ejecutar = async (loteSize = 10, soloFaltantes = true) => {
     setCargando(true);
     try {
       const municipios = MUNICIPIOS_MICHOACAN_113.map((m) => ({
@@ -37,20 +54,28 @@ export function IngestaHistoricoIEM() {
 
       for (let i = 0; i < municipios.length; i += loteSize) {
         const lote = municipios.slice(i, i + loteSize);
-        toast.info(
-          `Lote ${Math.floor(i / loteSize) + 1}/${Math.ceil(municipios.length / loteSize)} · ${lote[0].nombre}…`,
-        );
+        const numLote = Math.floor(i / loteSize) + 1;
+        const totalLotes = Math.ceil(municipios.length / loteSize);
+        toast.info(`Lote ${numLote}/${totalLotes} · ${lote[0].nombre}…`);
 
         const { data, error } = await supabase.functions.invoke("ingest-historico-iem", {
           body: { municipios: lote, anios: ANIOS, solo_faltantes: soloFaltantes },
         });
 
-        if (error) {
-          toast.error("Error en lote", { description: error.message });
+        if (error || !data?.run_id) {
+          toast.error("Error iniciando lote", { description: error?.message ?? "sin run_id" });
           fallidosTotal += lote.length * ANIOS.length;
-        } else if (data) {
-          exitososTotal += data.exitosos ?? 0;
-          fallidosTotal += data.fallidos ?? 0;
+          continue;
+        }
+
+        try {
+          const res = await esperarRun(data.run_id);
+          exitososTotal += res.exitosos;
+          fallidosTotal += res.fallidos;
+        } catch (e) {
+          toast.warning(`Lote ${numLote} sigue procesando`, {
+            description: "Continuando con el siguiente. Vuelve a ejecutar para completar.",
+          });
         }
         await cargarCobertura();
       }
@@ -97,7 +122,7 @@ export function IngestaHistoricoIEM() {
 
       <div className="flex flex-col md:flex-row gap-2">
         <Button
-          onClick={() => ejecutar(20, true)}
+          onClick={() => ejecutar(10, true)}
           disabled={cargando}
           variant="default"
           size="sm"
@@ -110,7 +135,7 @@ export function IngestaHistoricoIEM() {
           {cargando ? "Cargando lote a lote…" : "Ingerir municipios faltantes"}
         </Button>
         <Button
-          onClick={() => ejecutar(20, false)}
+          onClick={() => ejecutar(10, false)}
           disabled={cargando}
           variant="outline"
           size="sm"
