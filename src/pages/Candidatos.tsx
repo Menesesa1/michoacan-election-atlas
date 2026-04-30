@@ -13,6 +13,7 @@ import { Users, GitCompare, Search, Layers, Star, Swords, Trophy, ListFilter } f
 import { CandidatoCard } from "@/components/candidatos/CandidatoCard";
 import { DossierComercialSelector } from "@/components/candidatos/DossierComercialSelector";
 import { BriefingInternoSelector } from "@/components/candidatos/BriefingInternoSelector";
+import { IngestaHistoricoIEM } from "@/components/candidatos/IngestaHistoricoIEM";
 import { CandidatoForm } from "@/components/candidatos/CandidatoForm";
 import { FichaCandidato } from "@/components/candidatos/FichaCandidato";
 import { ComparadorCandidatos } from "@/components/candidatos/ComparadorCandidatos";
@@ -251,6 +252,7 @@ export default function Candidatos() {
       <BannerFaseActiva />
 
       <BriefingInternoSelector candidatos={candidatos} />
+      <IngestaHistoricoIEM />
       <DossierComercialSelector candidatos={candidatos} />
 
       <Tabs defaultValue="lista" className="space-y-4">

@@ -16,6 +16,27 @@ import { MUNICIPIOS_MICHOACAN_113 } from "@/data/locales/municipios-catalogo";
 import { loadPadronOficial } from "@/lib/padron-loader";
 import { loadCatalogo, type SeccionCat } from "@/lib/secciones-catalogo";
 import type { Candidato } from "@/lib/candidatos/types";
+import { supabase } from "@/integrations/supabase/client";
+
+interface HistoricoMuniDB {
+  anio: number;
+  partido_ganador: string | null;
+  candidato_ganador: string | null;
+  pct_ganador: number | null;
+  partido_segundo: string | null;
+  pct_segundo: number | null;
+  participacion_pct: number | null;
+}
+
+async function fetchHistoricoMuniDB(clave: number): Promise<HistoricoMuniDB[]> {
+  const { data, error } = await supabase
+    .from("historico_municipios")
+    .select("anio,partido_ganador,candidato_ganador,pct_ganador,partido_segundo,pct_segundo,participacion_pct")
+    .eq("municipio_clave", clave)
+    .order("anio", { ascending: false });
+  if (error || !data) return [];
+  return data as HistoricoMuniDB[];
+}
 
 export interface FragmentacionTerritorial {
   total: number;
@@ -429,10 +450,52 @@ async function resolverAyuntamiento(c: Candidato, padron: PadronCache | null): P
   if (!muni) return null;
   const partido = mapPartidoIEM(c.partido);
 
-  // Histórico real IEM por municipio
-  const hist = AYUNTAMIENTOS.filter((a) => a.municipioClave === muni.clave).sort((a, b) => b.anio - a.anio);
+  // 1) Histórico desde DB (Perplexity ingerido) — preferente si existe para este municipio.
+  const histDB = await fetchHistoricoMuniDB(muni.clave);
+  // 2) Histórico seed estático IEM (21 municipios)
+  const histSeed = AYUNTAMIENTOS.filter((a) => a.municipioClave === muni.clave).sort((a, b) => b.anio - a.anio);
   const ciclos: AnioLocal[] = [2021, 2018, 2015];
-  const ult = hist[0] ?? null;
+
+  // Normalizamos al mismo shape: {anio, partidoGanador, porcentajeGanador, participacionPct, partido2, pct2}
+  type HistN = {
+    anio: number;
+    partidoGanador: string;
+    porcentajeGanador: number;
+    participacionPct: number | null;
+    partido2: string | null;
+    pct2: number | null;
+    fuente: "DB" | "SEED";
+  };
+  const histNorm: HistN[] = [];
+  for (const h of histDB) {
+    if (h.partido_ganador && h.pct_ganador != null) {
+      histNorm.push({
+        anio: h.anio,
+        partidoGanador: h.partido_ganador,
+        porcentajeGanador: h.pct_ganador,
+        participacionPct: h.participacion_pct,
+        partido2: h.partido_segundo,
+        pct2: h.pct_segundo,
+        fuente: "DB",
+      });
+    }
+  }
+  // Añadir años del seed que no estén en DB
+  for (const s of histSeed) {
+    if (!histNorm.some((h) => h.anio === s.anio)) {
+      histNorm.push({
+        anio: s.anio,
+        partidoGanador: s.partidoGanador,
+        porcentajeGanador: s.porcentajeGanador,
+        participacionPct: s.participacionPct,
+        partido2: null,
+        pct2: null,
+        fuente: "SEED",
+      });
+    }
+  }
+  histNorm.sort((a, b) => b.anio - a.anio);
+  const ult = histNorm[0] ?? null;
 
   let brechaPp: number | null = null;
   let intencionPropia: number | null = null;
@@ -444,30 +507,34 @@ async function resolverAyuntamiento(c: Candidato, padron: PadronCache | null): P
   if (ult) {
     cicloRef = ult.anio;
     participacionHist = ult.participacionPct;
-    rivalPartido = ult.partidoGanador;
-    intencionRival = ult.porcentajeGanador;
-    // Aproximamos voto del partido propio: si el propio fue ganador en algún ciclo previo, usamos su % promedio.
-    const previas = partido ? hist.filter((h) => h.partidoGanador === partido) : [];
-    if (previas.length > 0) {
-      intencionPropia = Math.round((previas.reduce((a, b) => a + b.porcentajeGanador, 0) / previas.length) * 10) / 10;
-    } else {
-      // Asumimos posición competitiva débil: 30-45% del voto del ganador.
-      intencionPropia = Math.round(ult.porcentajeGanador * 0.55 * 10) / 10;
-    }
+    // Si el partido propio coincide con el ganador del último ciclo:
     if (partido && partido === ult.partidoGanador) {
-      // Caso raro: el candidato es del partido oficialista. El "rival" es la 2da fuerza estimada.
       intencionPropia = ult.porcentajeGanador;
-      intencionRival = Math.round(ult.porcentajeGanador * 0.78 * 10) / 10;
-      rivalPartido = "Oposición histórica";
+      // 2do real si lo tenemos en DB, si no aproximación
+      if (ult.partido2 && ult.pct2 != null) {
+        rivalPartido = ult.partido2;
+        intencionRival = ult.pct2;
+      } else {
+        rivalPartido = "Oposición histórica";
+        intencionRival = Math.round(ult.porcentajeGanador * 0.78 * 10) / 10;
+      }
+    } else {
+      rivalPartido = ult.partidoGanador;
+      intencionRival = ult.porcentajeGanador;
+      const previas = partido ? histNorm.filter((h) => h.partidoGanador === partido) : [];
+      if (previas.length > 0) {
+        intencionPropia = Math.round(
+          (previas.reduce((a, b) => a + b.porcentajeGanador, 0) / previas.length) * 10,
+        ) / 10;
+      } else {
+        intencionPropia = Math.round(ult.porcentajeGanador * 0.55 * 10) / 10;
+      }
     }
     brechaPp = Math.round((intencionRival! - intencionPropia!) * 10) / 10;
   }
-  // Si NO hay histórico municipal IEM (caso común: solo cargamos 21 de 113 municipios),
-  // seguimos adelante con padrón INE 2026 + fragmentación territorial.
-  // Esto mantiene útiles los bloques 2 y 3 del briefing.
 
   const padM = padron?.municipios.get(muni.clave) ?? null;
-  if (!ult && !padM) return null; // ni histórico ni padrón → no podemos hacer nada
+  if (!ult && !padM) return null;
   const lista = padM?.listaNominal ?? null;
   const secT = padM?.secciones ?? null;
   const sec = brechaPp != null
@@ -475,8 +542,9 @@ async function resolverAyuntamiento(c: Candidato, padron: PadronCache | null): P
     : { riesgo: null as number | null, pivote: null as number | null };
   const fragmentacion = await fragMunicipio(muni.clave);
 
+  const fuenteHist = ult?.fuente === "DB" ? "IEM (Perplexity/Wikipedia)" : "IEM seed";
   const origenPartes: string[] = [`IEM · Ayuntamiento ${muni.nombre}`];
-  if (cicloRef) origenPartes.push(`cómputo ${cicloRef}`);
+  if (cicloRef) origenPartes.push(`cómputo ${cicloRef} · ${fuenteHist}`);
   else origenPartes.push("sin histórico IEM cargado");
   if (padM) origenPartes.push("padrón INE 2026");
 
