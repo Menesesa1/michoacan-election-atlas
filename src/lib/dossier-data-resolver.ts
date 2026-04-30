@@ -434,9 +434,9 @@ async function resolverAyuntamiento(c: Candidato, padron: PadronCache | null): P
   const ciclos: AnioLocal[] = [2021, 2018, 2015];
   const ult = hist[0] ?? null;
 
-  let brechaPp: number;
-  let intencionPropia: number;
-  let intencionRival: number;
+  let brechaPp: number | null = null;
+  let intencionPropia: number | null = null;
+  let intencionRival: number | null = null;
   let rivalPartido: string | null = null;
   let cicloRef: number | null = null;
   let participacionHist: number | null = null;
@@ -455,22 +455,30 @@ async function resolverAyuntamiento(c: Candidato, padron: PadronCache | null): P
       intencionPropia = Math.round(ult.porcentajeGanador * 0.55 * 10) / 10;
     }
     if (partido && partido === ult.partidoGanador) {
-      // Caso rara: el candidato es del partido oficialista. El "rival" es la 2da fuerza estimada.
+      // Caso raro: el candidato es del partido oficialista. El "rival" es la 2da fuerza estimada.
       intencionPropia = ult.porcentajeGanador;
       intencionRival = Math.round(ult.porcentajeGanador * 0.78 * 10) / 10;
       rivalPartido = "Oposición histórica";
     }
-    brechaPp = Math.round((intencionRival - intencionPropia) * 10) / 10;
-  } else {
-    // Sin histórico municipal específico → no resolvemos, dejamos al estimador.
-    return null;
+    brechaPp = Math.round((intencionRival! - intencionPropia!) * 10) / 10;
   }
+  // Si NO hay histórico municipal IEM (caso común: solo cargamos 21 de 113 municipios),
+  // seguimos adelante con padrón INE 2026 + fragmentación territorial.
+  // Esto mantiene útiles los bloques 2 y 3 del briefing.
 
   const padM = padron?.municipios.get(muni.clave) ?? null;
+  if (!ult && !padM) return null; // ni histórico ni padrón → no podemos hacer nada
   const lista = padM?.listaNominal ?? null;
   const secT = padM?.secciones ?? null;
-  const sec = estimarSecciones(secT, brechaPp);
+  const sec = brechaPp != null
+    ? estimarSecciones(secT, brechaPp)
+    : { riesgo: null as number | null, pivote: null as number | null };
   const fragmentacion = await fragMunicipio(muni.clave);
+
+  const origenPartes: string[] = [`IEM · Ayuntamiento ${muni.nombre}`];
+  if (cicloRef) origenPartes.push(`cómputo ${cicloRef}`);
+  else origenPartes.push("sin histórico IEM cargado");
+  if (padM) origenPartes.push("padrón INE 2026");
 
   return {
     brechaPp,
@@ -484,8 +492,8 @@ async function resolverAyuntamiento(c: Candidato, padron: PadronCache | null): P
     seccionesPivote: sec.pivote,
     participacionHist,
     demografia: padM ? demografiaDesdePorEdad(padM.porEdad) : METRICAS_VACIAS.demografia,
-    origen: `IEM · Ayuntamiento ${muni.nombre} · cómputo ${cicloRef}${padM ? " + padrón INE 2026" : ""}`,
-    fuenteResultados: "IEM",
+    origen: origenPartes.join(" · "),
+    fuenteResultados: ult ? "IEM" : null,
     fuentePadron: padM ? "INE-DERFE 2026" : null,
     fragmentacion,
     esEstimacion: false,
