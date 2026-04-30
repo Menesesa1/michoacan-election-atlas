@@ -238,6 +238,99 @@ export type Database = {
         }
         Relationships: []
       }
+      historico_municipios: {
+        Row: {
+          anio: number
+          candidato_ganador: string | null
+          created_at: string
+          fuente: string
+          fuente_urls: Json
+          id: string
+          ingerido_en: string
+          municipio_clave: number
+          municipio_nombre: string
+          notas: string | null
+          participacion_pct: number | null
+          partido_ganador: string | null
+          partido_segundo: string | null
+          pct_ganador: number | null
+          pct_segundo: number | null
+          updated_at: string
+        }
+        Insert: {
+          anio: number
+          candidato_ganador?: string | null
+          created_at?: string
+          fuente?: string
+          fuente_urls?: Json
+          id?: string
+          ingerido_en?: string
+          municipio_clave: number
+          municipio_nombre: string
+          notas?: string | null
+          participacion_pct?: number | null
+          partido_ganador?: string | null
+          partido_segundo?: string | null
+          pct_ganador?: number | null
+          pct_segundo?: number | null
+          updated_at?: string
+        }
+        Update: {
+          anio?: number
+          candidato_ganador?: string | null
+          created_at?: string
+          fuente?: string
+          fuente_urls?: Json
+          id?: string
+          ingerido_en?: string
+          municipio_clave?: number
+          municipio_nombre?: string
+          notas?: string | null
+          participacion_pct?: number | null
+          partido_ganador?: string | null
+          partido_segundo?: string | null
+          pct_ganador?: number | null
+          pct_segundo?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      historico_municipios_runs: {
+        Row: {
+          detalle: Json | null
+          duracion_ms: number | null
+          ejecutada_en: string
+          error: string | null
+          id: string
+          total_exitosos: number
+          total_fallidos: number
+          total_solicitados: number
+          trigger: string
+        }
+        Insert: {
+          detalle?: Json | null
+          duracion_ms?: number | null
+          ejecutada_en?: string
+          error?: string | null
+          id?: string
+          total_exitosos?: number
+          total_fallidos?: number
+          total_solicitados?: number
+          trigger?: string
+        }
+        Update: {
+          detalle?: Json | null
+          duracion_ms?: number | null
+          ejecutada_en?: string
+          error?: string | null
+          id?: string
+          total_exitosos?: number
+          total_fallidos?: number
+          total_solicitados?: number
+          trigger?: string
+        }
+        Relationships: []
+      }
       social_menciones: {
         Row: {
           batch_id: string
