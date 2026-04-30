@@ -159,10 +159,13 @@ export async function generarBriefingInterno({ candidato }: BriefingInput): Prom
     doc.setFontSize(size);
     doc.setTextColor(...(opts.color ?? COLOR.ink));
     const indent = opts.indent ?? 0;
-    const lines = doc.splitTextToSize(text, contentW - indent);
+    const wrapW = contentW - indent;
+    // Normalizar comillas tipográficas y espacios raros que provocan justificación rota
+    const clean = String(text).replace(/[\u00A0\u202F]/g, " ").replace(/\s+/g, " ").trim();
+    const lines = doc.splitTextToSize(clean, wrapW);
     for (const line of lines) {
       ensure(lh);
-      doc.text(line, margin + indent, y);
+      doc.text(line, margin + indent, y, { align: "left", maxWidth: wrapW });
       y += lh;
     }
     y += 2;
@@ -182,9 +185,12 @@ export async function generarBriefingInterno({ candidato }: BriefingInput): Prom
     if (!text) return;
     const size = 9;
     const lh = size * 1.5;
+    const bulletIndent = 16; // x-offset donde inicia el texto del bullet
+    const wrapW = contentW - bulletIndent;
     doc.setFont("helvetica", "normal");
     doc.setFontSize(size);
-    const lines = doc.splitTextToSize(text, contentW - 18);
+    const clean = String(text).replace(/[\u00A0\u202F]/g, " ").replace(/\s+/g, " ").trim();
+    const lines = doc.splitTextToSize(clean, wrapW);
     for (let i = 0; i < lines.length; i++) {
       ensure(lh);
       if (i === 0) {
@@ -194,7 +200,7 @@ export async function generarBriefingInterno({ candidato }: BriefingInput): Prom
         doc.setFont("helvetica", "normal");
       }
       doc.setTextColor(...(color ?? COLOR.ink));
-      doc.text(lines[i], margin + 16, y);
+      doc.text(lines[i], margin + bulletIndent, y, { align: "left", maxWidth: wrapW });
       y += lh;
     }
   };
