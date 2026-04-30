@@ -5,6 +5,7 @@
 // análisis OSINT/perfil/discurso desde Supabase (tabla candidato_analisis).
 
 import jsPDF from "jspdf";
+import { registerMontserrat } from "./fonts/register-montserrat";
 import { supabase } from "@/integrations/supabase/client";
 import type { Candidato } from "@/lib/candidatos/types";
 import type {
@@ -80,6 +81,7 @@ export async function generarBriefingInterno({ candidato }: BriefingInput): Prom
   ]);
 
   const doc = new jsPDF({ unit: "pt", format: "letter" });
+  registerMontserrat(doc);
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
   const margin = 48;
@@ -90,11 +92,11 @@ export async function generarBriefingInterno({ candidato }: BriefingInput): Prom
   const headerStrip = () => {
     doc.setFillColor(...COLOR.bgPanelDark);
     doc.rect(0, 0, pageW, 24, "F");
-    doc.setFont("helvetica", "bold");
+    doc.setFont("Montserrat", "bold");
     doc.setFontSize(7.5);
     doc.setTextColor(255, 255, 255);
     doc.text("EME · BRIEFING INTERNO · CONFIDENCIAL", margin, 15);
-    doc.setFont("helvetica", "normal");
+    doc.setFont("Montserrat", "normal");
     doc.setTextColor(220, 200, 140);
     doc.text(candidato.nombre.toUpperCase(), pageW - margin, 15, { align: "right" });
     y = 50;
@@ -102,7 +104,7 @@ export async function generarBriefingInterno({ candidato }: BriefingInput): Prom
 
   const footer = () => {
     const pageNum = doc.getNumberOfPages();
-    doc.setFont("helvetica", "normal");
+    doc.setFont("Montserrat", "normal");
     doc.setFontSize(7);
     doc.setTextColor(...COLOR.muted);
     doc.text(
@@ -125,7 +127,7 @@ export async function generarBriefingInterno({ candidato }: BriefingInput): Prom
     // Espacio generoso antes de cada sección
     y += 8;
     ensure(40);
-    doc.setFont("helvetica", "bold");
+    doc.setFont("Montserrat", "bold");
     doc.setFontSize(12);
     doc.setTextColor(...COLOR.ink);
     doc.text(label.toUpperCase(), margin, y);
@@ -133,7 +135,7 @@ export async function generarBriefingInterno({ candidato }: BriefingInput): Prom
       const w = doc.getTextWidth(badge) + 12;
       doc.setFillColor(...COLOR.accent);
       doc.roundedRect(pageW - margin - w, y - 11, w, 15, 2, 2, "F");
-      doc.setFont("helvetica", "bold");
+      doc.setFont("Montserrat", "bold");
       doc.setFontSize(7);
       doc.setTextColor(255, 255, 255);
       doc.text(badge, pageW - margin - w / 2, y - 1, { align: "center" });
@@ -155,7 +157,7 @@ export async function generarBriefingInterno({ candidato }: BriefingInput): Prom
     if (!text) return;
     const size = opts.size ?? 9.5;
     const lh = size * 1.45;
-    doc.setFont("helvetica", opts.bold ? "bold" : "normal");
+    doc.setFont("Montserrat", opts.bold ? "bold" : "normal");
     doc.setFontSize(size);
     doc.setTextColor(...(opts.color ?? COLOR.ink));
     const indent = opts.indent ?? 0;
@@ -174,7 +176,7 @@ export async function generarBriefingInterno({ candidato }: BriefingInput): Prom
   const subtitle = (text: string, color?: [number, number, number]) => {
     y += 4;
     ensure(14);
-    doc.setFont("helvetica", "bold");
+    doc.setFont("Montserrat", "bold");
     doc.setFontSize(8.5);
     doc.setTextColor(...(color ?? COLOR.muted));
     doc.text(text.toUpperCase(), margin, y);
@@ -187,7 +189,7 @@ export async function generarBriefingInterno({ candidato }: BriefingInput): Prom
     const lh = size * 1.5;
     const bulletIndent = 16; // x-offset donde inicia el texto del bullet
     const wrapW = contentW - bulletIndent;
-    doc.setFont("helvetica", "normal");
+    doc.setFont("Montserrat", "normal");
     doc.setFontSize(size);
     const clean = String(text).replace(/[\u00A0\u202F]/g, " ").replace(/\s+/g, " ").trim();
     const lines = doc.splitTextToSize(clean, wrapW);
@@ -195,9 +197,9 @@ export async function generarBriefingInterno({ candidato }: BriefingInput): Prom
       ensure(lh);
       if (i === 0) {
         doc.setTextColor(...COLOR.accent);
-        doc.setFont("helvetica", "bold");
+        doc.setFont("Montserrat", "bold");
         doc.text("›", margin + 4, y);
-        doc.setFont("helvetica", "normal");
+        doc.setFont("Montserrat", "normal");
       }
       doc.setTextColor(...(color ?? COLOR.ink));
       doc.text(lines[i], margin + bulletIndent, y, { align: "left", maxWidth: wrapW });
@@ -221,12 +223,12 @@ export async function generarBriefingInterno({ candidato }: BriefingInput): Prom
       doc.setLineWidth(0.4);
       doc.roundedRect(x, y, colW, cardH, 3, 3, "S");
 
-      doc.setFont("helvetica", "bold");
+      doc.setFont("Montserrat", "bold");
       doc.setFontSize(6.5);
       doc.setTextColor(...COLOR.muted);
       doc.text(it.label.toUpperCase(), x + 8, y + 13);
 
-      doc.setFont("helvetica", "bold");
+      doc.setFont("Montserrat", "bold");
       doc.setFontSize(13);
       const c =
         it.tone === "ok" ? COLOR.ok : it.tone === "danger" ? COLOR.danger : COLOR.ink;
@@ -252,7 +254,7 @@ export async function generarBriefingInterno({ candidato }: BriefingInput): Prom
     const top = y;
 
     // Título primero (queda en su lugar, no se sobreescribe)
-    doc.setFont("helvetica", "bold");
+    doc.setFont("Montserrat", "bold");
     doc.setFontSize(8);
     doc.setTextColor(...toneColor);
     doc.text(title.toUpperCase(), margin + padX, top + 16);
@@ -287,7 +289,7 @@ export async function generarBriefingInterno({ candidato }: BriefingInput): Prom
   doc.setFillColor(...COLOR.accent);
   doc.rect(0, 200, pageW, 4, "F");
 
-  doc.setFont("helvetica", "bold");
+  doc.setFont("Montserrat", "bold");
   doc.setFontSize(9);
   doc.setTextColor(220, 200, 140);
   doc.text("BRIEFING INTERNO · DOSSIER DE TRABAJO", margin, 50);
@@ -297,7 +299,7 @@ export async function generarBriefingInterno({ candidato }: BriefingInput): Prom
   const nombreLines = doc.splitTextToSize(candidato.nombre, contentW);
   doc.text(nombreLines, margin, 90);
 
-  doc.setFont("helvetica", "normal");
+  doc.setFont("Montserrat", "normal");
   doc.setFontSize(11);
   doc.setTextColor(210, 210, 220);
   doc.text(
