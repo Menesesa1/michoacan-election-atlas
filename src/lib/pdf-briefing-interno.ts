@@ -237,44 +237,41 @@ export async function generarBriefingInterno({ candidato }: BriefingInput): Prom
     tone: "default" | "warn" | "ok" = "default",
   ) => {
     const padX = 14;
-    const padTop = 22;
-    const padBottom = 12;
+    const padTop = 26;
+    const padBottom = 14;
     const toneColor =
       tone === "warn" ? COLOR.danger : tone === "ok" ? COLOR.ok : COLOR.accent;
 
-    ensure(60);
+    ensure(70);
     const top = y;
 
-    // Pintamos primero un fondo provisional NO — necesitamos primero medir el body.
-    // Render del body con offset desde el top: dejamos espacio para el título.
-    y = top + padTop;
+    // Título primero (queda en su lugar, no se sobreescribe)
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8);
+    doc.setTextColor(...toneColor);
+    doc.text(title.toUpperCase(), margin + padX, top + 16);
+
+    // Línea separadora bajo el título
+    doc.setDrawColor(...toneColor);
+    doc.setLineWidth(0.4);
+    doc.line(margin + padX, top + 20, pageW - margin - padX, top + 20);
+
+    // Render del body
+    y = top + padTop + 4;
     body();
 
     const bottom = y + padBottom;
     const height = bottom - top;
 
-    // Fondo sutil del panel
-    const bg: [number, number, number] =
-      tone === "warn" ? [252, 244, 244] : tone === "ok" ? [244, 250, 246] : [250, 247, 235];
-    doc.setFillColor(...bg);
-    doc.roundedRect(margin, top, contentW, height, 4, 4, "F");
-    // Barra lateral acentuada
+    // Borde del panel (solo outline, no fill — así no tapa nada)
+    doc.setDrawColor(...toneColor);
+    doc.setLineWidth(0.5);
+    doc.roundedRect(margin, top, contentW, height, 4, 4, "S");
+    // Barra lateral acentuada (delgada, encima del borde)
     doc.setFillColor(...toneColor);
     doc.rect(margin, top, 3, height, "F");
-    // Borde fino
-    doc.setDrawColor(...toneColor);
-    doc.setLineWidth(0.4);
-    doc.roundedRect(margin, top, contentW, height, 4, 4, "S");
 
-    // Título — lo escribimos sobre el fondo (jsPDF dibuja en orden secuencial,
-    // así que repintamos el título por encima ahora para que quede arriba).
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(8);
-    doc.setTextColor(...toneColor);
-    doc.text(title.toUpperCase(), margin + padX, top + 14);
-
-    y = bottom + 12;
-    void padX;
+    y = bottom + 14;
   };
 
   // ───────── PORTADA ─────────
