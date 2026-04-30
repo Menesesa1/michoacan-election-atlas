@@ -1,0 +1,1 @@
+ALTER TABLE public.historico_municipios_runs ADD COLUMN IF NOT EXISTS finalizado_en timestamptz;
