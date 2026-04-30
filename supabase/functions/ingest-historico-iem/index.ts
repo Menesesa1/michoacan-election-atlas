@@ -116,10 +116,96 @@ interface ReqBody {
   solo_faltantes?: boolean;
 }
 
+// @ts-ignore — EdgeRuntime es global en Supabase Edge Runtime
+declare const EdgeRuntime: { waitUntil: (p: Promise<unknown>) => void };
+
+async function procesarBatch(
+  supabase: ReturnType<typeof createClient>,
+  municipios: Array<{ clave: number; nombre: string }>,
+  aniosUsar: number[],
+  yaCargados: Set<string>,
+  runId: string,
+) {
+  const t0 = Date.now();
+  const detalle: any[] = [];
+  let exitosos = 0;
+  let fallidos = 0;
+
+  for (const muni of municipios) {
+    for (const anio of aniosUsar) {
+      const k = `${muni.clave}|${anio}`;
+      if (yaCargados.has(k)) {
+        detalle.push({ municipio: muni.nombre, anio, status: "skip-existente" });
+        continue;
+      }
+
+      const r = await consultarPerplexity(muni.nombre, anio);
+      if ("error" in r) {
+        fallidos++;
+        detalle.push({ municipio: muni.nombre, anio, status: "error", error: r.error });
+        continue;
+      }
+
+      const partidoG = r.datos.partido_ganador?.trim().toUpperCase() ?? null;
+      if (!partidoG && r.datos.pct_ganador == null) {
+        fallidos++;
+        detalle.push({ municipio: muni.nombre, anio, status: "sin-datos" });
+        continue;
+      }
+
+      const { error: insErr } = await supabase
+        .from("historico_municipios")
+        .upsert(
+          {
+            municipio_clave: muni.clave,
+            municipio_nombre: muni.nombre,
+            anio,
+            partido_ganador: partidoG,
+            candidato_ganador: r.datos.candidato_ganador,
+            pct_ganador: r.datos.pct_ganador,
+            partido_segundo: r.datos.partido_segundo?.trim().toUpperCase() ?? null,
+            pct_segundo: r.datos.pct_segundo,
+            participacion_pct: r.datos.participacion_pct,
+            fuente: "perplexity",
+            fuente_urls: r.citas.slice(0, 5),
+            notas: r.datos.notas,
+            ingerido_en: new Date().toISOString(),
+          },
+          { onConflict: "municipio_clave,anio" },
+        );
+      if (insErr) {
+        fallidos++;
+        detalle.push({ municipio: muni.nombre, anio, status: "db-error", error: insErr.message });
+      } else {
+        exitosos++;
+        detalle.push({
+          municipio: muni.nombre,
+          anio,
+          status: "ok",
+          partido: partidoG,
+          pct: r.datos.pct_ganador,
+        });
+      }
+
+      await new Promise((res) => setTimeout(res, 250));
+    }
+  }
+
+  await supabase
+    .from("historico_municipios_runs")
+    .update({
+      total_exitosos: exitosos,
+      total_fallidos: fallidos,
+      duracion_ms: Date.now() - t0,
+      detalle,
+      finalizado_en: new Date().toISOString(),
+    })
+    .eq("id", runId);
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
-  const t0 = Date.now();
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
   try {
@@ -134,7 +220,17 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Si solo_faltantes, leer claves+años ya presentes
+    // Tope de seguridad: si llegan demasiados, rechazar para evitar batches enormes.
+    const totalTrabajo = municipios.length * aniosUsar.length;
+    if (totalTrabajo > 30) {
+      return new Response(
+        JSON.stringify({
+          error: `Batch demasiado grande (${totalTrabajo} consultas). Envía como máximo 10 municipios × 3 años = 30 por llamada.`,
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
     let yaCargados = new Set<string>();
     if (body.solo_faltantes) {
       const { data: existentes } = await supabase
@@ -149,98 +245,43 @@ Deno.serve(async (req) => {
       );
     }
 
-    const detalle: any[] = [];
-    let exitosos = 0;
-    let fallidos = 0;
-
-    for (const muni of municipios) {
-      for (const anio of aniosUsar) {
-        const k = `${muni.clave}|${anio}`;
-        if (yaCargados.has(k)) {
-          detalle.push({ municipio: muni.nombre, anio, status: "skip-existente" });
-          continue;
-        }
-
-        const r = await consultarPerplexity(muni.nombre, anio);
-        if ("error" in r) {
-          fallidos++;
-          detalle.push({ municipio: muni.nombre, anio, status: "error", error: r.error });
-          continue;
-        }
-
-        const partidoG = r.datos.partido_ganador?.trim().toUpperCase() ?? null;
-        if (!partidoG && r.datos.pct_ganador == null) {
-          fallidos++;
-          detalle.push({ municipio: muni.nombre, anio, status: "sin-datos" });
-          continue;
-        }
-
-        const { error: insErr } = await supabase
-          .from("historico_municipios")
-          .upsert(
-            {
-              municipio_clave: muni.clave,
-              municipio_nombre: muni.nombre,
-              anio,
-              partido_ganador: partidoG,
-              candidato_ganador: r.datos.candidato_ganador,
-              pct_ganador: r.datos.pct_ganador,
-              partido_segundo: r.datos.partido_segundo?.trim().toUpperCase() ?? null,
-              pct_segundo: r.datos.pct_segundo,
-              participacion_pct: r.datos.participacion_pct,
-              fuente: "perplexity",
-              fuente_urls: r.citas.slice(0, 5),
-              notas: r.datos.notas,
-              ingerido_en: new Date().toISOString(),
-            },
-            { onConflict: "municipio_clave,anio" },
-          );
-        if (insErr) {
-          fallidos++;
-          detalle.push({ municipio: muni.nombre, anio, status: "db-error", error: insErr.message });
-        } else {
-          exitosos++;
-          detalle.push({
-            municipio: muni.nombre,
-            anio,
-            status: "ok",
-            partido: partidoG,
-            pct: r.datos.pct_ganador,
-          });
-        }
-
-        // Pequeña pausa para no saturar Perplexity.
-        await new Promise((res) => setTimeout(res, 250));
-      }
+    // Crea registro de run "en progreso" para que el cliente pueda pollear.
+    const { data: runRow, error: runErr } = await supabase
+      .from("historico_municipios_runs")
+      .insert({
+        total_solicitados: totalTrabajo,
+        total_exitosos: 0,
+        total_fallidos: 0,
+        duracion_ms: 0,
+        trigger: "manual",
+        detalle: [],
+      })
+      .select("id")
+      .single();
+    if (runErr || !runRow) {
+      return new Response(JSON.stringify({ error: runErr?.message ?? "no se pudo crear run" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
-    const duracion = Date.now() - t0;
-    await supabase.from("historico_municipios_runs").insert({
-      total_solicitados: municipios.length * aniosUsar.length,
-      total_exitosos: exitosos,
-      total_fallidos: fallidos,
-      duracion_ms: duracion,
-      trigger: "manual",
-      detalle,
-    });
+    // Lanza el procesamiento en background y responde de inmediato.
+    EdgeRuntime.waitUntil(
+      procesarBatch(supabase, municipios, aniosUsar, yaCargados, runRow.id as string),
+    );
 
     return new Response(
       JSON.stringify({
         ok: true,
-        exitosos,
-        fallidos,
-        duracion_ms: duracion,
-        detalle: detalle.slice(0, 30),
+        run_id: runRow.id,
+        total: totalTrabajo,
+        mensaje:
+          "Procesamiento iniciado en background. Pollea la tabla historico_municipios_runs por id para ver progreso.",
       }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      { status: 202, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    await supabase.from("historico_municipios_runs").insert({
-      trigger: "manual",
-      error: msg,
-      duracion_ms: Date.now() - t0,
-    });
     return new Response(JSON.stringify({ error: msg }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
