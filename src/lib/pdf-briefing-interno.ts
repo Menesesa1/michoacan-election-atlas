@@ -82,69 +82,70 @@ export async function generarBriefingInterno({ candidato }: BriefingInput): Prom
   const doc = new jsPDF({ unit: "pt", format: "letter" });
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
-  const margin = 36;
+  const margin = 48;
   const contentW = pageW - margin * 2;
   let y = margin;
 
   // ───────── Helpers de layout ─────────
-  const ensure = (h: number) => {
-    if (y + h > pageH - margin - 24) {
-      footer();
-      doc.addPage();
-      y = margin;
-      headerStrip();
-    }
-  };
-
   const headerStrip = () => {
     doc.setFillColor(...COLOR.bgPanelDark);
-    doc.rect(0, 0, pageW, 22, "F");
+    doc.rect(0, 0, pageW, 24, "F");
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(8);
+    doc.setFontSize(7.5);
     doc.setTextColor(255, 255, 255);
-    doc.text("EME · BRIEFING INTERNO · CONFIDENCIAL", margin, 14);
+    doc.text("EME · BRIEFING INTERNO · CONFIDENCIAL", margin, 15);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(220, 200, 140);
-    doc.text(candidato.nombre.toUpperCase(), pageW - margin, 14, { align: "right" });
-    y = Math.max(y, 38);
+    doc.text(candidato.nombre.toUpperCase(), pageW - margin, 15, { align: "right" });
+    y = 50;
   };
 
   const footer = () => {
     const pageNum = doc.getNumberOfPages();
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(7.5);
+    doc.setFontSize(7);
     doc.setTextColor(...COLOR.muted);
     doc.text(
-      `Generado ${new Date().toLocaleString("es-MX")} · Uso interno equipo de campaña · No distribuir`,
+      `Generado ${new Date().toLocaleString("es-MX")} · Uso interno · No distribuir`,
       margin,
-      pageH - 14,
+      pageH - 18,
     );
-    doc.text(`p. ${pageNum}`, pageW - margin, pageH - 14, { align: "right" });
+    doc.text(`p. ${pageNum}`, pageW - margin, pageH - 18, { align: "right" });
+  };
+
+  const ensure = (h: number) => {
+    if (y + h > pageH - margin - 28) {
+      footer();
+      doc.addPage();
+      headerStrip();
+    }
   };
 
   const sectionTitle = (label: string, badge?: string) => {
-    ensure(28);
+    // Espacio generoso antes de cada sección
+    y += 8;
+    ensure(40);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(11);
+    doc.setFontSize(12);
     doc.setTextColor(...COLOR.ink);
     doc.text(label.toUpperCase(), margin, y);
     if (badge) {
-      const w = doc.getTextWidth(badge) + 10;
+      const w = doc.getTextWidth(badge) + 12;
       doc.setFillColor(...COLOR.accent);
-      doc.roundedRect(pageW - margin - w, y - 9, w, 13, 2, 2, "F");
+      doc.roundedRect(pageW - margin - w, y - 11, w, 15, 2, 2, "F");
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(7.5);
+      doc.setFontSize(7);
       doc.setTextColor(255, 255, 255);
-      doc.text(badge, pageW - margin - w / 2, y, { align: "center" });
+      doc.text(badge, pageW - margin - w / 2, y - 1, { align: "center" });
     }
-    y += 5;
+    y += 8;
     doc.setDrawColor(...COLOR.accent);
-    doc.setLineWidth(1.2);
-    doc.line(margin, y, margin + 40, y);
+    doc.setLineWidth(1.4);
+    doc.line(margin, y, margin + 48, y);
     doc.setDrawColor(...COLOR.divider);
-    doc.setLineWidth(0.5);
-    doc.line(margin + 42, y, pageW - margin, y);
-    y += 10;
+    doc.setLineWidth(0.4);
+    doc.line(margin + 50, y, pageW - margin, y);
+    y += 16;
   };
 
   const para = (
@@ -152,33 +153,49 @@ export async function generarBriefingInterno({ candidato }: BriefingInput): Prom
     opts: { bold?: boolean; size?: number; color?: [number, number, number]; indent?: number } = {},
   ) => {
     if (!text) return;
+    const size = opts.size ?? 9.5;
+    const lh = size * 1.45;
     doc.setFont("helvetica", opts.bold ? "bold" : "normal");
-    doc.setFontSize(opts.size ?? 9.5);
+    doc.setFontSize(size);
     doc.setTextColor(...(opts.color ?? COLOR.ink));
     const indent = opts.indent ?? 0;
     const lines = doc.splitTextToSize(text, contentW - indent);
     for (const line of lines) {
-      ensure(13);
+      ensure(lh);
       doc.text(line, margin + indent, y);
-      y += 12;
+      y += lh;
     }
+    y += 2;
+  };
+
+  const subtitle = (text: string, color?: [number, number, number]) => {
+    y += 4;
+    ensure(14);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8.5);
+    doc.setTextColor(...(color ?? COLOR.muted));
+    doc.text(text.toUpperCase(), margin, y);
+    y += 12;
   };
 
   const bullet = (text: string, color?: [number, number, number]) => {
     if (!text) return;
+    const size = 9;
+    const lh = size * 1.5;
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(9);
-    doc.setTextColor(...(color ?? COLOR.ink));
-    const lines = doc.splitTextToSize(text, contentW - 14);
+    doc.setFontSize(size);
+    const lines = doc.splitTextToSize(text, contentW - 18);
     for (let i = 0; i < lines.length; i++) {
-      ensure(12);
+      ensure(lh);
       if (i === 0) {
         doc.setTextColor(...COLOR.accent);
-        doc.text("›", margin + 2, y);
-        doc.setTextColor(...(color ?? COLOR.ink));
+        doc.setFont("helvetica", "bold");
+        doc.text("›", margin + 4, y);
+        doc.setFont("helvetica", "normal");
       }
-      doc.text(lines[i], margin + 14, y);
-      y += 11.5;
+      doc.setTextColor(...(color ?? COLOR.ink));
+      doc.text(lines[i], margin + 16, y);
+      y += lh;
     }
   };
 
@@ -186,22 +203,32 @@ export async function generarBriefingInterno({ candidato }: BriefingInput): Prom
     items: Array<{ label: string; value: string; tone?: "ok" | "danger" | "muted" }>,
   ) => {
     const cols = items.length;
-    const colW = contentW / cols;
-    ensure(34);
+    const gap = 8;
+    const colW = (contentW - gap * (cols - 1)) / cols;
+    const cardH = 44;
+    ensure(cardH + 8);
     items.forEach((it, i) => {
-      const x = margin + i * colW;
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(7);
+      const x = margin + i * (colW + gap);
+      doc.setFillColor(248, 246, 240);
+      doc.roundedRect(x, y, colW, cardH, 3, 3, "F");
+      doc.setDrawColor(...COLOR.divider);
+      doc.setLineWidth(0.4);
+      doc.roundedRect(x, y, colW, cardH, 3, 3, "S");
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(6.5);
       doc.setTextColor(...COLOR.muted);
-      doc.text(it.label.toUpperCase(), x, y);
+      doc.text(it.label.toUpperCase(), x + 8, y + 13);
+
       doc.setFont("helvetica", "bold");
       doc.setFontSize(13);
       const c =
         it.tone === "ok" ? COLOR.ok : it.tone === "danger" ? COLOR.danger : COLOR.ink;
       doc.setTextColor(...c);
-      doc.text(it.value, x, y + 14);
+      const valLines = doc.splitTextToSize(it.value, colW - 16);
+      doc.text(valLines[0] ?? it.value, x + 8, y + 32);
     });
-    y += 30;
+    y += cardH + 10;
   };
 
   const panel = (
@@ -209,29 +236,54 @@ export async function generarBriefingInterno({ candidato }: BriefingInput): Prom
     body: () => void,
     tone: "default" | "warn" | "ok" = "default",
   ) => {
-    const startY = y;
-    // Reserva: estimamos altura mediante simulación rápida — usamos panel con padding y fondo
-    const padX = 10;
-    const padY = 8;
-    ensure(40);
+    const padX = 14;
+    const padTop = 22;
+    const padBottom = 12;
+    const toneColor =
+      tone === "warn" ? COLOR.danger : tone === "ok" ? COLOR.ok : COLOR.accent;
+
+    ensure(60);
     const top = y;
-    y += padY + 12;
+    // Reservamos espacio para el título antes de ejecutar el body
+    y = top + padTop;
+
+    // Sangra el contenido del panel desde el margen del panel
+    const prevMargin = innerMarginRef.value;
+    innerMarginRef.value = margin + padX;
+    body();
+    innerMarginRef.value = prevMargin;
+
+    const bottom = y + padBottom;
+    // Fondo sutil
+    doc.setFillColor(
+      tone === "warn" ? 252 : tone === "ok" ? 244 : 250,
+      tone === "warn" ? 244 : tone === "ok" ? 250 : 247,
+      tone === "warn" ? 244 : tone === "ok" ? 246 : 235,
+    );
+    doc.roundedRect(margin, top, contentW, bottom - top, 4, 4, "F");
+    // Borde lateral acentuado
+    doc.setFillColor(...toneColor);
+    doc.rect(margin, top, 3, bottom - top, "F");
+    // Borde fino
+    doc.setDrawColor(...toneColor);
+    doc.setLineWidth(0.5);
+    doc.roundedRect(margin, top, contentW, bottom - top, 4, 4, "S");
+
+    // Título encima del contenido (lo escribimos al final para que quede sobre el fondo)
     doc.setFont("helvetica", "bold");
     doc.setFontSize(8);
-    doc.setTextColor(
-      ...(tone === "warn" ? COLOR.danger : tone === "ok" ? COLOR.ok : COLOR.accent),
-    );
-    doc.text(title.toUpperCase(), margin + padX, top + padY + 4);
-    body();
-    const bottom = y + padY;
-    doc.setDrawColor(
-      ...(tone === "warn" ? COLOR.danger : tone === "ok" ? COLOR.ok : COLOR.accent),
-    );
-    doc.setLineWidth(0.6);
-    doc.roundedRect(margin, top, contentW, bottom - top, 3, 3, "S");
-    y = bottom + 6;
-    void startY;
+    doc.setTextColor(...toneColor);
+    doc.text(title.toUpperCase(), margin + padX, top + 14);
+
+    y = bottom + 10;
   };
+
+  // Permite que bullet/para dentro de panel respeten un margen interno
+  const innerMarginRef = { value: margin };
+  const _origText = doc.text.bind(doc);
+  // No mutamos doc.text: en su lugar, bullet/para usan margin directamente.
+  // Para sangría dentro de panel, reescribimos bullet/para para leer innerMarginRef.
+  void _origText;
 
   // ───────── PORTADA ─────────
   doc.setFillColor(...COLOR.bgPanelDark);
