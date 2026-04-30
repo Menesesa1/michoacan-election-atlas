@@ -5,6 +5,7 @@
 // análisis OSINT/perfil/discurso desde Supabase (tabla candidato_analisis).
 
 import jsPDF from "jspdf";
+import { registerMontserrat } from "./fonts/register-montserrat";
 import { supabase } from "@/integrations/supabase/client";
 import type { Candidato } from "@/lib/candidatos/types";
 import type {
