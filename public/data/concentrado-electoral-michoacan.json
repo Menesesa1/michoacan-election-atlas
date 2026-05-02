@@ -1,0 +1,31 @@
+{
+  "fuente": "INE - Concentrado General de Información Electoral",
+  "entidad": { "clave": 16, "nombre": "MICHOACAN DE OCAMPO" },
+  "distritos_federales": {
+    "total": 11,
+    "por_tamano": {
+      "competencia_alta": 0,
+      "competencia_media": 0,
+      "competencia_baja": 3,
+      "mediana_alta": 2,
+      "mediana_media": 2,
+      "mediana_baja": 2,
+      "densidad_baja": 2,
+      "densidad_media": 0,
+      "densidad_alta": 0
+    }
+  },
+  "municipios": 113,
+  "secciones": {
+    "total": 2825,
+    "urbanas": 1450,
+    "rurales": 1027,
+    "mixtas": 348
+  },
+  "localidades": {
+    "total": 9837,
+    "urbanas": 265,
+    "rurales": 9572
+  },
+  "manzanas": 106328
+}
