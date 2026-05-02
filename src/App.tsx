@@ -34,6 +34,7 @@ import CrmSimpatizantes from "./pages/CrmSimpatizantes";
 import DiaD from "./pages/DiaD";
 import CalendarioElectoral from "./pages/CalendarioElectoral";
 import ParidadGenero from "./pages/ParidadGenero";
+import Administracion from "./pages/Administracion";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
