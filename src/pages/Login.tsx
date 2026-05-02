@@ -182,9 +182,7 @@ export default function Login() {
             </button>
 
             <div className="text-[10px] text-muted-foreground font-mono text-center pt-2 border-t border-border/50 leading-relaxed">
-              Si es tu primera vez, se creará la cuenta automáticamente.
-              <br />
-              Mínimo 6 caracteres en la contraseña.
+              Plataforma por invitación. Si necesitas una cuenta, contacta al administrador.
             </div>
           </form>
 
