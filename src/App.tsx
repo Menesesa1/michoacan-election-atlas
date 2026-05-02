@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { DataProvider } from "@/context/DataContext";
 import { AuthProvider } from "@/context/AuthContext";
 import { RequireAuth } from "@/components/RequireAuth";
+import { RequireRole } from "@/components/RequireRole";
 import { AppLayout } from "@/layouts/AppLayout";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
@@ -33,6 +34,7 @@ import CrmSimpatizantes from "./pages/CrmSimpatizantes";
 import DiaD from "./pages/DiaD";
 import CalendarioElectoral from "./pages/CalendarioElectoral";
 import ParidadGenero from "./pages/ParidadGenero";
+import Administracion from "./pages/Administracion";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -82,6 +84,14 @@ const App = () => (
                 <Route path="/paridad-genero" element={<ParidadGenero />} />
                 <Route path="/distritos" element={<Distritos />} />
                 <Route path="/fuentes" element={<Fuentes />} />
+                <Route
+                  path="/administracion"
+                  element={
+                    <RequireRole roles={["admin"]}>
+                      <Administracion />
+                    </RequireRole>
+                  }
+                />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>

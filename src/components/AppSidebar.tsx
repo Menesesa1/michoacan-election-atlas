@@ -24,6 +24,7 @@ import {
   ShieldCheck,
   CalendarDays,
   Scale,
+  ShieldCheck as ShieldAdmin,
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useState } from "react";
@@ -81,7 +82,7 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
-  const { user, logout } = useAuth();
+  const { user, logout, isAdmin } = useAuth();
 
   const isFederalActive = federal.some((f) => location.pathname.startsWith(f.url));
   const [federalOpen, setFederalOpen] = useState(isFederalActive);
@@ -240,6 +241,31 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {/* Administración (solo admins) */}
+        {isAdmin && (
+          <SidebarGroup>
+            <SidebarGroupLabel className="text-primary/80 font-semibold uppercase tracking-widest text-[10px]">
+              <ShieldAdmin className="w-3 h-3 mr-1.5 inline" />
+              {!collapsed && "Administración"}
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={isActive("/administracion")}>
+                    <NavLink
+                      to="/administracion"
+                      className={`${isActive("/administracion") ? "bg-sidebar-accent text-primary font-semibold border-l-2 border-primary" : "hover:bg-sidebar-accent/60"}`}
+                    >
+                      <ShieldAdmin className="w-4 h-4" />
+                      {!collapsed && <span>Accesos y roles</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
 
       <SidebarFooter className="border-t border-sidebar-border p-3">
