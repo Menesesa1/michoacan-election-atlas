@@ -84,6 +84,14 @@ const App = () => (
                 <Route path="/paridad-genero" element={<ParidadGenero />} />
                 <Route path="/distritos" element={<Distritos />} />
                 <Route path="/fuentes" element={<Fuentes />} />
+                <Route
+                  path="/administracion"
+                  element={
+                    <RequireRole roles={["admin"]}>
+                      <Administracion />
+                    </RequireRole>
+                  }
+                />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>
