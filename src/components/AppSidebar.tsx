@@ -82,7 +82,7 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
-  const { user, logout } = useAuth();
+  const { user, logout, isAdmin } = useAuth();
 
   const isFederalActive = federal.some((f) => location.pathname.startsWith(f.url));
   const [federalOpen, setFederalOpen] = useState(isFederalActive);
