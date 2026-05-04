@@ -1,6 +1,7 @@
 // Tipos compartidos del módulo de Estrategia 360
 import type { NivelEstrategia, Posicion } from "@/data/estrategia-templates";
 import type { CandidatoSnapshot } from "@/lib/candidatos/types";
+import type { SlotContendiente } from "@/lib/candidatos/contendientes-esperados";
 
 export interface MetaVictoriaCalc {
   lista_nominal: number;
@@ -23,6 +24,30 @@ export interface MetaVictoriaCalc {
   }[];
 }
 
+/** Inteligencia agregada del territorio (sentimiento, CIB, narrativas). */
+export interface InteligenciaSnapshot {
+  sentimiento_promedio?: number;
+  pct_negativo?: number;
+  pct_positivo?: number;
+  total_menciones?: number;
+  top_temas?: { tema: string; n: number }[];
+  cib_alertas_activas?: number;
+  cib_severidad_max?: "baja" | "media" | "alta" | "critica";
+  alertas_crisis_activas?: number;
+  alertas_urgentes?: number;
+  narrativas_pendientes?: { mensaje: string; tono?: string; urgencia: number }[];
+}
+
+/** Pulso de Google Trends. */
+export interface TrendsSnapshot {
+  termino?: string;
+  promedio_interes?: number;
+  pico_interes?: number;
+  variacion_pct?: number;
+  contexto_narrativo?: string;
+  related_top?: { query: string; value?: number }[];
+}
+
 export interface SnapshotPayload {
   nivel: NivelEstrategia;
   nivelLabel: string;
@@ -30,6 +55,8 @@ export interface SnapshotPayload {
   posicion: Posicion;
   coalicion: string[];
   horizonte: string;
+  /** Lista nominal estatal oficial INE-DERFE — referencia invariante. */
+  lista_nominal_estatal_oficial?: number;
   historico: {
     año: number;
     ganador: string;
@@ -59,6 +86,10 @@ export interface SnapshotPayload {
   };
   meta_victoria?: MetaVictoriaCalc;
   alertas_activas?: string[];
+  inteligencia?: InteligenciaSnapshot;
+  trends?: TrendsSnapshot;
+  /** Universo COMPLETO esperado por cargo (partidos + indep), antes de lista oficial. */
+  contendientes_esperados?: SlotContendiente[];
   candidatos?: {
     propio?: CandidatoSnapshot;
     adversarios: CandidatoSnapshot[];
