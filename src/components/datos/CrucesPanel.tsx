@@ -67,11 +67,13 @@ export default function CrucesPanel() {
       const d = distritoLocalDeSeccion(s.seccion);
       if (!d) return;
       const slot = acum.get(d) ?? { esc: [], sin: [], pob: 0 };
-      if (typeof s.grado_promedio_escolaridad === "number")
-        slot.esc.push(s.grado_promedio_escolaridad);
-      if (typeof s.pct_sin_acceso_servicios === "number")
-        slot.sin.push(s.pct_sin_acceso_servicios);
-      slot.pob += s.poblacion_total ?? 0;
+      const esc = Number(s.GRAPROES);
+      if (Number.isFinite(esc) && esc > 0) slot.esc.push(esc);
+      // pct sin viviendas con todos los servicios
+      const tot = Number(s.TVIVHAB);
+      const conServ = Number(s.VPH_C_SERV);
+      if (tot > 0) slot.sin.push(((tot - conServ) / tot) * 100);
+      slot.pob += Number(s.POBTOT) || 0;
       acum.set(d, slot);
     });
 
