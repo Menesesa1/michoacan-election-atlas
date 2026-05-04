@@ -14,6 +14,7 @@ import { CandidatosDestacados } from "@/components/mando/CandidatosDestacados";
 import { EstrategiasRecientes } from "@/components/mando/EstrategiasRecientes";
 import { TendenciaResumen } from "@/components/mando/TendenciaResumen";
 import { InteresModulos } from "@/components/mando/InteresModulos";
+import { SituationRoom } from "@/components/mando/SituationRoom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { useElectoralData } from "@/context/DataContext";
@@ -59,6 +60,8 @@ export default function MandoCentral() {
           {pdfLoading ? "Generando…" : "Briefing PDF"}
         </Button>
       </div>
+
+      <SituationRoom />
 
       <BannerFaseActiva />
 

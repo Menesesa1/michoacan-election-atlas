@@ -27,3 +27,6 @@ INE Tech encoding: "M" = Mujeres.
 - [Concentrado INE](mem://reference/concentrado-ine-michoacan) — Totales oficiales Michoacán (11/113/2825) para validación cruzada
 - [Control de acceso](mem://features/access-control) — Roles admin/analista/cliente, signup cerrado, panel /administracion
 - [SOCMINT Stack](mem://features/socmint-stack) — Pipeline PSICOINT (emociones+sarcasmo) + GEOINT (sección/colonia) + CIB (4 heurísticas) + Narrativas accionables
+- [Lista nominal única](mem://features/lista-nominal-unica) — LN estatal invariante (~3.6M INE-DERFE); badge + hook validan agregaciones parciales federal/local
+- [Situation Room](mem://features/situation-room) — /mando-central abre con líder, alertas, sentimiento y narrativa accionable de un vistazo
+- [Datos 3 tabs](mem://features/datos-tres-tabs) — /datos consolidado en Resultados / Contexto / Cruces; Distritos como toggle dentro de Resultados
