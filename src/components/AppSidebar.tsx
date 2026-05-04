@@ -74,8 +74,6 @@ export function AppSidebar() {
   const location = useLocation();
   const { user, logout, isAdmin } = useAuth();
 
-  const isFederalActive = federal.some((f) => location.pathname.startsWith(f.url));
-  const [federalOpen, setFederalOpen] = useState(isFederalActive);
 
   const isActive = (url: string, end?: boolean) =>
     end ? location.pathname === url : location.pathname.startsWith(url);
