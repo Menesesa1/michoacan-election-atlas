@@ -20,7 +20,7 @@ export default function Inteligencia() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-1 border-b border-border/50">
+      <div className="flex items-center gap-1 border-b border-border/50 overflow-x-auto">
         {tabs.map((t) => {
           const active = pathname.startsWith(t.to);
           return (
