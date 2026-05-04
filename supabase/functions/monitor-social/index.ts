@@ -344,6 +344,10 @@ Deno.serve(async (req) => {
           tema: m.tema,
           hashtags: m.hashtags,
           municipio: normalizarMunicipio(m.municipio),
+          emociones: m.emociones ?? {},
+          sarcasmo: m.sarcasmo ?? false,
+          seccion_inferida: typeof m.seccion_inferida === "number" ? m.seccion_inferida : null,
+          colonia_inferida: m.colonia_inferida ?? null,
         }));
         const { error: insErr } = await supabase.from("social_menciones").insert(rows);
         if (insErr) {
