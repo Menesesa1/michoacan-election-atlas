@@ -44,7 +44,7 @@ const sections = [
     icon: Swords,
     Component: ComparadorPropioVsRival,
   },
-  { id: "mapa-calor", label: "Mapa de calor", icon: MapPin, Component: MapaCalorRiesgo },
+  { id: "mapa-calor", label: "Mapa de calor", icon: MapPin, Component: MapaCalorSentimiento },
 ] as const;
 
 export default function MonitorInteligencia() {
