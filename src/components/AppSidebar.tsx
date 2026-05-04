@@ -23,7 +23,7 @@ import {
   ShieldCheck as ShieldAdmin,
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
-import { useState } from "react";
+
 import {
   Sidebar,
   SidebarContent,
