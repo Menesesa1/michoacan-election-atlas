@@ -49,11 +49,14 @@ const App = () => (
                 }
               >
                 <Route path="/mando" element={<MandoCentral />} />
-                <Route path="/gobernador" element={<Gobernador />} />
-                <Route path="/diputados-locales" element={<DiputadosLocales />} />
-                <Route path="/ayuntamientos" element={<Ayuntamientos />} />
-                <Route path="/socioeconomico" element={<Socioeconomico />} />
-                <Route path="/demografia" element={<Demografia />} />
+                <Route path="/datos" element={<Datos />} />
+                <Route path="/datos/:tab" element={<Datos />} />
+                <Route path="/gobernador" element={<Navigate to="/datos/gobernador" replace />} />
+                <Route path="/diputados-locales" element={<Navigate to="/datos/diputados-locales" replace />} />
+                <Route path="/ayuntamientos" element={<Navigate to="/datos/ayuntamientos" replace />} />
+                <Route path="/socioeconomico" element={<Navigate to="/datos/socioeconomico" replace />} />
+                <Route path="/demografia" element={<Navigate to="/datos/demografia" replace />} />
+                <Route path="/distritos" element={<Navigate to="/datos/distritos" replace />} />
                 <Route path="/tendencias" element={<Tendencias />} />
                 <Route path="/crisis" element={<Navigate to="/inteligencia" replace />} />
                 <Route path="/inteligencia" element={<MonitorInteligencia />} />
