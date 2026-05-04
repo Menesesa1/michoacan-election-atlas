@@ -62,15 +62,7 @@ const App = () => (
                 <Route path="/tendencias" element={<Tendencias />} />
                 <Route path="/crisis" element={<Navigate to="/inteligencia" replace />} />
                 <Route path="/inteligencia" element={<MonitorInteligencia />} />
-                <Route path="/inteligencia/alertas" element={<Navigate to="/inteligencia" replace />} />
-                <Route path="/inteligencia/cib" element={<Navigate to="/inteligencia" replace />} />
-                <Route path="/inteligencia/geoint" element={<Navigate to="/inteligencia" replace />} />
-                <Route path="/inteligencia/emociones" element={<Navigate to="/inteligencia" replace />} />
-                <Route path="/inteligencia/narrativas" element={<Navigate to="/inteligencia" replace />} />
-                <Route path="/inteligencia/listening-estatal" element={<Navigate to="/inteligencia" replace />} />
-                <Route path="/inteligencia/listening-candidatos" element={<Navigate to="/inteligencia" replace />} />
-                <Route path="/inteligencia/comparador" element={<Navigate to="/inteligencia" replace />} />
-                <Route path="/inteligencia/mapa-calor" element={<Navigate to="/inteligencia" replace />} />
+                <Route path="/inteligencia/:section" element={<MonitorInteligencia />} />
                 <Route path="/escenarios" element={<Escenarios />} />
                 <Route path="/operacion" element={<Operacion />} />
                 <Route path="/operacion-territorial" element={<OperacionTerritorial />} />
