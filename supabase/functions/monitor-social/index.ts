@@ -153,7 +153,14 @@ async function classifyMenciones(
       messages: [
         {
           role: "system",
-          content: `Eres un analista de social listening político en Michoacán. Para cada noticia/mención sobre "${entidadNombre}", extrae: sentimiento (-1 muy negativo, 0 neutro, +1 muy positivo), tema principal (1-3 palabras: seguridad, economía, gobernanza, escándalo, agenda, etc.), hashtags relevantes inferidos y MUNICIPIO al que se refiere la mención. El municipio DEBE ser uno de los 113 municipios de Michoacán (ej: Morelia, Uruapan, Zamora, Lázaro Cárdenas, Apatzingán, Pátzcuaro, Zitácuaro, etc.) escrito con el nombre oficial INEGI. Si la mención es estatal/genérica de Michoacán sin municipio claro, devuelve null. NO inventes municipios fuera de Michoacán.`,
+          content: `Eres un analista SOCMINT político en Michoacán. Para cada noticia/mención sobre "${entidadNombre}", extrae:
+- sentimiento (-1 muy negativo, 0 neutro, +1 muy positivo)
+- tema principal (1-3 palabras: seguridad, economía, gobernanza, escándalo, agenda, etc.)
+- hashtags relevantes inferidos
+- MUNICIPIO oficial INEGI de Michoacán (los 113), o null si es estatal/no claro. NO inventes municipios fuera de Michoacán
+- PSICOINT: scores 0-1 de 6 emociones (enojo, miedo, esperanza, indignacion, desconfianza, orgullo). Asigna 0 si no está presente
+- sarcasmo: true si detectas ironía o sarcasmo
+- GEOINT fino: si el texto menciona explícitamente número de sección electoral (ej "sección 1234"), devuélvelo en seccion_inferida; si menciona colonia/tenencia/fraccionamiento (ej "colonia Félix Ireta", "tenencia Morelos"), devuelve el nombre en colonia_inferida. Si no, null en ambos.`,
         },
         { role: "user", content: `Menciones sobre ${entidadNombre}:\n\n${corpus}\n\nClasifica cada una.` },
       ],
@@ -162,7 +169,7 @@ async function classifyMenciones(
           type: "function",
           function: {
             name: "emit_menciones",
-            description: "Emite menciones clasificadas",
+            description: "Emite menciones clasificadas con SOCMINT+PSICOINT+GEOINT",
             parameters: {
               type: "object",
               properties: {
@@ -178,11 +185,31 @@ async function classifyMenciones(
                       sentimiento: { type: "number", minimum: -1, maximum: 1 },
                       tema: { type: "string" },
                       hashtags: { type: "array", items: { type: "string" }, maxItems: 5 },
-                      municipio: { type: ["string", "null"], description: "Municipio oficial de Michoacán o null si es estatal/no claro" },
+                      municipio: { type: ["string", "null"], description: "Municipio oficial de Michoacán o null" },
+                      emociones: {
+                        type: "object",
+                        properties: {
+                          enojo: { type: "number", minimum: 0, maximum: 1 },
+                          miedo: { type: "number", minimum: 0, maximum: 1 },
+                          esperanza: { type: "number", minimum: 0, maximum: 1 },
+                          indignacion: { type: "number", minimum: 0, maximum: 1 },
+                          desconfianza: { type: "number", minimum: 0, maximum: 1 },
+                          orgullo: { type: "number", minimum: 0, maximum: 1 },
+                        },
+                        required: ["enojo", "miedo", "esperanza", "indignacion", "desconfianza", "orgullo"],
+                      },
+                      sarcasmo: { type: "boolean" },
+                      seccion_inferida: { type: ["integer", "null"], description: "Número de sección INE si se menciona explícitamente" },
+                      colonia_inferida: { type: ["string", "null"], description: "Nombre de colonia/tenencia si se menciona" },
                     },
-                    required: ["titulo", "fragmento", "url", "fuente", "sentimiento", "tema", "hashtags", "municipio"],
+                    required: ["titulo", "fragmento", "url", "fuente", "sentimiento", "tema", "hashtags", "municipio", "emociones", "sarcasmo", "seccion_inferida", "colonia_inferida"],
                   },
                 },
+              },
+              required: ["menciones"],
+            },
+          },
+        },
               },
               required: ["menciones"],
             },
