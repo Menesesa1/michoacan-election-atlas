@@ -1,44 +1,48 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Landmark,
-  Vote,
-  Building,
-  PieChart,
-  Users,
-  Map as MapIcon,
-  GitCompareArrows,
-} from "lucide-react";
-import Gobernador from "@/pages/Gobernador";
-import DiputadosLocales from "@/pages/DiputadosLocales";
-import Ayuntamientos from "@/pages/Ayuntamientos";
-import Socioeconomico from "@/pages/Socioeconomico";
-import Demografia from "@/pages/Demografia";
-import Distritos from "@/pages/Distritos";
+import { BarChart3, Layers, GitCompareArrows } from "lucide-react";
+import ResultadosPanel from "@/components/datos/ResultadosPanel";
+import ContextoPanel from "@/components/datos/ContextoPanel";
 import CrucesPanel from "@/components/datos/CrucesPanel";
 
 const TABS = [
-  { id: "gobernador", label: "Gobernador", icon: Landmark, Component: Gobernador },
-  { id: "diputados-locales", label: "Diputados Locales", icon: Vote, Component: DiputadosLocales },
-  { id: "ayuntamientos", label: "Ayuntamientos", icon: Building, Component: Ayuntamientos },
-  { id: "distritos", label: "Distritos federales", icon: MapIcon, Component: Distritos },
-  { id: "socioeconomico", label: "Socioeconómico", icon: PieChart, Component: Socioeconomico },
-  { id: "demografia", label: "Demografía", icon: Users, Component: Demografia },
+  { id: "resultados", label: "Resultados", icon: BarChart3, Component: ResultadosPanel },
+  { id: "contexto", label: "Contexto", icon: Layers, Component: ContextoPanel },
   { id: "cruces", label: "Cruces", icon: GitCompareArrows, Component: CrucesPanel },
 ] as const;
 
 type TabId = (typeof TABS)[number]["id"];
 
+// Aliases para compatibilidad con URLs antiguas y redirects.
+const ALIAS: Record<string, TabId> = {
+  gobernador: "resultados",
+  "diputados-locales": "resultados",
+  ayuntamientos: "resultados",
+  distritos: "resultados",
+  socioeconomico: "contexto",
+  demografia: "contexto",
+};
+
 export default function Datos() {
   const { tab } = useParams<{ tab?: string }>();
   const navigate = useNavigate();
-  const initial = (TABS.find((t) => t.id === tab)?.id ?? "gobernador") as TabId;
-  const [active, setActive] = useState<TabId>(initial);
+
+  const resolveInitial = (): TabId => {
+    if (!tab) return "resultados";
+    if (TABS.some((t) => t.id === tab)) return tab as TabId;
+    return ALIAS[tab] ?? "resultados";
+  };
+
+  const [active, setActive] = useState<TabId>(resolveInitial());
 
   useEffect(() => {
-    if (tab && TABS.some((t) => t.id === tab)) setActive(tab as TabId);
-    else if (!tab) setActive("gobernador");
+    const next = resolveInitial();
+    setActive(next);
+    if (tab && tab !== next && ALIAS[tab]) {
+      navigate(`/datos/${next}`, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab]);
 
   const onChange = (v: string) => {
@@ -56,8 +60,9 @@ export default function Datos() {
         </div>
         <h1 className="text-2xl font-bold text-foreground">Datos</h1>
         <p className="text-sm text-muted-foreground mt-1 max-w-3xl">
-          Resultados electorales por tipo de elección, contexto socioeconómico, padrón demográfico
-          y cruces analíticos. Toda la estadística de soporte en un solo lugar.
+          Resultados electorales por tipo de elección, contexto socioeconómico/demográfico
+          y cruces analíticos. La unidad atómica es la sección; la lista nominal estatal
+          es única (INE-DERFE) sin importar el corte distrital.
         </p>
       </div>
 
@@ -66,7 +71,7 @@ export default function Datos() {
           {TABS.map((t) => (
             <TabsTrigger key={t.id} value={t.id} className="gap-1.5">
               <t.icon className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">{t.label}</span>
+              <span>{t.label}</span>
             </TabsTrigger>
           ))}
         </TabsList>
