@@ -184,9 +184,6 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* COMPARADOR */}
-      <ComparadorEncuestadoras />
-
       {/* METODOLOGÍA */}
       <section id="metodologia" className="py-20 px-4 sm:px-6 lg:px-12">
         <div className="max-w-5xl mx-auto space-y-8">
@@ -205,12 +202,12 @@ export default function Landing() {
                 d: "Resultados INE / IEM 2018-2024, padrón electoral, lista nominal, cartografía SIGE.",
               },
               {
-                t: "Encuestas públicas",
-                d: "Mitofsky, El Financiero y Massive Caller, normalizadas y promediadas semanalmente.",
+                t: "Social listening + PSICOINT",
+                d: "Monitor de medios, redes y conversación local con clasificación emocional (no solo positivo/negativo) y detección de sarcasmo.",
               },
               {
                 t: "Inteligencia operativa",
-                d: "Feed de alertas conectable vía Google Sheets / JSON, monitoreo de medios y redes.",
+                d: "Alertas de crisis, detección CIB de bots, GEOINT por sección y narrativas accionables generadas con IA.",
               },
             ].map((b) => (
               <div key={b.t} className="executive-panel p-6 gold-border space-y-2">
