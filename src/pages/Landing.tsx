@@ -83,7 +83,7 @@ export default function Landing() {
           <div className="grid grid-cols-2 gap-4">
             {[
               { icon: Map, label: "Distritos", val: "11+24", sub: "Federales / Locales" },
-              { icon: BarChart3, label: "Encuestadoras", val: "3", sub: "Mitofsky · EFC · MAC" },
+              { icon: BarChart3, label: "Monitor IA", val: "6", sub: "PSICOINT · CIB · GEOINT" },
               { icon: Users, label: "Padrón", val: "3.7M", sub: "Lista nominal" },
               { icon: AlertTriangle, label: "Alertas", val: "Live", sub: "Feed operación" },
             ].map((k) => (
