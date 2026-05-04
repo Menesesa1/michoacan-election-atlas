@@ -22,6 +22,15 @@ interface SearchHit {
   publishedDate?: string;
 }
 
+interface EmocionesScore {
+  enojo: number;
+  miedo: number;
+  esperanza: number;
+  indignacion: number;
+  desconfianza: number;
+  orgullo: number;
+}
+
 interface MencionClasificada {
   titulo: string;
   fragmento: string;
@@ -31,6 +40,12 @@ interface MencionClasificada {
   tema: string;
   hashtags: string[];
   municipio?: string | null; // Municipio de Michoacán al que se refiere (o null si es estatal)
+  // PSICOINT
+  emociones?: EmocionesScore | null;
+  sarcasmo?: boolean;
+  // GEOINT
+  seccion_inferida?: number | null;
+  colonia_inferida?: string | null;
 }
 
 interface EntidadObjetivo {
