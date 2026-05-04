@@ -12,15 +12,10 @@ import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import ResetPassword from "./pages/ResetPassword";
 import MandoCentral from "./pages/MandoCentral";
-import Distritos from "./pages/Distritos";
-import Demografia from "./pages/Demografia";
 import Tendencias from "./pages/Tendencias";
 import MonitorInteligencia from "./pages/MonitorInteligencia";
 import Fuentes from "./pages/Fuentes";
-import Socioeconomico from "./pages/Socioeconomico";
-import Gobernador from "./pages/Gobernador";
-import DiputadosLocales from "./pages/DiputadosLocales";
-import Ayuntamientos from "./pages/Ayuntamientos";
+import Datos from "./pages/Datos";
 import Escenarios from "./pages/Escenarios";
 import Candidatos from "./pages/Candidatos";
 import Operacion from "./pages/Operacion";
@@ -54,11 +49,14 @@ const App = () => (
                 }
               >
                 <Route path="/mando" element={<MandoCentral />} />
-                <Route path="/gobernador" element={<Gobernador />} />
-                <Route path="/diputados-locales" element={<DiputadosLocales />} />
-                <Route path="/ayuntamientos" element={<Ayuntamientos />} />
-                <Route path="/socioeconomico" element={<Socioeconomico />} />
-                <Route path="/demografia" element={<Demografia />} />
+                <Route path="/datos" element={<Datos />} />
+                <Route path="/datos/:tab" element={<Datos />} />
+                <Route path="/gobernador" element={<Navigate to="/datos/gobernador" replace />} />
+                <Route path="/diputados-locales" element={<Navigate to="/datos/diputados-locales" replace />} />
+                <Route path="/ayuntamientos" element={<Navigate to="/datos/ayuntamientos" replace />} />
+                <Route path="/socioeconomico" element={<Navigate to="/datos/socioeconomico" replace />} />
+                <Route path="/demografia" element={<Navigate to="/datos/demografia" replace />} />
+                <Route path="/distritos" element={<Navigate to="/datos/distritos" replace />} />
                 <Route path="/tendencias" element={<Tendencias />} />
                 <Route path="/crisis" element={<Navigate to="/inteligencia" replace />} />
                 <Route path="/inteligencia" element={<MonitorInteligencia />} />
@@ -71,7 +69,7 @@ const App = () => (
                 <Route path="/candidatos" element={<Candidatos />} />
                 <Route path="/calendario-electoral" element={<CalendarioElectoral />} />
                 <Route path="/paridad-genero" element={<ParidadGenero />} />
-                <Route path="/distritos" element={<Distritos />} />
+                
                 <Route path="/fuentes" element={<Fuentes />} />
                 <Route
                   path="/administracion"

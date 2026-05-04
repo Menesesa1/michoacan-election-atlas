@@ -5,7 +5,6 @@ import {
   TrendingUp,
   ShieldAlert,
   Database,
-  PieChart,
   BarChart3,
   ExternalLink,
   Briefcase,
@@ -13,10 +12,7 @@ import {
   Building2,
   FolderOpen,
   LogOut,
-  Vote,
-  Building,
-  Landmark,
-  ChevronDown,
+  
   Sparkles,
   Zap,
   Network,
@@ -27,7 +23,7 @@ import {
   ShieldCheck as ShieldAdmin,
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
-import { useState } from "react";
+
 import {
   Sidebar,
   SidebarContent,
@@ -47,11 +43,7 @@ import { useAuth } from "@/context/AuthContext";
 const locales = [
   { title: "Mando Central", url: "/mando", icon: LayoutDashboard, end: true },
   { title: "Calendario electoral", url: "/calendario-electoral", icon: CalendarDays },
-  { title: "Gobernador", url: "/gobernador", icon: Landmark },
-  { title: "Diputados Locales", url: "/diputados-locales", icon: Vote },
-  { title: "Ayuntamientos", url: "/ayuntamientos", icon: Building },
-  { title: "Socioeconómico", url: "/socioeconomico", icon: PieChart },
-  { title: "Demografía", url: "/demografia", icon: Users },
+  { title: "Datos · Estadística", url: "/datos", icon: BarChart3 },
   { title: "Tendencias", url: "/tendencias", icon: TrendingUp },
   { title: "Estrategia 360", url: "/escenarios", icon: Sparkles },
   { title: "Operación 360", url: "/operacion", icon: Zap },
@@ -67,9 +59,7 @@ const operacionCampania = [
   { title: "Día D · Casilla", url: "/dia-d", icon: ShieldCheck },
 ];
 
-const federal = [
-  { title: "Distritos federales", url: "/distritos", icon: Map },
-];
+
 
 const tools = [
   { title: "Meta Business Suite", url: "https://business.facebook.com/latest/home", icon: Briefcase },
@@ -84,8 +74,6 @@ export function AppSidebar() {
   const location = useLocation();
   const { user, logout, isAdmin } = useAuth();
 
-  const isFederalActive = federal.some((f) => location.pathname.startsWith(f.url));
-  const [federalOpen, setFederalOpen] = useState(isFederalActive);
 
   const isActive = (url: string, end?: boolean) =>
     end ? location.pathname === url : location.pathname.startsWith(url);
@@ -171,44 +159,7 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Federal (referencia) — colapsable */}
-        <SidebarGroup>
-          <button
-            onClick={() => setFederalOpen((v) => !v)}
-            className="w-full flex items-center justify-between px-2 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors"
-            type="button"
-          >
-            <span className="flex items-center">
-              <Map className="w-3 h-3 mr-1.5 inline opacity-70" />
-              {!collapsed && "Federal (referencia)"}
-            </span>
-            {!collapsed && (
-              <ChevronDown className={`w-3 h-3 transition-transform ${federalOpen ? "rotate-180" : ""}`} />
-            )}
-          </button>
-          {(federalOpen || collapsed) && (
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {federal.map((item) => {
-                  const active = isActive(item.url);
-                  return (
-                    <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton asChild isActive={active}>
-                        <NavLink
-                          to={item.url}
-                          className={`${active ? "bg-sidebar-accent text-primary font-semibold border-l-2 border-primary" : "hover:bg-sidebar-accent/60"} opacity-90`}
-                        >
-                          <item.icon className="w-4 h-4" />
-                          {!collapsed && <span>{item.title}</span>}
-                        </NavLink>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  );
-                })}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          )}
-        </SidebarGroup>
+        {/* Federal (referencia) — fusionado dentro de Datos · Estadística */}
 
         {/* Herramientas externas */}
         <SidebarGroup>
