@@ -7,7 +7,7 @@ import {
   type Posicion,
   type NivelEstrategia,
 } from "@/data/estrategia-templates";
-import { buildSnapshot, getTerritorios, type SnapshotPayload } from "@/lib/estrategia-context";
+import { buildSnapshot, enriquecerSnapshot, getTerritorios, type SnapshotPayload } from "@/lib/estrategia-context";
 import { loadCatalogo } from "@/lib/secciones-catalogo";
 import { alertasMock } from "@/data/alertas-mock";
 import { filtrarAlertasTerritorio, alertasASnapshot } from "@/lib/alertas-territorio";
@@ -81,7 +81,7 @@ export default function Escenarios() {
     [nivel, territorioLabel],
   );
 
-  const snapshot = useMemo<SnapshotPayload>(
+  const snapshotBase = useMemo<SnapshotPayload>(
     () => buildSnapshot({
       nivel: nivel as NivelEstrategia,
       nivelLabel: NIVEL_LABEL[nivel],
@@ -98,6 +98,25 @@ export default function Escenarios() {
     }),
     [nivel, territorio, territorioLabel, posicion, coalicion, horizonte, distritos, distritosLocales, alertasTerritorio, candidatosSnap, supuestos, catalogoLoaded],
   );
+
+  // Snapshot enriquecido con datos vivos (LN oficial, inteligencia, trends,
+  // contendientes esperados). Se recalcula al cambiar parámetros clave.
+  const [snapshot, setSnapshot] = useState<SnapshotPayload>(snapshotBase);
+  useEffect(() => {
+    let alive = true;
+    setSnapshot(snapshotBase);
+    void enriquecerSnapshot(snapshotBase, {
+      nivel: nivel as NivelEstrategia,
+      territorioLabel,
+      candidatoPropioId: propioId || undefined,
+      filtroEntidad: territorioLabel,
+    }).then((enr) => {
+      if (alive) setSnapshot(enr);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [snapshotBase, nivel, territorioLabel, propioId]);
 
   const generar = async () => {
     setLoading(true);
