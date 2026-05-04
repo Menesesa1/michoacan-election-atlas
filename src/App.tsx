@@ -60,19 +60,17 @@ const App = () => (
                 <Route path="/socioeconomico" element={<Socioeconomico />} />
                 <Route path="/demografia" element={<Demografia />} />
                 <Route path="/tendencias" element={<Tendencias />} />
-                <Route path="/crisis" element={<Navigate to="/inteligencia/alertas" replace />} />
-                <Route path="/inteligencia" element={<Inteligencia />}>
-                  <Route index element={<Navigate to="/inteligencia/alertas" replace />} />
-                  <Route path="alertas" element={<Crisis />} />
-                  <Route path="cib" element={<CibAlertas />} />
-                  <Route path="geoint" element={<GeoIntPanel />} />
-                  <Route path="emociones" element={<PsicoIntPanel />} />
-                  <Route path="narrativas" element={<NarrativasPanel />} />
-                  <Route path="listening-estatal" element={<ListeningEstatal />} />
-                  <Route path="listening-candidatos" element={<ListeningCandidatos />} />
-                  <Route path="comparador" element={<ComparadorPropioVsRival />} />
-                  <Route path="mapa-calor" element={<MapaCalor />} />
-                </Route>
+                <Route path="/crisis" element={<Navigate to="/inteligencia" replace />} />
+                <Route path="/inteligencia" element={<MonitorInteligencia />} />
+                <Route path="/inteligencia/alertas" element={<Navigate to="/inteligencia" replace />} />
+                <Route path="/inteligencia/cib" element={<Navigate to="/inteligencia" replace />} />
+                <Route path="/inteligencia/geoint" element={<Navigate to="/inteligencia" replace />} />
+                <Route path="/inteligencia/emociones" element={<Navigate to="/inteligencia" replace />} />
+                <Route path="/inteligencia/narrativas" element={<Navigate to="/inteligencia" replace />} />
+                <Route path="/inteligencia/listening-estatal" element={<Navigate to="/inteligencia" replace />} />
+                <Route path="/inteligencia/listening-candidatos" element={<Navigate to="/inteligencia" replace />} />
+                <Route path="/inteligencia/comparador" element={<Navigate to="/inteligencia" replace />} />
+                <Route path="/inteligencia/mapa-calor" element={<Navigate to="/inteligencia" replace />} />
                 <Route path="/escenarios" element={<Escenarios />} />
                 <Route path="/operacion" element={<Operacion />} />
                 <Route path="/operacion-territorial" element={<OperacionTerritorial />} />
