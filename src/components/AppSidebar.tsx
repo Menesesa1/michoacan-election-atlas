@@ -161,44 +161,7 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Federal (referencia) — colapsable */}
-        <SidebarGroup>
-          <button
-            onClick={() => setFederalOpen((v) => !v)}
-            className="w-full flex items-center justify-between px-2 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors"
-            type="button"
-          >
-            <span className="flex items-center">
-              <Map className="w-3 h-3 mr-1.5 inline opacity-70" />
-              {!collapsed && "Federal (referencia)"}
-            </span>
-            {!collapsed && (
-              <ChevronDown className={`w-3 h-3 transition-transform ${federalOpen ? "rotate-180" : ""}`} />
-            )}
-          </button>
-          {(federalOpen || collapsed) && (
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {federal.map((item) => {
-                  const active = isActive(item.url);
-                  return (
-                    <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton asChild isActive={active}>
-                        <NavLink
-                          to={item.url}
-                          className={`${active ? "bg-sidebar-accent text-primary font-semibold border-l-2 border-primary" : "hover:bg-sidebar-accent/60"} opacity-90`}
-                        >
-                          <item.icon className="w-4 h-4" />
-                          {!collapsed && <span>{item.title}</span>}
-                        </NavLink>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  );
-                })}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          )}
-        </SidebarGroup>
+        {/* Federal (referencia) — fusionado dentro de Datos · Estadística */}
 
         {/* Herramientas externas */}
         <SidebarGroup>
