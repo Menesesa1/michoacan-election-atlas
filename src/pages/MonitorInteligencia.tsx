@@ -12,12 +12,11 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AlertasOperacion } from "@/components/AlertasOperacion";
-import CibAlertas from "@/pages/CibAlertas";
-import PsicoIntPanel from "@/pages/PsicoIntPanel";
-import GeoIntPanel from "@/pages/GeoIntPanel";
-import NarrativasPanel from "@/pages/NarrativasPanel";
+import CibAlertasSection from "@/components/inteligencia/CibAlertasSection";
+import PsicoIntSection from "@/components/inteligencia/PsicoIntSection";
+import GeoIntSection from "@/components/inteligencia/GeoIntSection";
+import NarrativasSection from "@/components/inteligencia/NarrativasSection";
 import { ListeningPanel } from "@/components/ListeningPanel";
-import ComparadorPropioVsRival from "@/pages/ComparadorPropioVsRival";
 import { MapaCalorSentimiento } from "@/components/MapaCalorSentimiento";
 
 const sections = [
