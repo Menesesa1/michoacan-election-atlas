@@ -1,13 +1,17 @@
 import { NavLink, Outlet, useLocation, Navigate } from "react-router-dom";
-import { ShieldAlert, Activity, Users, Swords, MapPin } from "lucide-react";
+import { ShieldAlert, Activity, Users, Swords, MapPin, Bot, Brain, Megaphone, Map } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const tabs = [
   { to: "/inteligencia/alertas", label: "Alertas", icon: ShieldAlert },
-  { to: "/inteligencia/listening-estatal", label: "Sentimiento Estatal", icon: Activity },
-  { to: "/inteligencia/listening-candidatos", label: "Por Candidato", icon: Users },
+  { to: "/inteligencia/cib", label: "CIB / Bots", icon: Bot },
+  { to: "/inteligencia/emociones", label: "Emociones", icon: Brain },
+  { to: "/inteligencia/geoint", label: "GEOINT", icon: Map },
+  { to: "/inteligencia/narrativas", label: "Narrativas", icon: Megaphone },
+  { to: "/inteligencia/listening-estatal", label: "Sentimiento", icon: Activity },
+  { to: "/inteligencia/listening-candidatos", label: "Candidatos", icon: Users },
   { to: "/inteligencia/comparador", label: "Propio vs Rival", icon: Swords },
-  { to: "/inteligencia/mapa-calor", label: "Mapa de Calor", icon: MapPin },
+  { to: "/inteligencia/mapa-calor", label: "Mapa Calor", icon: MapPin },
 ];
 
 export default function Inteligencia() {
@@ -16,7 +20,7 @@ export default function Inteligencia() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-1 border-b border-border/50">
+      <div className="flex items-center gap-1 border-b border-border/50 overflow-x-auto">
         {tabs.map((t) => {
           const active = pathname.startsWith(t.to);
           return (

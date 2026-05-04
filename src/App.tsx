@@ -21,6 +21,10 @@ import ListeningEstatal from "./pages/ListeningEstatal";
 import ListeningCandidatos from "./pages/ListeningCandidatos";
 import ComparadorPropioVsRival from "./pages/ComparadorPropioVsRival";
 import MapaCalor from "./pages/MapaCalor";
+import CibAlertas from "./pages/CibAlertas";
+import GeoIntPanel from "./pages/GeoIntPanel";
+import PsicoIntPanel from "./pages/PsicoIntPanel";
+import NarrativasPanel from "./pages/NarrativasPanel";
 import Fuentes from "./pages/Fuentes";
 import Socioeconomico from "./pages/Socioeconomico";
 import Gobernador from "./pages/Gobernador";
@@ -69,6 +73,10 @@ const App = () => (
                 <Route path="/inteligencia" element={<Inteligencia />}>
                   <Route index element={<Navigate to="/inteligencia/alertas" replace />} />
                   <Route path="alertas" element={<Crisis />} />
+                  <Route path="cib" element={<CibAlertas />} />
+                  <Route path="geoint" element={<GeoIntPanel />} />
+                  <Route path="emociones" element={<PsicoIntPanel />} />
+                  <Route path="narrativas" element={<NarrativasPanel />} />
                   <Route path="listening-estatal" element={<ListeningEstatal />} />
                   <Route path="listening-candidatos" element={<ListeningCandidatos />} />
                   <Route path="comparador" element={<ComparadorPropioVsRival />} />

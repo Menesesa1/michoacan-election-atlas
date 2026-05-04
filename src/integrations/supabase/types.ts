@@ -202,6 +202,57 @@ export type Database = {
         }
         Relationships: []
       }
+      cib_alertas: {
+        Row: {
+          batch_id: string | null
+          candidato_id: string | null
+          created_at: string
+          descripcion: string
+          detectada_en: string
+          entidad_nombre: string
+          entidad_tipo: string
+          evidencia: Json
+          id: string
+          severidad: string
+          tipo_patron: string
+          titulo: string
+          ventana_fin: string
+          ventana_inicio: string
+        }
+        Insert: {
+          batch_id?: string | null
+          candidato_id?: string | null
+          created_at?: string
+          descripcion: string
+          detectada_en?: string
+          entidad_nombre: string
+          entidad_tipo: string
+          evidencia?: Json
+          id?: string
+          severidad: string
+          tipo_patron: string
+          titulo: string
+          ventana_fin: string
+          ventana_inicio: string
+        }
+        Update: {
+          batch_id?: string | null
+          candidato_id?: string | null
+          created_at?: string
+          descripcion?: string
+          detectada_en?: string
+          entidad_nombre?: string
+          entidad_tipo?: string
+          evidencia?: Json
+          id?: string
+          severidad?: string
+          tipo_patron?: string
+          titulo?: string
+          ventana_fin?: string
+          ventana_inicio?: string
+        }
+        Relationships: []
+      }
       estrategias_guardadas: {
         Row: {
           created_at: string
@@ -334,12 +385,139 @@ export type Database = {
         }
         Relationships: []
       }
+      medios_michoacan_runs: {
+        Row: {
+          batch_id: string | null
+          duracion_ms: number | null
+          ejecutada_en: string
+          error: string | null
+          id: string
+          medios_consultados: number
+          menciones_creadas: number
+          trigger: string
+          urls_descubiertas: number
+          urls_nuevas: number
+        }
+        Insert: {
+          batch_id?: string | null
+          duracion_ms?: number | null
+          ejecutada_en?: string
+          error?: string | null
+          id?: string
+          medios_consultados?: number
+          menciones_creadas?: number
+          trigger?: string
+          urls_descubiertas?: number
+          urls_nuevas?: number
+        }
+        Update: {
+          batch_id?: string | null
+          duracion_ms?: number | null
+          ejecutada_en?: string
+          error?: string | null
+          id?: string
+          medios_consultados?: number
+          menciones_creadas?: number
+          trigger?: string
+          urls_descubiertas?: number
+          urls_nuevas?: number
+        }
+        Relationships: []
+      }
+      medios_urls_procesadas: {
+        Row: {
+          fuente: string
+          id: string
+          procesada_en: string
+          url: string
+          url_hash: string
+        }
+        Insert: {
+          fuente: string
+          id?: string
+          procesada_en?: string
+          url: string
+          url_hash: string
+        }
+        Update: {
+          fuente?: string
+          id?: string
+          procesada_en?: string
+          url?: string
+          url_hash?: string
+        }
+        Relationships: []
+      }
+      narrativas_sugeridas: {
+        Row: {
+          candidato_id: string | null
+          cib_alerta_id: string | null
+          contexto: string
+          created_at: string
+          emocion_objetivo: string | null
+          entidad_nombre: string
+          id: string
+          mensaje: string
+          plataforma: string | null
+          tipo: string
+          tono: string | null
+          updated_at: string
+          urgencia: number
+          usado: boolean
+          user_id: string
+        }
+        Insert: {
+          candidato_id?: string | null
+          cib_alerta_id?: string | null
+          contexto: string
+          created_at?: string
+          emocion_objetivo?: string | null
+          entidad_nombre: string
+          id?: string
+          mensaje: string
+          plataforma?: string | null
+          tipo: string
+          tono?: string | null
+          updated_at?: string
+          urgencia?: number
+          usado?: boolean
+          user_id: string
+        }
+        Update: {
+          candidato_id?: string | null
+          cib_alerta_id?: string | null
+          contexto?: string
+          created_at?: string
+          emocion_objetivo?: string | null
+          entidad_nombre?: string
+          id?: string
+          mensaje?: string
+          plataforma?: string | null
+          tipo?: string
+          tono?: string | null
+          updated_at?: string
+          urgencia?: number
+          usado?: boolean
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "narrativas_sugeridas_cib_alerta_id_fkey"
+            columns: ["cib_alerta_id"]
+            isOneToOne: false
+            referencedRelation: "cib_alertas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       social_menciones: {
         Row: {
           batch_id: string
           candidato_id: string | null
+          colonia_inferida: string | null
           created_at: string
           detectada_en: string
+          emociones: Json | null
           entidad_nombre: string
           entidad_tipo: Database["public"]["Enums"]["social_entidad_tipo"]
           fragmento: string | null
@@ -348,6 +526,8 @@ export type Database = {
           id: string
           municipio: string | null
           publicada_en: string | null
+          sarcasmo: boolean | null
+          seccion_inferida: number | null
           sentimiento: number
           tema: string | null
           titulo: string
@@ -356,8 +536,10 @@ export type Database = {
         Insert: {
           batch_id: string
           candidato_id?: string | null
+          colonia_inferida?: string | null
           created_at?: string
           detectada_en?: string
+          emociones?: Json | null
           entidad_nombre: string
           entidad_tipo: Database["public"]["Enums"]["social_entidad_tipo"]
           fragmento?: string | null
@@ -366,6 +548,8 @@ export type Database = {
           id?: string
           municipio?: string | null
           publicada_en?: string | null
+          sarcasmo?: boolean | null
+          seccion_inferida?: number | null
           sentimiento: number
           tema?: string | null
           titulo: string
@@ -374,8 +558,10 @@ export type Database = {
         Update: {
           batch_id?: string
           candidato_id?: string | null
+          colonia_inferida?: string | null
           created_at?: string
           detectada_en?: string
+          emociones?: Json | null
           entidad_nombre?: string
           entidad_tipo?: Database["public"]["Enums"]["social_entidad_tipo"]
           fragmento?: string | null
@@ -384,6 +570,8 @@ export type Database = {
           id?: string
           municipio?: string | null
           publicada_en?: string | null
+          sarcasmo?: boolean | null
+          seccion_inferida?: number | null
           sentimiento?: number
           tema?: string | null
           titulo?: string
