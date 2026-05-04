@@ -59,7 +59,7 @@ const operacionCampania = [
   { title: "Día D · Casilla", url: "/dia-d", icon: ShieldCheck },
 ];
 
-const federal: { title: string; url: string; icon: typeof Map }[] = [];
+
 
 const tools = [
   { title: "Meta Business Suite", url: "https://business.facebook.com/latest/home", icon: Briefcase },
