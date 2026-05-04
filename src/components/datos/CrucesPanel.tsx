@@ -14,7 +14,7 @@ import { GitCompareArrows, Info } from "lucide-react";
 import { VOTO_MORENA_2021_POR_DISTRITO } from "@/data/locales/gobernador";
 import { ganadoresPorAnio } from "@/data/locales/diputados-locales";
 import { loadECEG, type SeccionCenso } from "@/lib/eceg-loader";
-import { loadCatalogo, getCatalogo, type SeccionCatalogo } from "@/lib/secciones-catalogo";
+import { loadCatalogo, distritoLocalDeSeccion } from "@/lib/secciones-catalogo";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 const fmt = (n: number) => (Number.isFinite(n) ? n.toFixed(1) : "—");
