@@ -3,7 +3,7 @@ import { ArrowRight, ShieldCheck, BarChart3, Map, AlertTriangle, Users } from "l
 import { Button } from "@/components/ui/button";
 import { LandingNavbar } from "@/components/LandingNavbar";
 import { PdfDownloadFab } from "@/components/PdfDownloadFab";
-import { ComparadorEncuestadoras } from "@/components/ComparadorEncuestadoras";
+
 import { IntencionVotoChart } from "@/components/IntencionVotoChart";
 import { SentimientoMoreliaChart } from "@/components/SentimientoMoreliaChart";
 import { EmeLogo } from "@/components/EmeLogo";
