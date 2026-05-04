@@ -18,7 +18,7 @@ import GeoIntPanel from "@/pages/GeoIntPanel";
 import NarrativasPanel from "@/pages/NarrativasPanel";
 import { ListeningPanel } from "@/components/ListeningPanel";
 import ComparadorPropioVsRival from "@/pages/ComparadorPropioVsRival";
-import { MapaCalorRiesgo } from "@/components/MapaCalorRiesgo";
+import { MapaCalorSentimiento } from "@/components/MapaCalorSentimiento";
 
 const sections = [
   { id: "alertas", label: "Alertas", icon: ShieldAlert, Component: AlertasOperacion },
