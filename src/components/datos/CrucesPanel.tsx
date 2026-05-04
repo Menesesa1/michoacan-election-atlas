@@ -100,7 +100,7 @@ export default function CrucesPanel() {
       });
     });
     return out;
-  }, [censo, catalogo]);
+  }, [censo, catalogoReady]);
 
   const ejeConfig = {
     escolaridad: {
