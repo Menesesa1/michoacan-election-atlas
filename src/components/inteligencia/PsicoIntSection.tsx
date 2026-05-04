@@ -13,7 +13,7 @@ interface Mencion {
 
 const EMOCIONES = ["enojo", "miedo", "esperanza", "indignacion", "desconfianza", "orgullo"];
 
-export default function PsicoIntPanel() {
+export default function PsicoIntSection() {
   const [data, setData] = useState<Mencion[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -34,11 +34,7 @@ export default function PsicoIntPanel() {
     data.forEach((m) => {
       if (!m.emociones || Object.keys(m.emociones).length === 0) return;
       if (!map.has(m.entidad_nombre)) {
-        map.set(m.entidad_nombre, {
-          sum: Object.fromEntries(EMOCIONES.map((e) => [e, 0])),
-          n: 0,
-          sarcasmo: 0,
-        });
+        map.set(m.entidad_nombre, { sum: Object.fromEntries(EMOCIONES.map((e) => [e, 0])), n: 0, sarcasmo: 0 });
       }
       const slot = map.get(m.entidad_nombre)!;
       EMOCIONES.forEach((e) => (slot.sum[e] += Number(m.emociones![e] ?? 0)));
@@ -66,7 +62,7 @@ export default function PsicoIntPanel() {
           PSICOINT · Termómetro Emocional
         </h2>
         <p className="text-xs text-muted-foreground">
-          No es solo positivo/negativo. Aquí ves qué emoción específica domina la conversación: enojo, miedo, esperanza, indignación, desconfianza u orgullo.
+          Emoción específica que domina la conversación: enojo, miedo, esperanza, indignación, desconfianza u orgullo.
         </p>
       </div>
 
@@ -74,7 +70,7 @@ export default function PsicoIntPanel() {
         <p className="text-sm text-muted-foreground">Cargando…</p>
       ) : porEntidad.length === 0 ? (
         <Card className="p-8 text-center text-sm text-muted-foreground">
-          Aún no hay menciones clasificadas con emociones. Ejecuta el monitor social para empezar a poblar.
+          Aún no hay menciones clasificadas con emociones.
         </Card>
       ) : (
         <div className="grid gap-3 md:grid-cols-2">

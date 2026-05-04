@@ -15,16 +15,7 @@ import MandoCentral from "./pages/MandoCentral";
 import Distritos from "./pages/Distritos";
 import Demografia from "./pages/Demografia";
 import Tendencias from "./pages/Tendencias";
-import Inteligencia from "./pages/Inteligencia";
-import Crisis from "./pages/Crisis";
-import ListeningEstatal from "./pages/ListeningEstatal";
-import ListeningCandidatos from "./pages/ListeningCandidatos";
-import ComparadorPropioVsRival from "./pages/ComparadorPropioVsRival";
-import MapaCalor from "./pages/MapaCalor";
-import CibAlertas from "./pages/CibAlertas";
-import GeoIntPanel from "./pages/GeoIntPanel";
-import PsicoIntPanel from "./pages/PsicoIntPanel";
-import NarrativasPanel from "./pages/NarrativasPanel";
+import MonitorInteligencia from "./pages/MonitorInteligencia";
 import Fuentes from "./pages/Fuentes";
 import Socioeconomico from "./pages/Socioeconomico";
 import Gobernador from "./pages/Gobernador";
@@ -69,19 +60,9 @@ const App = () => (
                 <Route path="/socioeconomico" element={<Socioeconomico />} />
                 <Route path="/demografia" element={<Demografia />} />
                 <Route path="/tendencias" element={<Tendencias />} />
-                <Route path="/crisis" element={<Navigate to="/inteligencia/alertas" replace />} />
-                <Route path="/inteligencia" element={<Inteligencia />}>
-                  <Route index element={<Navigate to="/inteligencia/alertas" replace />} />
-                  <Route path="alertas" element={<Crisis />} />
-                  <Route path="cib" element={<CibAlertas />} />
-                  <Route path="geoint" element={<GeoIntPanel />} />
-                  <Route path="emociones" element={<PsicoIntPanel />} />
-                  <Route path="narrativas" element={<NarrativasPanel />} />
-                  <Route path="listening-estatal" element={<ListeningEstatal />} />
-                  <Route path="listening-candidatos" element={<ListeningCandidatos />} />
-                  <Route path="comparador" element={<ComparadorPropioVsRival />} />
-                  <Route path="mapa-calor" element={<MapaCalor />} />
-                </Route>
+                <Route path="/crisis" element={<Navigate to="/inteligencia" replace />} />
+                <Route path="/inteligencia" element={<MonitorInteligencia />} />
+                <Route path="/inteligencia/:section" element={<MonitorInteligencia />} />
                 <Route path="/escenarios" element={<Escenarios />} />
                 <Route path="/operacion" element={<Operacion />} />
                 <Route path="/operacion-territorial" element={<OperacionTerritorial />} />

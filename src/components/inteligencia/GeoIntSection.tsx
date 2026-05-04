@@ -16,7 +16,7 @@ interface MencionGeo {
   detectada_en: string;
 }
 
-export default function GeoIntPanel() {
+export default function GeoIntSection() {
   const [data, setData] = useState<MencionGeo[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -51,7 +51,7 @@ export default function GeoIntPanel() {
           GEOINT · Conversación por Sección y Colonia
         </h2>
         <p className="text-xs text-muted-foreground">
-          Menciones geo-localizadas a nivel sección INE o colonia/tenencia (cuando el texto lo cita explícitamente).
+          Menciones geo-localizadas a nivel sección INE o colonia/tenencia.
         </p>
       </div>
 
@@ -59,7 +59,7 @@ export default function GeoIntPanel() {
         <p className="text-sm text-muted-foreground">Cargando…</p>
       ) : porSeccion.length === 0 ? (
         <Card className="p-8 text-center text-sm text-muted-foreground">
-          Aún no hay menciones con sección o colonia inferida. Esto requiere que las notas mencionen explícitamente la ubicación.
+          Aún no hay menciones con sección o colonia inferida.
         </Card>
       ) : (
         <div className="grid gap-3 md:grid-cols-2">
@@ -74,13 +74,7 @@ export default function GeoIntPanel() {
               </div>
               <div className="space-y-1.5 text-xs">
                 {items.slice(0, 5).map((m) => (
-                  <a
-                    key={m.id}
-                    href={m.url ?? "#"}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="block text-muted-foreground hover:text-foreground line-clamp-2"
-                  >
+                  <a key={m.id} href={m.url ?? "#"} target="_blank" rel="noreferrer" className="block text-muted-foreground hover:text-foreground line-clamp-2">
                     <span className={m.sentimiento < 0 ? "text-red-400" : m.sentimiento > 0 ? "text-emerald-400" : ""}>●</span>{" "}
                     {m.titulo}
                   </a>

@@ -30,7 +30,7 @@ const TIPO_COLOR: Record<string, string> = {
   contranarrativa: "bg-rose-500/20 text-rose-300 border-rose-500/40",
 };
 
-export default function NarrativasPanel() {
+export default function NarrativasSection() {
   const [list, setList] = useState<Narrativa[]>([]);
   const [loading, setLoading] = useState(true);
   const [generando, setGenerando] = useState(false);
@@ -48,9 +48,7 @@ export default function NarrativasPanel() {
     setLoading(false);
   };
 
-  useEffect(() => {
-    cargar();
-  }, []);
+  useEffect(() => { cargar(); }, []);
 
   const generar = async () => {
     if (!entidad.trim() || !contexto.trim()) {
@@ -94,22 +92,13 @@ export default function NarrativasPanel() {
           Narrativas Accionables · Datos a Mensajes
         </h2>
         <p className="text-xs text-muted-foreground">
-          Genera mensajes listos para publicar (defensivos, contraste, pivote, oportunidad o contranarrativa) a partir de un contexto.
+          Genera mensajes listos para publicar (defensivos, contraste, pivote, oportunidad o contranarrativa).
         </p>
       </div>
 
       <Card className="p-4 bg-card/50 backdrop-blur border-border/50 space-y-3">
-        <Input
-          placeholder="Entidad (ej. Bedolla, MORENA, Uruapan)"
-          value={entidad}
-          onChange={(e) => setEntidad(e.target.value)}
-        />
-        <Textarea
-          placeholder="Contexto: ¿qué pasó, qué tema, qué emoción domina? (ej. 'Indignación creciente por inseguridad en Tierra Caliente tras emboscada')"
-          value={contexto}
-          onChange={(e) => setContexto(e.target.value)}
-          rows={3}
-        />
+        <Input placeholder="Entidad (ej. Bedolla, MORENA, Uruapan)" value={entidad} onChange={(e) => setEntidad(e.target.value)} />
+        <Textarea placeholder="Contexto: ¿qué pasó, qué tema, qué emoción domina?" value={contexto} onChange={(e) => setContexto(e.target.value)} rows={3} />
         <Button onClick={generar} disabled={generando} className="w-full">
           {generando ? "Generando…" : "Generar mensajes"}
         </Button>
@@ -119,7 +108,7 @@ export default function NarrativasPanel() {
         <p className="text-sm text-muted-foreground">Cargando…</p>
       ) : list.length === 0 ? (
         <Card className="p-8 text-center text-sm text-muted-foreground">
-          Aún no hay narrativas guardadas. Genera la primera arriba o desde una alerta CIB.
+          Aún no hay narrativas guardadas.
         </Card>
       ) : (
         <div className="grid gap-3">

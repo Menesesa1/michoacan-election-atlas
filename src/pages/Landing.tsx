@@ -3,7 +3,7 @@ import { ArrowRight, ShieldCheck, BarChart3, Map, AlertTriangle, Users } from "l
 import { Button } from "@/components/ui/button";
 import { LandingNavbar } from "@/components/LandingNavbar";
 import { PdfDownloadFab } from "@/components/PdfDownloadFab";
-import { ComparadorEncuestadoras } from "@/components/ComparadorEncuestadoras";
+
 import { IntencionVotoChart } from "@/components/IntencionVotoChart";
 import { SentimientoMoreliaChart } from "@/components/SentimientoMoreliaChart";
 import { EmeLogo } from "@/components/EmeLogo";
@@ -49,8 +49,8 @@ export default function Landing() {
 
             <p className="text-lg text-muted-foreground max-w-xl leading-relaxed">
               Inteligencia política, electoral y demográfica en una sola plataforma.
-              Comparador multi-encuestadora, mapa de riesgo distrital y alertas en tiempo real
-              para decisiones estratégicas del Gabinete.
+              Monitor unificado de alertas, sentimiento, comportamiento coordinado y narrativas
+              accionables para decisiones estratégicas del Gabinete.
             </p>
 
             <div className="flex items-center gap-2 text-primary text-sm font-mono uppercase tracking-widest">
@@ -61,10 +61,10 @@ export default function Landing() {
             <div className="flex flex-col sm:flex-row gap-3 pt-2">
               <Button
                 size="lg"
-                onClick={() => scrollTo("comparador")}
+                onClick={() => scrollTo("metodologia")}
                 className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold gap-2 glow-primary"
               >
-                Ver Comparador
+                Ver metodología
                 <ArrowRight className="w-4 h-4" />
               </Button>
               <Button
@@ -83,7 +83,7 @@ export default function Landing() {
           <div className="grid grid-cols-2 gap-4">
             {[
               { icon: Map, label: "Distritos", val: "11+24", sub: "Federales / Locales" },
-              { icon: BarChart3, label: "Encuestadoras", val: "3", sub: "Mitofsky · EFC · MAC" },
+              { icon: BarChart3, label: "Monitor IA", val: "6", sub: "PSICOINT · CIB · GEOINT" },
               { icon: Users, label: "Padrón", val: "3.7M", sub: "Lista nominal" },
               { icon: AlertTriangle, label: "Alertas", val: "Live", sub: "Feed operación" },
             ].map((k) => (
@@ -184,9 +184,6 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* COMPARADOR */}
-      <ComparadorEncuestadoras />
-
       {/* METODOLOGÍA */}
       <section id="metodologia" className="py-20 px-4 sm:px-6 lg:px-12">
         <div className="max-w-5xl mx-auto space-y-8">
@@ -205,12 +202,12 @@ export default function Landing() {
                 d: "Resultados INE / IEM 2018-2024, padrón electoral, lista nominal, cartografía SIGE.",
               },
               {
-                t: "Encuestas públicas",
-                d: "Mitofsky, El Financiero y Massive Caller, normalizadas y promediadas semanalmente.",
+                t: "Social listening + PSICOINT",
+                d: "Monitor de medios, redes y conversación local con clasificación emocional (no solo positivo/negativo) y detección de sarcasmo.",
               },
               {
                 t: "Inteligencia operativa",
-                d: "Feed de alertas conectable vía Google Sheets / JSON, monitoreo de medios y redes.",
+                d: "Alertas de crisis, detección CIB de bots, GEOINT por sección y narrativas accionables generadas con IA.",
               },
             ].map((b) => (
               <div key={b.t} className="executive-panel p-6 gold-border space-y-2">

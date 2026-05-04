@@ -34,7 +34,7 @@ const SEVERIDAD_COLOR: Record<string, string> = {
   baja: "bg-muted text-muted-foreground",
 };
 
-export default function CibAlertas() {
+export default function CibAlertasSection() {
   const [alertas, setAlertas] = useState<CibAlerta[]>([]);
   const [loading, setLoading] = useState(true);
   const [running, setRunning] = useState(false);
@@ -82,7 +82,7 @@ export default function CibAlertas() {
       toast({ title: "Error", description: error.message, variant: "destructive" });
       return;
     }
-    toast({ title: "Mensajes generados", description: `${data?.mensajes?.length ?? 0} mensajes listos en /inteligencia/narrativas` });
+    toast({ title: "Mensajes generados", description: `${data?.mensajes?.length ?? 0} mensajes en sección Narrativas` });
   };
 
   return (
@@ -107,7 +107,7 @@ export default function CibAlertas() {
         <p className="text-sm text-muted-foreground">Cargando…</p>
       ) : alertas.length === 0 ? (
         <Card className="p-8 text-center text-sm text-muted-foreground">
-          Sin alertas CIB en las últimas 48h. Esto es buena señal o hace falta más volumen de menciones.
+          Sin alertas CIB en las últimas 48h.
         </Card>
       ) : (
         <div className="grid gap-3">
@@ -128,13 +128,7 @@ export default function CibAlertas() {
                       {a.evidencia?.urls?.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-2">
                           {(a.evidencia.urls as string[]).slice(0, 3).map((u, i) => (
-                            <a
-                              key={i}
-                              href={u}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="text-[10px] text-primary hover:underline inline-flex items-center gap-1"
-                            >
+                            <a key={i} href={u} target="_blank" rel="noreferrer" className="text-[10px] text-primary hover:underline inline-flex items-center gap-1">
                               evidencia {i + 1} <ExternalLink className="w-2.5 h-2.5" />
                             </a>
                           ))}
