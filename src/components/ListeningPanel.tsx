@@ -166,13 +166,13 @@ export function ListeningPanel({ scope }: ListeningPanelProps) {
 
   useEffect(() => {
     const channel = supabase
-      .channel("social-runs-changes")
+      .channel(`social-runs-changes-${scope}`)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "social_runs" }, () => loadLatest())
       .subscribe();
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [loadLatest]);
+  }, [loadLatest, scope]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
