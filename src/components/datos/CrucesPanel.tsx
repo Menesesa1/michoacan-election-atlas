@@ -47,7 +47,7 @@ function correlacion(xs: number[], ys: number[]): number {
 
 export default function CrucesPanel() {
   const [censo, setCenso] = useState<SeccionCenso[] | null>(null);
-  const [catalogo, setCatalogo] = useState<SeccionCatalogo[] | null>(null);
+  const [catalogoReady, setCatalogoReady] = useState(false);
   const [eje, setEje] = useState<"escolaridad" | "sinAcceso" | "participacion">("escolaridad");
 
   useEffect(() => {
@@ -55,21 +55,16 @@ export default function CrucesPanel() {
       .then(setCenso)
       .catch(() => {});
     loadCatalogo()
-      .then(() => setCatalogo(getCatalogo()))
+      .then(() => setCatalogoReady(true))
       .catch(() => {});
   }, []);
 
   const puntos = useMemo<Punto[]>(() => {
-    if (!censo || !catalogo) return [];
-    // Index sección → distrito local
-    const seccionAdistrito = new Map<number, number>();
-    catalogo.forEach((s) => {
-      if (s.distrito_local) seccionAdistrito.set(s.seccion, s.distrito_local);
-    });
-    // Acumular censo por distrito local
+    if (!censo || !catalogoReady) return [];
+    // Acumular censo por distrito local usando lookup del catálogo
     const acum = new Map<number, { esc: number[]; sin: number[]; pob: number }>();
     censo.forEach((s) => {
-      const d = seccionAdistrito.get(s.seccion);
+      const d = distritoLocalDeSeccion(s.seccion);
       if (!d) return;
       const slot = acum.get(d) ?? { esc: [], sin: [], pob: 0 };
       if (typeof s.grado_promedio_escolaridad === "number")
