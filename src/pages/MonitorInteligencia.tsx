@@ -21,10 +21,10 @@ import { MapaCalorSentimiento } from "@/components/MapaCalorSentimiento";
 
 const sections = [
   { id: "alertas", label: "Alertas", icon: ShieldAlert, Component: AlertasOperacion },
-  { id: "cib", label: "CIB / Bots", icon: Bot, Component: CibAlertas },
-  { id: "emociones", label: "Emociones", icon: Brain, Component: PsicoIntPanel },
-  { id: "geoint", label: "GEOINT", icon: MapIcon, Component: GeoIntPanel },
-  { id: "narrativas", label: "Narrativas", icon: Megaphone, Component: NarrativasPanel },
+  { id: "cib", label: "CIB / Bots", icon: Bot, Component: CibAlertasSection },
+  { id: "emociones", label: "Emociones", icon: Brain, Component: PsicoIntSection },
+  { id: "geoint", label: "GEOINT", icon: MapIcon, Component: GeoIntSection },
+  { id: "narrativas", label: "Narrativas", icon: Megaphone, Component: NarrativasSection },
   {
     id: "sentimiento",
     label: "Sentimiento estatal",
@@ -36,12 +36,6 @@ const sections = [
     label: "Candidatos",
     icon: Users,
     Component: () => <ListeningPanel scope="candidatos" />,
-  },
-  {
-    id: "comparador",
-    label: "Propio vs Rival",
-    icon: Swords,
-    Component: ComparadorPropioVsRival,
   },
   { id: "mapa-calor", label: "Mapa de calor", icon: MapPin, Component: MapaCalorSentimiento },
 ] as const;
