@@ -47,11 +47,7 @@ import { useAuth } from "@/context/AuthContext";
 const locales = [
   { title: "Mando Central", url: "/mando", icon: LayoutDashboard, end: true },
   { title: "Calendario electoral", url: "/calendario-electoral", icon: CalendarDays },
-  { title: "Gobernador", url: "/gobernador", icon: Landmark },
-  { title: "Diputados Locales", url: "/diputados-locales", icon: Vote },
-  { title: "Ayuntamientos", url: "/ayuntamientos", icon: Building },
-  { title: "Socioeconómico", url: "/socioeconomico", icon: PieChart },
-  { title: "Demografía", url: "/demografia", icon: Users },
+  { title: "Datos · Estadística", url: "/datos", icon: BarChart3 },
   { title: "Tendencias", url: "/tendencias", icon: TrendingUp },
   { title: "Estrategia 360", url: "/escenarios", icon: Sparkles },
   { title: "Operación 360", url: "/operacion", icon: Zap },
@@ -67,9 +63,7 @@ const operacionCampania = [
   { title: "Día D · Casilla", url: "/dia-d", icon: ShieldCheck },
 ];
 
-const federal = [
-  { title: "Distritos federales", url: "/distritos", icon: Map },
-];
+const federal: { title: string; url: string; icon: typeof Map }[] = [];
 
 const tools = [
   { title: "Meta Business Suite", url: "https://business.facebook.com/latest/home", icon: Briefcase },
