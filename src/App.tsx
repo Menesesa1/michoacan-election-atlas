@@ -69,7 +69,7 @@ const App = () => (
                 <Route path="/candidatos" element={<Candidatos />} />
                 <Route path="/calendario-electoral" element={<CalendarioElectoral />} />
                 <Route path="/paridad-genero" element={<ParidadGenero />} />
-                <Route path="/distritos" element={<Distritos />} />
+                
                 <Route path="/fuentes" element={<Fuentes />} />
                 <Route
                   path="/administracion"
