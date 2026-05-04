@@ -12,7 +12,7 @@ import {
   Building2,
   FolderOpen,
   LogOut,
-  ChevronDown,
+  
   Sparkles,
   Zap,
   Network,
