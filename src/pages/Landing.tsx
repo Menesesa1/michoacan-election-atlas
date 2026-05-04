@@ -49,8 +49,8 @@ export default function Landing() {
 
             <p className="text-lg text-muted-foreground max-w-xl leading-relaxed">
               Inteligencia política, electoral y demográfica en una sola plataforma.
-              Comparador multi-encuestadora, mapa de riesgo distrital y alertas en tiempo real
-              para decisiones estratégicas del Gabinete.
+              Monitor unificado de alertas, sentimiento, comportamiento coordinado y narrativas
+              accionables para decisiones estratégicas del Gabinete.
             </p>
 
             <div className="flex items-center gap-2 text-primary text-sm font-mono uppercase tracking-widest">
@@ -61,10 +61,10 @@ export default function Landing() {
             <div className="flex flex-col sm:flex-row gap-3 pt-2">
               <Button
                 size="lg"
-                onClick={() => scrollTo("comparador")}
+                onClick={() => scrollTo("metodologia")}
                 className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold gap-2 glow-primary"
               >
-                Ver Comparador
+                Ver metodología
                 <ArrowRight className="w-4 h-4" />
               </Button>
               <Button
