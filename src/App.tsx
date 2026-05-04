@@ -73,6 +73,10 @@ const App = () => (
                 <Route path="/inteligencia" element={<Inteligencia />}>
                   <Route index element={<Navigate to="/inteligencia/alertas" replace />} />
                   <Route path="alertas" element={<Crisis />} />
+                  <Route path="cib" element={<CibAlertas />} />
+                  <Route path="geoint" element={<GeoIntPanel />} />
+                  <Route path="emociones" element={<PsicoIntPanel />} />
+                  <Route path="narrativas" element={<NarrativasPanel />} />
                   <Route path="listening-estatal" element={<ListeningEstatal />} />
                   <Route path="listening-candidatos" element={<ListeningCandidatos />} />
                   <Route path="comparador" element={<ComparadorPropioVsRival />} />
