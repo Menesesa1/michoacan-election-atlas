@@ -2,6 +2,7 @@ import type { SnapshotPayload } from "@/lib/estrategia-context";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { TrendingUp, Users, AlertTriangle, BarChart3, MapPin } from "lucide-react";
+import { SnapshotExtras } from "./SnapshotExtras";
 
 interface Props {
   snapshot: SnapshotPayload;
@@ -137,6 +138,8 @@ export function SnapshotDatos({ snapshot, supuestos, setSupuestos }: Props) {
           )}
         </div>
       </div>
+
+      <SnapshotExtras snapshot={snapshot} />
 
       <div className="rounded-lg border border-primary/30 bg-primary/5 p-4 space-y-3">
         <div className="text-[10px] font-mono uppercase tracking-widest text-primary">
