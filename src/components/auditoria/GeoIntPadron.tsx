@@ -139,13 +139,12 @@ ${genero !== "balance" ? `  AND (lm/lt) ${genero === "mayoria_mujeres" ? ">= 0.5
       </div>
 
       <div className="grid lg:grid-cols-[1fr_320px] gap-3">
-        <div className="rounded-lg overflow-hidden border border-border/40 h-[400px]">
-          {loading ? (
-            <div className="h-full flex items-center justify-center text-xs text-muted-foreground">
+        <div className="relative rounded-lg overflow-hidden border border-border/40 h-[400px] min-h-[400px] w-full">
+          <div ref={mapContainerRef} className="absolute inset-0 bg-background" style={{ minHeight: 400 }} />
+          {loading && (
+            <div className="absolute inset-0 flex items-center justify-center text-xs text-muted-foreground bg-background/80 z-[500]">
               Cargando padrón oficial…
             </div>
-          ) : (
-            <div ref={mapContainerRef} className="h-full w-full bg-background" />
           )}
         </div>
 
