@@ -53,6 +53,8 @@ export default function MandoCentral() {
         </div>
       </div>
 
+      <MetodologiaDisclaimer />
+
       <SituationRoom />
 
       <BannerFaseActiva />
