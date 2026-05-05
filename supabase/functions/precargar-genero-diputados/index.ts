@@ -3,7 +3,10 @@
 // structured output. Devuelve un arreglo de { anio, distrito, nombre, genero }
 // que el frontend aplica a los overrides locales del módulo de paridad.
 
-import { corsHeaders } from "@supabase/supabase-js/cors";
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
 
 const PERPLEXITY_API_KEY = Deno.env.get("PERPLEXITY_API_KEY");
 
