@@ -103,23 +103,23 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* ESCENARIOS */}
+      {/* ESCENARIOS / METODOLOGÍA DE DATOS */}
       <section id="escenarios" className="py-20 px-4 sm:px-6 lg:px-12">
-        <div className="max-w-7xl mx-auto space-y-8">
+        <div className="max-w-5xl mx-auto space-y-8">
           <div className="space-y-3 text-center">
             <div className="inline-flex items-center gap-2 text-primary text-xs font-mono uppercase tracking-widest">
               <span className="h-px w-8 bg-primary" />
               Escenarios Electorales
               <span className="h-px w-8 bg-primary" />
             </div>
-            <h2 className="text-3xl sm:text-4xl font-bold">Intención de voto en Morelia</h2>
+            <h2 className="text-3xl sm:text-4xl font-bold">Datos reales, no encuestas semanales</h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              Evolución semanal de la intención de voto presidencial municipal.
+              No publicamos tracking semanal de intención de voto sin ficha técnica auditable.
+              Mostramos histórico oficial INE/IEM, sentimiento social verificable y proyecciones
+              transparentes.
             </p>
           </div>
-          <div className="executive-panel p-4 sm:p-6 gold-border">
-            <IntencionVotoChart />
-          </div>
+          <MetodologiaDisclaimer />
         </div>
       </section>
 
