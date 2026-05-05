@@ -4,8 +4,8 @@ import { Button } from "@/components/ui/button";
 import { LandingNavbar } from "@/components/LandingNavbar";
 import { PdfDownloadFab } from "@/components/PdfDownloadFab";
 
-import { IntencionVotoChart } from "@/components/IntencionVotoChart";
 import { SentimientoMoreliaChart } from "@/components/SentimientoMoreliaChart";
+import { MetodologiaDisclaimer } from "@/components/mando/MetodologiaDisclaimer";
 import { EmeLogo } from "@/components/EmeLogo";
 
 export default function Landing() {
