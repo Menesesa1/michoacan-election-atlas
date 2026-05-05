@@ -49,6 +49,7 @@ export default function GeoIntPadron() {
   }, []);
 
   useEffect(() => {
+    if (loading) return;
     if (!mapContainerRef.current || mapInstanceRef.current) return;
 
     const map = L.map(mapContainerRef.current, {
