@@ -20,6 +20,7 @@ import {
 import { MUNICIPIOS_MICHOACAN_113 } from "@/data/locales/municipios-catalogo";
 import type { Genero } from "@/lib/paridad/inferir-genero";
 import { ImportadorGanadoresCSV } from "@/components/paridad/ImportadorGanadoresCSV";
+import ValidadorPlanilla from "@/components/paridad/ValidadorPlanilla";
 
 function GeneroBadge({ genero, confianza }: { genero: Genero; confianza?: "alta" | "media" | "baja" }) {
   if (genero === "M") {
