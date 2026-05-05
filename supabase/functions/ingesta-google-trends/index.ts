@@ -5,6 +5,7 @@
 // Persiste en public.trends_estatal y registra la corrida en public.trends_runs.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { logApiCall, withPipelineLock } from "../_shared/cost-control.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -27,7 +28,7 @@ interface SerpRelatedQuery {
   extracted_value?: number;
 }
 
-async function fetchSerpapi(params: Record<string, string>): Promise<unknown> {
+async function fetchSerpapi(params: Record<string, string>, runId?: string): Promise<unknown> {
   const SERPAPI_KEY = Deno.env.get("SERPAPI_KEY");
   if (!SERPAPI_KEY) throw new Error("SERPAPI_KEY no configurada");
   const url = new URL("https://serpapi.com/search.json");
@@ -37,11 +38,29 @@ async function fetchSerpapi(params: Record<string, string>): Promise<unknown> {
   url.searchParams.set("tz", TZ);
   url.searchParams.set("hl", "es");
   for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
+  const t0 = Date.now();
   const r = await fetch(url.toString());
+  const dur = Date.now() - t0;
   if (!r.ok) {
     const text = await r.text();
+    await logApiCall({
+      servicio: "serpapi",
+      funcion: "ingesta-google-trends",
+      operacion: params.data_type ?? "search",
+      runId: runId ?? null,
+      duracionMs: dur,
+      status: "error",
+      metadata: { http_status: r.status },
+    });
     throw new Error(`SerpApi error [${r.status}]: ${text.slice(0, 300)}`);
   }
+  await logApiCall({
+    servicio: "serpapi",
+    funcion: "ingesta-google-trends",
+    operacion: params.data_type ?? "search",
+    runId: runId ?? null,
+    duracionMs: dur,
+  });
   return await r.json();
 }
 
@@ -218,11 +237,24 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
 
+  let lockTaken = false;
   try {
     try {
       const body = await req.json();
       if (body?.trigger) trigger = String(body.trigger);
     } catch { /* sin body */ }
+
+    // Lock: evita que dos crons solapados disparen el mismo pipeline.
+    const { data: acquired } = await supabaseAdmin.rpc("intentar_lock_pipeline", {
+      _nombre: "ingesta-google-trends",
+    });
+    if (!acquired) {
+      return new Response(
+        JSON.stringify({ ok: false, skipped: true, reason: "already_running" }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+    lockTaken = true;
 
     // 1. Descubrir términos tendencia en Michoacán via Perplexity
     //    (SerpApi/Google Trends ya no expone TRENDING/DAILY_SEARCH_TRENDS;
@@ -379,5 +411,13 @@ Deno.serve(async (req) => {
       JSON.stringify({ ok: false, error: errorMsg }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
+  } finally {
+    if (lockTaken) {
+      try {
+        await supabaseAdmin.rpc("liberar_lock_pipeline", { _nombre: "ingesta-google-trends" });
+      } catch (e) {
+        console.error("[lock] unlock failed", e);
+      }
+    }
   }
 });

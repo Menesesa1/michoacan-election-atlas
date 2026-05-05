@@ -275,6 +275,16 @@ Deno.serve(async (req) => {
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
   const batchId = crypto.randomUUID();
 
+  // Lock: previene runs solapados (mismo cron + manual al mismo tiempo)
+  const lockName = userId ? `monitor-social:${userId}` : "monitor-social:global";
+  const { data: acquired } = await supabase.rpc("intentar_lock_pipeline", { _nombre: lockName });
+  if (!acquired) {
+    return new Response(
+      JSON.stringify({ success: false, skipped: true, reason: "already_running" }),
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
+  }
+
   try {
     // 1. Cargar TODOS los candidatos del usuario (propios y rivales registrados manualmente).
     //    Ya no auto-detectamos rivales con IA: el usuario decide a quién monitorear desde /candidatos.
@@ -429,5 +439,11 @@ Deno.serve(async (req) => {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
+  } finally {
+    try {
+      await supabase.rpc("liberar_lock_pipeline", { _nombre: lockName });
+    } catch (e) {
+      console.error("[lock] unlock failed", e);
+    }
   }
 });

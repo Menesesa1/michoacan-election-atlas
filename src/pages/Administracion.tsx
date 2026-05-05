@@ -15,6 +15,7 @@ import {
 import { toast } from "sonner";
 import { ShieldCheck, UserPlus, Trash2, RefreshCw } from "lucide-react";
 import SaludPipeline from "@/components/admin/SaludPipeline";
+import ObservabilidadCostos from "@/components/admin/ObservabilidadCostos";
 
 interface UserRoleRow {
   id: string;
@@ -120,6 +121,8 @@ export default function Administracion() {
       </header>
 
       <SaludPipeline />
+
+      <ObservabilidadCostos />
 
       <Card className="p-4 space-y-3">
         <h2 className="text-sm font-semibold flex items-center gap-2">
