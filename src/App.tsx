@@ -26,6 +26,7 @@ import CalendarioElectoral from "./pages/CalendarioElectoral";
 import ParidadGenero from "./pages/ParidadGenero";
 import Administracion from "./pages/Administracion";
 import NotificacionesPreferencias from "./pages/NotificacionesPreferencias";
+import AuditoriaTransparencia from "./pages/AuditoriaTransparencia";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
