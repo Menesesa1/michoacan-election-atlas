@@ -18,27 +18,15 @@ import { SituationRoom } from "@/components/mando/SituationRoom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { useElectoralData } from "@/context/DataContext";
-import { LayoutGrid, BarChart3, FileDown, Loader2 } from "lucide-react";
+import { LayoutGrid, BarChart3 } from "lucide-react";
 import { descargarBriefingPDF } from "@/lib/briefing-pdf";
+import { descargarInformeGeneralXLSX } from "@/lib/exports/informe-general-xlsx";
+import { ExportButton } from "@/components/exports/ExportButton";
 import { toast } from "sonner";
 
 export default function MandoCentral() {
   const [eleccion, setEleccion] = useState("fed2024");
-  const [pdfLoading, setPdfLoading] = useState(false);
   const { isUsingMock, importedKeys } = useElectoralData();
-
-  const handleBriefing = async () => {
-    setPdfLoading(true);
-    toast.info("Generando briefing…", { description: "Compilando KPIs, alertas y discurso ciudadano" });
-    try {
-      await descargarBriefingPDF();
-      toast.success("Briefing descargado");
-    } catch (err) {
-      toast.error("Error al generar PDF", { description: err instanceof Error ? err.message : String(err) });
-    } finally {
-      setPdfLoading(false);
-    }
-  };
 
   return (
     <div className="space-y-5">
@@ -55,10 +43,7 @@ export default function MandoCentral() {
         <span className={`text-[10px] font-mono ${isUsingMock ? "text-muted-foreground animate-pulse-glow" : "text-primary"}`}>
           ● {isUsingMock ? "DATOS REPRESENTATIVOS" : `${importedKeys.length} DATASET(S) IMPORTADOS`}
         </span>
-        <Button onClick={handleBriefing} disabled={pdfLoading} size="sm" className="gap-2">
-          {pdfLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileDown className="w-3.5 h-3.5" />}
-          {pdfLoading ? "Generando…" : "Briefing PDF"}
-        </Button>
+        <Button onClick={() => { /* placeholder removed */ }} disabled={true} size="sm" className="gap-2 hidden">x</Button>
       </div>
 
       <SituationRoom />
