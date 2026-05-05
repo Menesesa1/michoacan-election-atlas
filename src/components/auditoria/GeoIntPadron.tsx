@@ -104,11 +104,11 @@ export default function GeoIntPadron() {
       if (s.lat == null || s.lng == null) return;
 
       L.circleMarker([s.lat, s.lng], {
-        radius: Math.max(2, Math.min(8, s.lt / 600)),
-        color: "hsl(var(--primary))",
-        fillColor: "hsl(var(--primary))",
-        fillOpacity: 0.5,
-        weight: 0.5,
+        radius: Math.max(3, Math.min(9, s.lt / 500)),
+        color: "#34d399",
+        fillColor: "#10b981",
+        fillOpacity: 0.6,
+        weight: 1,
       })
         .bindTooltip(
           `<div class="text-xs"><div><b>Sección ${s.sec}</b> · D${s.dis}</div><div>LN: ${s.lt.toLocaleString("es-MX")}</div><div>♀ ${s.lm} / ♂ ${s.lh}</div></div>`,
