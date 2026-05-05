@@ -40,10 +40,18 @@ export default function MandoCentral() {
             Estado de los escenarios: contiendas, candidatos, estrategia y tendencias en un solo vistazo.
           </p>
         </div>
-        <span className={`text-[10px] font-mono ${isUsingMock ? "text-muted-foreground animate-pulse-glow" : "text-primary"}`}>
-          ● {isUsingMock ? "DATOS REPRESENTATIVOS" : `${importedKeys.length} DATASET(S) IMPORTADOS`}
-        </span>
-        <Button onClick={() => { /* placeholder removed */ }} disabled={true} size="sm" className="gap-2 hidden">x</Button>
+        <div className="flex items-center gap-3">
+          <span className={`text-[10px] font-mono ${isUsingMock ? "text-muted-foreground animate-pulse-glow" : "text-primary"}`}>
+            ● {isUsingMock ? "DATOS REPRESENTATIVOS" : `${importedKeys.length} DATASET(S) IMPORTADOS`}
+          </span>
+          <ExportButton
+            label="Informe ejecutivo"
+            options={[
+              { label: "Briefing ejecutivo (PDF)", icon: "pdf", handler: descargarBriefingPDF },
+              { label: "Informe completo (Excel)", icon: "xlsx", handler: descargarInformeGeneralXLSX },
+            ]}
+          />
+        </div>
       </div>
 
       <SituationRoom />
