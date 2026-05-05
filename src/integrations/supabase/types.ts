@@ -98,6 +98,54 @@ export type Database = {
         }
         Relationships: []
       }
+      api_usage_log: {
+        Row: {
+          cache_hit: boolean
+          costo_estimado_usd: number
+          created_at: string
+          duracion_ms: number | null
+          funcion: string
+          id: string
+          metadata: Json
+          operacion: string | null
+          run_id: string | null
+          servicio: string
+          status: string
+          tokens_in: number | null
+          tokens_out: number | null
+        }
+        Insert: {
+          cache_hit?: boolean
+          costo_estimado_usd?: number
+          created_at?: string
+          duracion_ms?: number | null
+          funcion: string
+          id?: string
+          metadata?: Json
+          operacion?: string | null
+          run_id?: string | null
+          servicio: string
+          status?: string
+          tokens_in?: number | null
+          tokens_out?: number | null
+        }
+        Update: {
+          cache_hit?: boolean
+          costo_estimado_usd?: number
+          created_at?: string
+          duracion_ms?: number | null
+          funcion?: string
+          id?: string
+          metadata?: Json
+          operacion?: string | null
+          run_id?: string | null
+          servicio?: string
+          status?: string
+          tokens_in?: number | null
+          tokens_out?: number | null
+        }
+        Relationships: []
+      }
       candidato_analisis: {
         Row: {
           candidato_id: string
@@ -999,7 +1047,19 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      api_usage_diario: {
+        Row: {
+          cache_hits: number | null
+          costo_total_usd: number | null
+          dia: string | null
+          duracion_promedio_ms: number | null
+          errores: number | null
+          funcion: string | null
+          llamadas: number | null
+          servicio: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       fanout_run_generic: {
@@ -1022,6 +1082,24 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      intentar_lock_pipeline: { Args: { _nombre: string }; Returns: boolean }
+      liberar_lock_pipeline: { Args: { _nombre: string }; Returns: boolean }
+      registrar_uso_api: {
+        Args: {
+          _cache_hit?: boolean
+          _costo?: number
+          _duracion_ms?: number
+          _funcion: string
+          _metadata?: Json
+          _operacion?: string
+          _run_id?: string
+          _servicio: string
+          _status?: string
+          _tokens_in?: number
+          _tokens_out?: number
+        }
+        Returns: string
       }
       severidad_rank: { Args: { _sev: string }; Returns: number }
     }
