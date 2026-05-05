@@ -72,6 +72,7 @@ const App = () => (
                 <Route path="/calendario-electoral" element={<CalendarioElectoral />} />
                 <Route path="/paridad-genero" element={<ParidadGenero />} />
                 <Route path="/notificaciones/preferencias" element={<NotificacionesPreferencias />} />
+                <Route path="/auditoria" element={<AuditoriaTransparencia />} />
                 
                 <Route path="/fuentes" element={<Fuentes />} />
                 <Route
