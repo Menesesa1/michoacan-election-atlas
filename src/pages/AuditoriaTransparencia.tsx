@@ -24,6 +24,7 @@ export default function AuditoriaTransparencia() {
       <CibTrazabilidad />
       <GeoIntPadron />
       <MetaAndromedaMonitor />
+      <MetodologiaTransparente />
     </div>
   );
 }
