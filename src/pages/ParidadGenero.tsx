@@ -21,6 +21,7 @@ import { MUNICIPIOS_MICHOACAN_113 } from "@/data/locales/municipios-catalogo";
 import type { Genero } from "@/lib/paridad/inferir-genero";
 import { ImportadorGanadoresCSV } from "@/components/paridad/ImportadorGanadoresCSV";
 import ValidadorPlanilla from "@/components/paridad/ValidadorPlanilla";
+import PrecargaGeneroDiputados from "@/components/paridad/PrecargaGeneroDiputados";
 
 function GeneroBadge({ genero, confianza }: { genero: Genero; confianza?: "alta" | "media" | "baja" }) {
   if (genero === "M") {
@@ -229,6 +230,7 @@ export default function ParidadGenero() {
 
         {/* Tab Diputados */}
         <TabsContent value="diputados" className="space-y-3">
+          <PrecargaGeneroDiputados onDone={reload} />
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-base">Ganadores por distrito local — definir género manualmente</CardTitle>
