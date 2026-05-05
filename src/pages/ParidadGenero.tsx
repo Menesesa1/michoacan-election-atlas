@@ -230,6 +230,7 @@ export default function ParidadGenero() {
 
         {/* Tab Diputados */}
         <TabsContent value="diputados" className="space-y-3">
+          <PrecargaGeneroDiputados onDone={reload} />
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-base">Ganadores por distrito local — definir género manualmente</CardTitle>
