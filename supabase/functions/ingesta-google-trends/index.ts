@@ -411,5 +411,13 @@ Deno.serve(async (req) => {
       JSON.stringify({ ok: false, error: errorMsg }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
+  } finally {
+    if (lockTaken) {
+      try {
+        await supabaseAdmin.rpc("liberar_lock_pipeline", { _nombre: "ingesta-google-trends" });
+      } catch (e) {
+        console.error("[lock] unlock failed", e);
+      }
+    }
   }
 });
