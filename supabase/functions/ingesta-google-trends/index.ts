@@ -28,7 +28,7 @@ interface SerpRelatedQuery {
   extracted_value?: number;
 }
 
-async function fetchSerpapi(params: Record<string, string>): Promise<unknown> {
+async function fetchSerpapi(params: Record<string, string>, runId?: string): Promise<unknown> {
   const SERPAPI_KEY = Deno.env.get("SERPAPI_KEY");
   if (!SERPAPI_KEY) throw new Error("SERPAPI_KEY no configurada");
   const url = new URL("https://serpapi.com/search.json");
@@ -38,11 +38,29 @@ async function fetchSerpapi(params: Record<string, string>): Promise<unknown> {
   url.searchParams.set("tz", TZ);
   url.searchParams.set("hl", "es");
   for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
+  const t0 = Date.now();
   const r = await fetch(url.toString());
+  const dur = Date.now() - t0;
   if (!r.ok) {
     const text = await r.text();
+    await logApiCall({
+      servicio: "serpapi",
+      funcion: "ingesta-google-trends",
+      operacion: params.data_type ?? "search",
+      runId: runId ?? null,
+      duracionMs: dur,
+      status: "error",
+      metadata: { http_status: r.status },
+    });
     throw new Error(`SerpApi error [${r.status}]: ${text.slice(0, 300)}`);
   }
+  await logApiCall({
+    servicio: "serpapi",
+    funcion: "ingesta-google-trends",
+    operacion: params.data_type ?? "search",
+    runId: runId ?? null,
+    duracionMs: dur,
+  });
   return await r.json();
 }
 
