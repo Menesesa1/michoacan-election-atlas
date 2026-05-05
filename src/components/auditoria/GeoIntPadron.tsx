@@ -144,33 +144,7 @@ ${genero !== "balance" ? `  AND (lm/lt) ${genero === "mayoria_mujeres" ? ">= 0.5
               Cargando padrón oficial…
             </div>
           ) : (
-            <MapContainer center={[19.4, -101.7]} zoom={7} style={{ height: "100%", width: "100%", background: "#0a0a0a" }}>
-              <TileLayer
-                url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-                attribution='&copy; OpenStreetMap &copy; CARTO'
-              />
-              {filtradas.map((s) => (
-                <CircleMarker
-                  key={s.sec}
-                  center={[s.lat!, s.lng!]}
-                  radius={Math.max(2, Math.min(8, s.lt / 600))}
-                  pathOptions={{
-                    color: "hsl(var(--primary))",
-                    fillColor: "hsl(var(--primary))",
-                    fillOpacity: 0.5,
-                    weight: 0.5,
-                  }}
-                >
-                  <LTooltip>
-                    <div className="text-xs">
-                      <div><b>Sección {s.sec}</b> · D{s.dis}</div>
-                      <div>LN: {s.lt.toLocaleString("es-MX")}</div>
-                      <div>♀ {s.lm} / ♂ {s.lh}</div>
-                    </div>
-                  </LTooltip>
-                </CircleMarker>
-              ))}
-            </MapContainer>
+            <div ref={mapContainerRef} className="h-full w-full bg-background" />
           )}
         </div>
 
