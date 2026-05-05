@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { ShieldCheck, UserPlus, Trash2, RefreshCw } from "lucide-react";
+import SaludPipeline from "@/components/admin/SaludPipeline";
 
 interface UserRoleRow {
   id: string;
@@ -117,6 +118,8 @@ export default function Administracion() {
           Actualizar
         </Button>
       </header>
+
+      <SaludPipeline />
 
       <Card className="p-4 space-y-3">
         <h2 className="text-sm font-semibold flex items-center gap-2">
