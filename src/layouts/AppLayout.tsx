@@ -2,6 +2,7 @@ import { Outlet } from "react-router-dom";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { EmeLogo } from "@/components/EmeLogo";
+import { NotificacionesBell } from "@/components/notificaciones/NotificacionesBell";
 
 export function AppLayout() {
   return (
@@ -25,8 +26,11 @@ export function AppLayout() {
                 </div>
               </div>
             </div>
-            <div className="text-[10px] text-primary font-mono uppercase tracking-widest hidden sm:block">
-              ● En operación
+            <div className="flex items-center gap-3">
+              <div className="text-[10px] text-primary font-mono uppercase tracking-widest hidden sm:block">
+                ● En operación
+              </div>
+              <NotificacionesBell />
             </div>
           </header>
 

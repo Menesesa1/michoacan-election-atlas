@@ -25,6 +25,7 @@ import DiaD from "./pages/DiaD";
 import CalendarioElectoral from "./pages/CalendarioElectoral";
 import ParidadGenero from "./pages/ParidadGenero";
 import Administracion from "./pages/Administracion";
+import NotificacionesPreferencias from "./pages/NotificacionesPreferencias";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -69,6 +70,7 @@ const App = () => (
                 <Route path="/candidatos" element={<Candidatos />} />
                 <Route path="/calendario-electoral" element={<CalendarioElectoral />} />
                 <Route path="/paridad-genero" element={<ParidadGenero />} />
+                <Route path="/notificaciones/preferencias" element={<NotificacionesPreferencias />} />
                 
                 <Route path="/fuentes" element={<Fuentes />} />
                 <Route
