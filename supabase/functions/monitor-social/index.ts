@@ -439,5 +439,11 @@ Deno.serve(async (req) => {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
+  } finally {
+    try {
+      await supabase.rpc("liberar_lock_pipeline", { _nombre: lockName });
+    } catch (e) {
+      console.error("[lock] unlock failed", e);
+    }
   }
 });
