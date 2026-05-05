@@ -2,6 +2,7 @@ import PsicointValidator from "@/components/auditoria/PsicointValidator";
 import CibTrazabilidad from "@/components/auditoria/CibTrazabilidad";
 import GeoIntPadron from "@/components/auditoria/GeoIntPadron";
 import MetaAndromedaMonitor from "@/components/auditoria/MetaAndromedaMonitor";
+import MetodologiaTransparente from "@/components/auditoria/MetodologiaTransparente";
 import { ShieldCheck } from "lucide-react";
 
 export default function AuditoriaTransparencia() {
@@ -23,6 +24,7 @@ export default function AuditoriaTransparencia() {
       <CibTrazabilidad />
       <GeoIntPadron />
       <MetaAndromedaMonitor />
+      <MetodologiaTransparente />
     </div>
   );
 }
