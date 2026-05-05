@@ -16,7 +16,6 @@ import { TendenciaResumen } from "@/components/mando/TendenciaResumen";
 import { InteresModulos } from "@/components/mando/InteresModulos";
 import { SituationRoom } from "@/components/mando/SituationRoom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useElectoralData } from "@/context/DataContext";
 import { LayoutGrid, BarChart3 } from "lucide-react";
 import { descargarBriefingPDF } from "@/lib/briefing-pdf";
