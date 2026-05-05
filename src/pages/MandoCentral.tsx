@@ -16,29 +16,15 @@ import { TendenciaResumen } from "@/components/mando/TendenciaResumen";
 import { InteresModulos } from "@/components/mando/InteresModulos";
 import { SituationRoom } from "@/components/mando/SituationRoom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
 import { useElectoralData } from "@/context/DataContext";
-import { LayoutGrid, BarChart3, FileDown, Loader2 } from "lucide-react";
+import { LayoutGrid, BarChart3 } from "lucide-react";
 import { descargarBriefingPDF } from "@/lib/briefing-pdf";
-import { toast } from "sonner";
+import { descargarInformeGeneralXLSX } from "@/lib/exports/informe-general-xlsx";
+import { ExportButton } from "@/components/exports/ExportButton";
 
 export default function MandoCentral() {
   const [eleccion, setEleccion] = useState("fed2024");
-  const [pdfLoading, setPdfLoading] = useState(false);
   const { isUsingMock, importedKeys } = useElectoralData();
-
-  const handleBriefing = async () => {
-    setPdfLoading(true);
-    toast.info("Generando briefing…", { description: "Compilando KPIs, alertas y discurso ciudadano" });
-    try {
-      await descargarBriefingPDF();
-      toast.success("Briefing descargado");
-    } catch (err) {
-      toast.error("Error al generar PDF", { description: err instanceof Error ? err.message : String(err) });
-    } finally {
-      setPdfLoading(false);
-    }
-  };
 
   return (
     <div className="space-y-5">
@@ -52,13 +38,18 @@ export default function MandoCentral() {
             Estado de los escenarios: contiendas, candidatos, estrategia y tendencias en un solo vistazo.
           </p>
         </div>
-        <span className={`text-[10px] font-mono ${isUsingMock ? "text-muted-foreground animate-pulse-glow" : "text-primary"}`}>
-          ● {isUsingMock ? "DATOS REPRESENTATIVOS" : `${importedKeys.length} DATASET(S) IMPORTADOS`}
-        </span>
-        <Button onClick={handleBriefing} disabled={pdfLoading} size="sm" className="gap-2">
-          {pdfLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileDown className="w-3.5 h-3.5" />}
-          {pdfLoading ? "Generando…" : "Briefing PDF"}
-        </Button>
+        <div className="flex items-center gap-3">
+          <span className={`text-[10px] font-mono ${isUsingMock ? "text-muted-foreground animate-pulse-glow" : "text-primary"}`}>
+            ● {isUsingMock ? "DATOS REPRESENTATIVOS" : `${importedKeys.length} DATASET(S) IMPORTADOS`}
+          </span>
+          <ExportButton
+            label="Informe ejecutivo"
+            options={[
+              { label: "Briefing ejecutivo (PDF)", icon: "pdf", handler: descargarBriefingPDF },
+              { label: "Informe completo (Excel)", icon: "xlsx", handler: descargarInformeGeneralXLSX },
+            ]}
+          />
+        </div>
       </div>
 
       <SituationRoom />
