@@ -15,6 +15,7 @@ import {
 import { toast } from "sonner";
 import { ShieldCheck, UserPlus, Trash2, RefreshCw } from "lucide-react";
 import SaludPipeline from "@/components/admin/SaludPipeline";
+import ObservabilidadCostos from "@/components/admin/ObservabilidadCostos";
 
 interface UserRoleRow {
   id: string;
