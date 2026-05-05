@@ -243,6 +243,15 @@ Deno.serve(async (req) => {
       if (body?.trigger) trigger = String(body.trigger);
     } catch { /* sin body */ }
 
+    // Lock: evita que dos crons solapados disparen el mismo pipeline.
+    const lock = await withPipelineLock("ingesta-google-trends", async () => true);
+    if (!lock.ok) {
+      return new Response(
+        JSON.stringify({ ok: false, skipped: true, reason: "already_running" }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
     // 1. Descubrir términos tendencia en Michoacán via Perplexity
     //    (SerpApi/Google Trends ya no expone TRENDING/DAILY_SEARCH_TRENDS;
     //    todos los data_type vigentes requieren `q`).
