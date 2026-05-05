@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { ExportButton } from "@/components/exports/ExportButton";
 import {
   ShieldAlert,
   Bot,
@@ -85,15 +86,24 @@ export default function MonitorInteligencia() {
 
   return (
     <div className="space-y-4">
-      <div>
-        <div className="text-primary text-[10px] font-mono uppercase tracking-widest">
-          Centro de operaciones
+      <div className="flex items-start justify-between flex-wrap gap-3">
+        <div>
+          <div className="text-primary text-[10px] font-mono uppercase tracking-widest">
+            Centro de operaciones
+          </div>
+          <h1 className="text-2xl font-bold text-foreground">Monitor de Inteligencia</h1>
+          <p className="text-sm text-muted-foreground mt-1 max-w-3xl">
+            Vista unificada: alertas, comportamiento coordinado, emociones, geo-conversación, narrativas
+            accionables, sentimiento y comparativos. Todo en un solo flujo de scroll.
+          </p>
         </div>
-        <h1 className="text-2xl font-bold text-foreground">Monitor de Inteligencia</h1>
-        <p className="text-sm text-muted-foreground mt-1 max-w-3xl">
-          Vista unificada: alertas, comportamiento coordinado, emociones, geo-conversación, narrativas
-          accionables, sentimiento y comparativos. Todo en un solo flujo de scroll.
-        </p>
+        <ExportButton
+          label="Exportar inteligencia"
+          options={[
+            { label: "Briefing ejecutivo (PDF)", icon: "pdf", handler: () => import("@/lib/briefing-pdf").then(m => m.descargarBriefingPDF()) },
+            { label: "Informe completo (Excel)", icon: "xlsx", handler: () => import("@/lib/exports/informe-general-xlsx").then(m => m.descargarInformeGeneralXLSX()) },
+          ]}
+        />
       </div>
 
       <div className="grid lg:grid-cols-[200px_1fr] gap-6">

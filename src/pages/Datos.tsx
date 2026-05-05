@@ -54,16 +54,25 @@ export default function Datos() {
 
   return (
     <div className="space-y-5">
-      <div>
-        <div className="text-primary text-[10px] font-mono uppercase tracking-widest">
-          Estadística referencial
+      <div className="flex items-start justify-between flex-wrap gap-3">
+        <div>
+          <div className="text-primary text-[10px] font-mono uppercase tracking-widest">
+            Estadística referencial
+          </div>
+          <h1 className="text-2xl font-bold text-foreground">Datos</h1>
+          <p className="text-sm text-muted-foreground mt-1 max-w-3xl">
+            Resultados electorales por tipo de elección, contexto socioeconómico/demográfico
+            y cruces analíticos. La unidad atómica es la sección; la lista nominal estatal
+            es única (INE-DERFE) sin importar el corte distrital.
+          </p>
         </div>
-        <h1 className="text-2xl font-bold text-foreground">Datos</h1>
-        <p className="text-sm text-muted-foreground mt-1 max-w-3xl">
-          Resultados electorales por tipo de elección, contexto socioeconómico/demográfico
-          y cruces analíticos. La unidad atómica es la sección; la lista nominal estatal
-          es única (INE-DERFE) sin importar el corte distrital.
-        </p>
+        <ExportButton
+          label="Exportar"
+          options={[
+            { label: "Informe ejecutivo (PDF)", icon: "pdf", handler: () => import("@/lib/briefing-pdf").then(m => m.descargarBriefingPDF()) },
+            { label: "Datos completos (Excel)", icon: "xlsx", handler: () => import("@/lib/exports/informe-general-xlsx").then(m => m.descargarInformeGeneralXLSX()) },
+          ]}
+        />
       </div>
 
       <Tabs value={active} onValueChange={onChange}>
