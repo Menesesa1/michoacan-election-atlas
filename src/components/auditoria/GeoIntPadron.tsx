@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { MapContainer, TileLayer, CircleMarker, Tooltip as LTooltip } from "react-leaflet";
+import { useEffect, useMemo, useRef, useState } from "react";
+import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -23,6 +23,9 @@ type FiltroJuventud = "todos" | "joven" | "adulto" | "mayor";
 type FiltroGenero = "balance" | "mayoria_mujeres" | "mayoria_hombres";
 
 export default function GeoIntPadron() {
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const mapInstanceRef = useRef<L.Map | null>(null);
+  const layerRef = useRef<L.LayerGroup | null>(null);
   const [secciones, setSecciones] = useState<SeccionGeo[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalEstado, setTotalEstado] = useState(0);
@@ -45,6 +48,33 @@ export default function GeoIntPadron() {
     })();
   }, []);
 
+  useEffect(() => {
+    if (!mapContainerRef.current || mapInstanceRef.current) return;
+
+    const map = L.map(mapContainerRef.current, {
+      center: [19.4, -101.7],
+      zoom: 7,
+      zoomControl: true,
+      attributionControl: true,
+      scrollWheelZoom: true,
+    });
+
+    L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+      attribution: "&copy; OpenStreetMap &copy; CARTO",
+      subdomains: "abcd",
+      maxZoom: 18,
+    }).addTo(map);
+
+    mapInstanceRef.current = map;
+    layerRef.current = L.layerGroup().addTo(map);
+
+    return () => {
+      map.remove();
+      mapInstanceRef.current = null;
+      layerRef.current = null;
+    };
+  }, []);
+
   const filtradas = useMemo(() => {
     return secciones.filter((s) => {
       const total = s.lt || 1;
@@ -64,6 +94,28 @@ export default function GeoIntPadron() {
 
   const sumLN = filtradas.reduce((a, s) => a + s.lt, 0);
   const cobertura = totalEstado ? (sumLN / totalEstado) * 100 : 0;
+
+  useEffect(() => {
+    if (!layerRef.current || loading) return;
+
+    layerRef.current.clearLayers();
+    filtradas.forEach((s) => {
+      if (s.lat == null || s.lng == null) return;
+
+      L.circleMarker([s.lat, s.lng], {
+        radius: Math.max(2, Math.min(8, s.lt / 600)),
+        color: "hsl(var(--primary))",
+        fillColor: "hsl(var(--primary))",
+        fillOpacity: 0.5,
+        weight: 0.5,
+      })
+        .bindTooltip(
+          `<div class="text-xs"><div><b>Sección ${s.sec}</b> · D${s.dis}</div><div>LN: ${s.lt.toLocaleString("es-MX")}</div><div>♀ ${s.lm} / ♂ ${s.lh}</div></div>`,
+          { direction: "top", sticky: true }
+        )
+        .addTo(layerRef.current!);
+    });
+  }, [filtradas, loading]);
 
   const query = `SELECT sec, dis, mun, lh AS hombres, lm AS mujeres, lt AS lista_nominal
 FROM padron_secciones_2026
