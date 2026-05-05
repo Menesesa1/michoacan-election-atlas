@@ -237,6 +237,7 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
 
+  let lockTaken = false;
   try {
     try {
       const body = await req.json();
@@ -244,13 +245,16 @@ Deno.serve(async (req) => {
     } catch { /* sin body */ }
 
     // Lock: evita que dos crons solapados disparen el mismo pipeline.
-    const lock = await withPipelineLock("ingesta-google-trends", async () => true);
-    if (!lock.ok) {
+    const { data: acquired } = await supabaseAdmin.rpc("intentar_lock_pipeline", {
+      _nombre: "ingesta-google-trends",
+    });
+    if (!acquired) {
       return new Response(
         JSON.stringify({ ok: false, skipped: true, reason: "already_running" }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
+    lockTaken = true;
 
     // 1. Descubrir términos tendencia en Michoacán via Perplexity
     //    (SerpApi/Google Trends ya no expone TRENDING/DAILY_SEARCH_TRENDS;
