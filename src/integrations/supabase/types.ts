@@ -510,6 +510,120 @@ export type Database = {
           },
         ]
       }
+      notificacion_preferencias: {
+        Row: {
+          alertas_crisis: boolean
+          alertas_crisis_min_severidad: string
+          cib: boolean
+          cib_min_severidad: string
+          created_at: string
+          runs: boolean
+          runs_solo_errores: boolean
+          salud_municipio: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          alertas_crisis?: boolean
+          alertas_crisis_min_severidad?: string
+          cib?: boolean
+          cib_min_severidad?: string
+          created_at?: string
+          runs?: boolean
+          runs_solo_errores?: boolean
+          salud_municipio?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          alertas_crisis?: boolean
+          alertas_crisis_min_severidad?: string
+          cib?: boolean
+          cib_min_severidad?: string
+          created_at?: string
+          runs?: boolean
+          runs_solo_errores?: boolean
+          salud_municipio?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      notificaciones: {
+        Row: {
+          created_at: string
+          descripcion: string | null
+          id: string
+          leida: boolean
+          leida_en: string | null
+          link: string | null
+          metadata: Json
+          severidad: string
+          tipo: string
+          titulo: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          descripcion?: string | null
+          id?: string
+          leida?: boolean
+          leida_en?: string | null
+          link?: string | null
+          metadata?: Json
+          severidad?: string
+          tipo: string
+          titulo: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          descripcion?: string | null
+          id?: string
+          leida?: boolean
+          leida_en?: string | null
+          link?: string | null
+          metadata?: Json
+          severidad?: string
+          tipo?: string
+          titulo?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      salud_municipio_estado: {
+        Row: {
+          cambiado_en: string
+          estado: string
+          estado_anterior: string | null
+          metadata: Json
+          municipio_clave: number
+          municipio_nombre: string
+          score: number | null
+          updated_at: string
+        }
+        Insert: {
+          cambiado_en?: string
+          estado: string
+          estado_anterior?: string | null
+          metadata?: Json
+          municipio_clave: number
+          municipio_nombre: string
+          score?: number | null
+          updated_at?: string
+        }
+        Update: {
+          cambiado_en?: string
+          estado?: string
+          estado_anterior?: string | null
+          metadata?: Json
+          municipio_clave?: number
+          municipio_nombre?: string
+          score?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       social_menciones: {
         Row: {
           batch_id: string
@@ -888,6 +1002,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      fanout_run_generic: {
+        Args: {
+          _error: string
+          _link: string
+          _resumen: string
+          _tipo_label: string
+          _user_id: string
+        }
+        Returns: undefined
+      }
       get_user_roles: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"][]
@@ -899,6 +1023,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      severidad_rank: { Args: { _sev: string }; Returns: number }
     }
     Enums: {
       app_role: "admin" | "analista" | "cliente"
