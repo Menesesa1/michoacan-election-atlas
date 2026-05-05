@@ -50,6 +50,7 @@ const locales = [
   { title: "Candidatos", url: "/candidatos", icon: Users },
   { title: "Paridad de género", url: "/paridad-genero", icon: Scale },
   { title: "Inteligencia", url: "/inteligencia", icon: ShieldAlert },
+  { title: "Auditoría técnica", url: "/auditoria", icon: ShieldCheck },
   { title: "Fuentes", url: "/fuentes", icon: Database },
 ];
 
