@@ -49,6 +49,7 @@ export default function GeoIntPadron() {
   }, []);
 
   useEffect(() => {
+    if (loading) return;
     if (!mapContainerRef.current || mapInstanceRef.current) return;
 
     const map = L.map(mapContainerRef.current, {
@@ -67,6 +68,7 @@ export default function GeoIntPadron() {
 
     mapInstanceRef.current = map;
     layerRef.current = L.layerGroup().addTo(map);
+    setTimeout(() => map.invalidateSize(), 100);
 
     return () => {
       map.remove();
@@ -103,11 +105,11 @@ export default function GeoIntPadron() {
       if (s.lat == null || s.lng == null) return;
 
       L.circleMarker([s.lat, s.lng], {
-        radius: Math.max(2, Math.min(8, s.lt / 600)),
-        color: "hsl(var(--primary))",
-        fillColor: "hsl(var(--primary))",
-        fillOpacity: 0.5,
-        weight: 0.5,
+        radius: Math.max(3, Math.min(9, s.lt / 500)),
+        color: "#34d399",
+        fillColor: "#10b981",
+        fillOpacity: 0.6,
+        weight: 1,
       })
         .bindTooltip(
           `<div class="text-xs"><div><b>Sección ${s.sec}</b> · D${s.dis}</div><div>LN: ${s.lt.toLocaleString("es-MX")}</div><div>♀ ${s.lm} / ♂ ${s.lh}</div></div>`,
@@ -138,13 +140,12 @@ ${genero !== "balance" ? `  AND (lm/lt) ${genero === "mayoria_mujeres" ? ">= 0.5
       </div>
 
       <div className="grid lg:grid-cols-[1fr_320px] gap-3">
-        <div className="rounded-lg overflow-hidden border border-border/40 h-[400px]">
-          {loading ? (
-            <div className="h-full flex items-center justify-center text-xs text-muted-foreground">
+        <div className="relative rounded-lg overflow-hidden border border-border/40 h-[400px] min-h-[400px] w-full">
+          <div ref={mapContainerRef} className="absolute inset-0 bg-background" style={{ minHeight: 400 }} />
+          {loading && (
+            <div className="absolute inset-0 flex items-center justify-center text-xs text-muted-foreground bg-background/80 z-[500]">
               Cargando padrón oficial…
             </div>
-          ) : (
-            <div ref={mapContainerRef} className="h-full w-full bg-background" />
           )}
         </div>
 
