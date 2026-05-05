@@ -20,6 +20,7 @@ import {
 import { MUNICIPIOS_MICHOACAN_113 } from "@/data/locales/municipios-catalogo";
 import type { Genero } from "@/lib/paridad/inferir-genero";
 import { ImportadorGanadoresCSV } from "@/components/paridad/ImportadorGanadoresCSV";
+import ValidadorPlanilla from "@/components/paridad/ValidadorPlanilla";
 
 function GeneroBadge({ genero, confianza }: { genero: Genero; confianza?: "alta" | "media" | "baja" }) {
   if (genero === "M") {
@@ -167,6 +168,9 @@ export default function ParidadGenero() {
           </TabsTrigger>
           <TabsTrigger value="sugerencias">
             <Users2 className="w-4 h-4 mr-1" /> Sugerencias 2027
+          </TabsTrigger>
+          <TabsTrigger value="validador">
+            <Scale className="w-4 h-4 mr-1" /> Validador IEM
           </TabsTrigger>
         </TabsList>
 
@@ -406,6 +410,11 @@ export default function ParidadGenero() {
               </table>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Tab Validador IEM */}
+        <TabsContent value="validador" className="space-y-3">
+          <ValidadorPlanilla />
         </TabsContent>
       </Tabs>
     </div>
