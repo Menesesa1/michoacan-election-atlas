@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { ExportButton } from "@/components/exports/ExportButton";
 import { useNavigate, useParams } from "react-router-dom";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart3, Layers, GitCompareArrows } from "lucide-react";
