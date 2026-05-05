@@ -411,6 +411,11 @@ export default function ParidadGenero() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* Tab Validador IEM */}
+        <TabsContent value="validador" className="space-y-3">
+          <ValidadorPlanilla />
+        </TabsContent>
       </Tabs>
     </div>
   );
