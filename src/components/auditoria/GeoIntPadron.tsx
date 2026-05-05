@@ -68,6 +68,7 @@ export default function GeoIntPadron() {
 
     mapInstanceRef.current = map;
     layerRef.current = L.layerGroup().addTo(map);
+    setTimeout(() => map.invalidateSize(), 100);
 
     return () => {
       map.remove();
