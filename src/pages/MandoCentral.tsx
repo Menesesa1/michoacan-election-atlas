@@ -16,13 +16,12 @@ import { TendenciaResumen } from "@/components/mando/TendenciaResumen";
 import { InteresModulos } from "@/components/mando/InteresModulos";
 import { SituationRoom } from "@/components/mando/SituationRoom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useElectoralData } from "@/context/DataContext";
 import { LayoutGrid, BarChart3 } from "lucide-react";
 import { descargarBriefingPDF } from "@/lib/briefing-pdf";
 import { descargarInformeGeneralXLSX } from "@/lib/exports/informe-general-xlsx";
 import { ExportButton } from "@/components/exports/ExportButton";
-import { toast } from "sonner";
 
 export default function MandoCentral() {
   const [eleccion, setEleccion] = useState("fed2024");
