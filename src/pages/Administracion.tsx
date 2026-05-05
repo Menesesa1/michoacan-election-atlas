@@ -122,6 +122,8 @@ export default function Administracion() {
 
       <SaludPipeline />
 
+      <ObservabilidadCostos />
+
       <Card className="p-4 space-y-3">
         <h2 className="text-sm font-semibold flex items-center gap-2">
           <UserPlus className="w-4 h-4 text-primary" />
