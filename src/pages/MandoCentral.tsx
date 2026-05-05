@@ -15,6 +15,7 @@ import { EstrategiasRecientes } from "@/components/mando/EstrategiasRecientes";
 import { TendenciaResumen } from "@/components/mando/TendenciaResumen";
 import { InteresModulos } from "@/components/mando/InteresModulos";
 import { SituationRoom } from "@/components/mando/SituationRoom";
+import { MetodologiaDisclaimer } from "@/components/mando/MetodologiaDisclaimer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useElectoralData } from "@/context/DataContext";
 import { LayoutGrid, BarChart3 } from "lucide-react";
@@ -51,6 +52,8 @@ export default function MandoCentral() {
           />
         </div>
       </div>
+
+      <MetodologiaDisclaimer />
 
       <SituationRoom />
 
