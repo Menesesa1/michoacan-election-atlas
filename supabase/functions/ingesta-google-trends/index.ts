@@ -5,6 +5,7 @@
 // Persiste en public.trends_estatal y registra la corrida en public.trends_runs.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { logApiCall, withPipelineLock } from "../_shared/cost-control.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
