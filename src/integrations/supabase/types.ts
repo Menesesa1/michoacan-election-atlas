@@ -496,6 +496,123 @@ export type Database = {
         }
         Relationships: []
       }
+      meta_ads: {
+        Row: {
+          ad_archive_id: string
+          ad_creative_body: string | null
+          ad_creative_link_caption: string | null
+          ad_creative_link_description: string | null
+          ad_creative_link_title: string | null
+          ad_delivery_start_time: string | null
+          ad_delivery_stop_time: string | null
+          ad_snapshot_url: string | null
+          candidato_id: string
+          created_at: string
+          currency: string | null
+          demographic_distribution: Json | null
+          detectado_en: string
+          id: string
+          impressions_lower: number | null
+          impressions_upper: number | null
+          languages: string[] | null
+          page_id: string | null
+          page_name: string | null
+          publisher_platforms: string[] | null
+          raw: Json | null
+          region_distribution: Json | null
+          spend_lower: number | null
+          spend_upper: number | null
+        }
+        Insert: {
+          ad_archive_id: string
+          ad_creative_body?: string | null
+          ad_creative_link_caption?: string | null
+          ad_creative_link_description?: string | null
+          ad_creative_link_title?: string | null
+          ad_delivery_start_time?: string | null
+          ad_delivery_stop_time?: string | null
+          ad_snapshot_url?: string | null
+          candidato_id: string
+          created_at?: string
+          currency?: string | null
+          demographic_distribution?: Json | null
+          detectado_en?: string
+          id?: string
+          impressions_lower?: number | null
+          impressions_upper?: number | null
+          languages?: string[] | null
+          page_id?: string | null
+          page_name?: string | null
+          publisher_platforms?: string[] | null
+          raw?: Json | null
+          region_distribution?: Json | null
+          spend_lower?: number | null
+          spend_upper?: number | null
+        }
+        Update: {
+          ad_archive_id?: string
+          ad_creative_body?: string | null
+          ad_creative_link_caption?: string | null
+          ad_creative_link_description?: string | null
+          ad_creative_link_title?: string | null
+          ad_delivery_start_time?: string | null
+          ad_delivery_stop_time?: string | null
+          ad_snapshot_url?: string | null
+          candidato_id?: string
+          created_at?: string
+          currency?: string | null
+          demographic_distribution?: Json | null
+          detectado_en?: string
+          id?: string
+          impressions_lower?: number | null
+          impressions_upper?: number | null
+          languages?: string[] | null
+          page_id?: string | null
+          page_name?: string | null
+          publisher_platforms?: string[] | null
+          raw?: Json | null
+          region_distribution?: Json | null
+          spend_lower?: number | null
+          spend_upper?: number | null
+        }
+        Relationships: []
+      }
+      meta_ads_runs: {
+        Row: {
+          ads_encontrados: number
+          ads_nuevos: number
+          candidatos_procesados: number
+          detalle: Json | null
+          duracion_ms: number | null
+          ejecutada_en: string
+          error: string | null
+          id: string
+          trigger: string
+        }
+        Insert: {
+          ads_encontrados?: number
+          ads_nuevos?: number
+          candidatos_procesados?: number
+          detalle?: Json | null
+          duracion_ms?: number | null
+          ejecutada_en?: string
+          error?: string | null
+          id?: string
+          trigger?: string
+        }
+        Update: {
+          ads_encontrados?: number
+          ads_nuevos?: number
+          candidatos_procesados?: number
+          detalle?: Json | null
+          duracion_ms?: number | null
+          ejecutada_en?: string
+          error?: string | null
+          id?: string
+          trigger?: string
+        }
+        Relationships: []
+      }
       narrativas_sugeridas: {
         Row: {
           candidato_id: string | null
