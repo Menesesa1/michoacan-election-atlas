@@ -9,7 +9,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
-import { Sparkles, AlertTriangle, RotateCcw, Search, MessageSquare, User, Users2, History, Radar, ExternalLink, TrendingUp, FileText } from "lucide-react";
+import { Sparkles, AlertTriangle, RotateCcw, Search, MessageSquare, User, Users2, History, Radar, ExternalLink, TrendingUp, FileText, Megaphone } from "lucide-react";
+import { MetaAdsTab } from "./MetaAdsTab";
 import { generarBriefingInterno } from "@/lib/pdf-briefing-interno";
 import { toast as sonnerToast } from "sonner";
 import type {
@@ -194,11 +195,12 @@ export function FichaCandidato({ candidato, open, onClose }: Props) {
         </div>
 
         <Tabs value={tab} onValueChange={(v) => setTab(v as TabKey)}>
-          <TabsList className="grid grid-cols-4 md:grid-cols-7 w-full h-auto">
+          <TabsList className="grid grid-cols-4 md:grid-cols-8 w-full h-auto">
             <TabsTrigger value="perfil"><User className="w-3.5 h-3.5 mr-1.5" />Perfil</TabsTrigger>
             <TabsTrigger value="osint"><Search className="w-3.5 h-3.5 mr-1.5" />OSINT</TabsTrigger>
             <TabsTrigger value="discurso"><MessageSquare className="w-3.5 h-3.5 mr-1.5" />Discurso</TabsTrigger>
             <TabsTrigger value="trends"><TrendingUp className="w-3.5 h-3.5 mr-1.5" />Trends</TabsTrigger>
+            <TabsTrigger value="meta_ads"><Megaphone className="w-3.5 h-3.5 mr-1.5" />Meta Ads</TabsTrigger>
             <TabsTrigger value="trayectoria"><History className="w-3.5 h-3.5 mr-1.5" />Trayectoria</TabsTrigger>
             <TabsTrigger value="eval_digital"><Radar className="w-3.5 h-3.5 mr-1.5" />Eval. digital</TabsTrigger>
             <TabsTrigger value="war_room"><Users2 className="w-3.5 h-3.5 mr-1.5" />War Room</TabsTrigger>
@@ -219,6 +221,10 @@ export function FichaCandidato({ candidato, open, onClose }: Props) {
             <TrendsCandidatoTab candidato={candidato} />
           </TabsContent>
 
+          <TabsContent value="meta_ads">
+            <MetaAdsTab candidato={candidato} />
+          </TabsContent>
+
           <TabsContent value="trayectoria">
             <TrayectoriaTab candidato={candidato} />
           </TabsContent>
@@ -236,7 +242,7 @@ export function FichaCandidato({ candidato, open, onClose }: Props) {
   );
 }
 
-type TabKey = TipoAnalisis | "war_room" | "trayectoria" | "eval_digital" | "trends";
+type TabKey = TipoAnalisis | "war_room" | "trayectoria" | "eval_digital" | "trends" | "meta_ads";
 
 function TrayectoriaTab({ candidato }: { candidato: Candidato }) {
   const { toast } = useToast();
