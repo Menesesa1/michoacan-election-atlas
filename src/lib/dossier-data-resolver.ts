@@ -49,6 +49,12 @@ export interface FragmentacionTerritorial {
   perfil: "urbano" | "rural" | "mixto" | "balanceado";
   /** Secciones que requieren operación NO digital (rural + mixta). */
   noDigitales: number;
+  /** Listas explícitas de secciones por tipo (catálogo INE). */
+  seccionesUrbanas: number[];
+  seccionesMixtas: number[];
+  seccionesRurales: number[];
+  /** Etiqueta legible del territorio cubierto (p. ej. "Quiroga", "Distrito Federal 8"). */
+  alcance: string;
 }
 
 export interface MetricasOficiales {
