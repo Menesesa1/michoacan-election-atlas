@@ -442,6 +442,14 @@ export async function generarBriefingInterno({ candidato }: BriefingInput): Prom
         `Perfil dominante: ${f.perfil.toUpperCase()} · ${f.noDigitales} secciones requieren operación territorial intensiva`,
         COLOR.accent,
       );
+      y += 2;
+
+      // Listado explícito de secciones por tipo (catálogo INE)
+      const fmtSecs = (arr: number[]) => arr.length ? arr.join(", ") : "—";
+      para(`Secciones del territorio (${f.alcance}):`, { bold: true, size: 9 });
+      para(`Urbanas (${f.urbanas}): ${fmtSecs(f.seccionesUrbanas)}`, { color: COLOR.ok, size: 8 });
+      para(`Mixtas (${f.mixtas}): ${fmtSecs(f.seccionesMixtas)}`, { size: 8 });
+      para(`Rurales (${f.rurales}): ${fmtSecs(f.seccionesRurales)}`, { color: COLOR.danger, size: 8 });
       y += 4;
     }
 
