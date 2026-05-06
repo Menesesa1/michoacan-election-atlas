@@ -393,10 +393,17 @@ export function generarDossierComercial({ candidato, consultor = "Job Meneses", 
   doc.text(txt, margin, y, { lineHeightFactor: 1.55 });
   y += txt.length * 10.5 * 1.55 + 24;
 
-  // 3 KPIs en fila
+  // 3 KPIs en fila — siempre en contexto del total real de secciones
+  const totalRef = m.seccionesTotal ?? m.fragmentacion?.total ?? null;
+  const subRiesgo = totalRef
+    ? `de ${totalRef} secciones del territorio donde el voto propio se erosiona`
+    : "secciones donde su voto se está erosionando";
+  const subPivote = totalRef
+    ? `de ${totalRef} secciones que se definirán por menos de 5 pp`
+    : "decidirán la elección por menos de 5 pp";
   const kpis = [
-    { label: "SECCIONES EN ROJO", val: m.seccionesRiesgo.toString(), sub: "donde su voto se está erosionando", color: C_ROJO },
-    { label: "SECCIONES PIVOTE", val: m.seccionesPivote.toString(), sub: "decidirán la elección por menos de 5 pp", color: C_AMBAR },
+    { label: "SECCIONES EN ROJO", val: m.seccionesRiesgo.toString(), sub: subRiesgo, color: C_ROJO },
+    { label: "SECCIONES PIVOTE", val: m.seccionesPivote.toString(), sub: subPivote, color: C_AMBAR },
     { label: "AMENAZAS DIGITALES", val: m.amenazasDigitales.toString(), sub: "narrativas adversas activas en redes", color: C_ROJO },
   ];
   const kw = (contentW - 24) / 3;
