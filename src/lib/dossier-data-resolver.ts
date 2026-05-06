@@ -456,7 +456,7 @@ async function resolverLocal(c: Candidato, padron: PadronCache | null): Promise<
       const cm = MUNICIPIOS_MICHOACAN_113.find((x) => norm(x.nombre) === mn);
       if (cm) claves.push(cm.clave);
     }
-    if (claves.length > 0) fragmentacion = await fragMunicipios(claves);
+    if (claves.length > 0) fragmentacion = await fragMunicipios(claves, distLocMeta ? `Distrito Local ${distLocMeta.distrito} · ${distLocMeta.cabecera}` : "Distrito Local");
   }
 
   return {
