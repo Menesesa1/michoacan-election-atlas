@@ -262,49 +262,79 @@ async function getCatalogo(): Promise<SeccionCat[] | null> {
   }
 }
 
-function fragmentar(subset: SeccionCat[]): FragmentacionTerritorial | null {
+function fragmentar(subset: SeccionCat[], alcance: string): FragmentacionTerritorial | null {
   const total = subset.length;
   if (total === 0) return null;
-  const urb = subset.filter((s) => s.tipo === 2).length;
-  const mix = subset.filter((s) => s.tipo === 3).length;
-  const rur = subset.filter((s) => s.tipo === 4).length;
-  const pctU = +((urb / total) * 100).toFixed(1);
-  const pctM = +((mix / total) * 100).toFixed(1);
-  const pctR = +((rur / total) * 100).toFixed(1);
+  const urbSecs = subset.filter((s) => s.tipo === 2).map((s) => s.sec).sort((a, b) => a - b);
+  const mixSecs = subset.filter((s) => s.tipo === 3).map((s) => s.sec).sort((a, b) => a - b);
+  const rurSecs = subset.filter((s) => s.tipo === 4).map((s) => s.sec).sort((a, b) => a - b);
+  const pctU = +((urbSecs.length / total) * 100).toFixed(1);
+  const pctM = +((mixSecs.length / total) * 100).toFixed(1);
+  const pctR = +((rurSecs.length / total) * 100).toFixed(1);
   let perfil: FragmentacionTerritorial["perfil"] = "balanceado";
   if (pctU >= 60) perfil = "urbano";
   else if (pctR >= 60) perfil = "rural";
   else if (pctM >= 50) perfil = "mixto";
   return {
     total,
-    urbanas: urb,
-    mixtas: mix,
-    rurales: rur,
+    urbanas: urbSecs.length,
+    mixtas: mixSecs.length,
+    rurales: rurSecs.length,
     pctUrbano: pctU,
     pctMixto: pctM,
     pctRural: pctR,
     perfil,
-    noDigitales: mix + rur,
+    noDigitales: mixSecs.length + rurSecs.length,
+    seccionesUrbanas: urbSecs,
+    seccionesMixtas: mixSecs,
+    seccionesRurales: rurSecs,
+    alcance,
   };
+}
+
+// El campo `mun` en secciones-catalogo.json NO es la clave INEGI 1-113.
+// Resolvemos cruzando con el mapeo verificado por distritos locales.
+import type { MunicipioSecciones } from "@/lib/municipios-secciones-tipo";
+let _munMap: Map<number, MunicipioSecciones> | null = null;
+async function getMunMap(): Promise<Map<number, MunicipioSecciones> | null> {
+  if (_munMap) return _munMap;
+  try {
+    const res = await fetch("/data/municipios-secciones-tipo.json");
+    if (!res.ok) return null;
+    const arr = (await res.json()) as MunicipioSecciones[];
+    _munMap = new Map(arr.map((m) => [m.inegi, m]));
+    return _munMap;
+  } catch { return null; }
+}
+async function inegiToMunCodes(claves: number[]): Promise<Set<number>> {
+  const map = await getMunMap();
+  if (!map) return new Set();
+  const out = new Set<number>();
+  for (const k of claves) { const m = map.get(k); if (m) out.add(m.mun_code); }
+  return out;
 }
 
 async function fragEstatal(): Promise<FragmentacionTerritorial | null> {
   const cat = await getCatalogo();
-  return cat ? fragmentar(cat) : null;
+  return cat ? fragmentar(cat, "Estado de Michoacán") : null;
 }
 async function fragDistritoFederal(num: number): Promise<FragmentacionTerritorial | null> {
   const cat = await getCatalogo();
-  return cat ? fragmentar(cat.filter((s) => s.dis === num)) : null;
+  return cat ? fragmentar(cat.filter((s) => s.dis === num), `Distrito Federal ${num}`) : null;
 }
-async function fragMunicipio(claveMun: number): Promise<FragmentacionTerritorial | null> {
-  const cat = await getCatalogo();
-  return cat ? fragmentar(cat.filter((s) => s.mun === claveMun)) : null;
-}
-async function fragMunicipios(claves: number[]): Promise<FragmentacionTerritorial | null> {
+async function fragMunicipio(claveInegi: number, nombre: string): Promise<FragmentacionTerritorial | null> {
   const cat = await getCatalogo();
   if (!cat) return null;
-  const set = new Set(claves);
-  return fragmentar(cat.filter((s) => set.has(s.mun)));
+  const munCodes = await inegiToMunCodes([claveInegi]);
+  if (munCodes.size === 0) return null;
+  return fragmentar(cat.filter((s) => munCodes.has(s.mun)), nombre);
+}
+async function fragMunicipios(claves: number[], alcance: string): Promise<FragmentacionTerritorial | null> {
+  const cat = await getCatalogo();
+  if (!cat) return null;
+  const munCodes = await inegiToMunCodes(claves);
+  if (munCodes.size === 0) return null;
+  return fragmentar(cat.filter((s) => munCodes.has(s.mun)), alcance);
 }
 
 // ─────────── Resolución por nivel ───────────
