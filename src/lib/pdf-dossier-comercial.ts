@@ -85,6 +85,32 @@ function calcularMetricas(c: Candidato, oficial?: MetricasOficiales | null): Met
     : 280_000 + r() * 240_000;
   const costoSemanal = Math.round((costoBase * (escala / 2 + 0.5)) / 1000) * 1000;
 
+  // Total real de secciones (oficial > fragmentación INE > null)
+  const seccionesTotalReal =
+    oficial?.seccionesTotal ?? oficial?.fragmentacion?.total ?? null;
+
+  // Riesgo y pivote: SIEMPRE acotados al total real para que nunca excedan
+  // las secciones existentes en el territorio (ej. Quiroga = 14 secs).
+  const brechaUsada = oficial?.brechaPp ?? baseBrechaEst;
+  let seccionesRiesgo: number;
+  let seccionesPivote: number;
+  if (seccionesTotalReal && seccionesTotalReal > 0) {
+    const fr = Math.min(0.55, Math.max(0.10, brechaUsada / 60));
+    const fp = Math.min(0.30, Math.max(0.08, 0.28 - Math.abs(brechaUsada) / 120));
+    seccionesRiesgo = oficial?.seccionesRiesgo ?? Math.round(seccionesTotalReal * fr);
+    seccionesPivote = oficial?.seccionesPivote ?? Math.round(seccionesTotalReal * fp);
+    // Tope duro: nunca más que el total
+    seccionesRiesgo = Math.min(seccionesRiesgo, seccionesTotalReal);
+    seccionesPivote = Math.min(seccionesPivote, seccionesTotalReal - seccionesRiesgo >= 0
+      ? Math.max(0, seccionesTotalReal - seccionesRiesgo) + Math.min(seccionesPivote, Math.ceil(seccionesTotalReal * 0.4))
+      : seccionesPivote);
+    seccionesPivote = Math.min(seccionesPivote, Math.ceil(seccionesTotalReal * 0.4));
+  } else {
+    // Sin total conocido: fallback escalado pero conservador
+    seccionesRiesgo = oficial?.seccionesRiesgo ?? Math.round((8 + r() * 16) * escala);
+    seccionesPivote = oficial?.seccionesPivote ?? Math.round((4 + r() * 10) * escala);
+  }
+
   return {
     brechaPp: Math.round((oficial?.brechaPp ?? baseBrechaEst) * 10) / 10,
     intencionPropia: oficial?.intencionPropia ?? intencionPropiaEst,
@@ -92,9 +118,9 @@ function calcularMetricas(c: Candidato, oficial?: MetricasOficiales | null): Met
     rivalPartido: oficial?.rivalPartido ?? null,
     cicloRef: oficial?.cicloRef ?? null,
     listaNominal: lista,
-    seccionesRiesgo: oficial?.seccionesRiesgo ?? Math.round((35 + r() * 60) * escala),
-    seccionesPivote: oficial?.seccionesPivote ?? Math.round((12 + r() * 28) * escala),
-    seccionesTotal: oficial?.seccionesTotal ?? null,
+    seccionesRiesgo,
+    seccionesPivote,
+    seccionesTotal: seccionesTotalReal,
     costoSemanal,
     diasRestantes: diasA2027(),
     probDerrota,
@@ -367,10 +393,17 @@ export function generarDossierComercial({ candidato, consultor = "Job Meneses", 
   doc.text(txt, margin, y, { lineHeightFactor: 1.55 });
   y += txt.length * 10.5 * 1.55 + 24;
 
-  // 3 KPIs en fila
+  // 3 KPIs en fila — siempre en contexto del total real de secciones
+  const totalRef = m.seccionesTotal ?? m.fragmentacion?.total ?? null;
+  const subRiesgo = totalRef
+    ? `de ${totalRef} secciones del territorio donde el voto propio se erosiona`
+    : "secciones donde su voto se está erosionando";
+  const subPivote = totalRef
+    ? `de ${totalRef} secciones que se definirán por menos de 5 pp`
+    : "decidirán la elección por menos de 5 pp";
   const kpis = [
-    { label: "SECCIONES EN ROJO", val: m.seccionesRiesgo.toString(), sub: "donde su voto se está erosionando", color: C_ROJO },
-    { label: "SECCIONES PIVOTE", val: m.seccionesPivote.toString(), sub: "decidirán la elección por menos de 5 pp", color: C_AMBAR },
+    { label: "SECCIONES EN ROJO", val: m.seccionesRiesgo.toString(), sub: subRiesgo, color: C_ROJO },
+    { label: "SECCIONES PIVOTE", val: m.seccionesPivote.toString(), sub: subPivote, color: C_AMBAR },
     { label: "AMENAZAS DIGITALES", val: m.amenazasDigitales.toString(), sub: "narrativas adversas activas en redes", color: C_ROJO },
   ];
   const kw = (contentW - 24) / 3;
