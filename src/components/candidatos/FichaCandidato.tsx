@@ -221,6 +221,10 @@ export function FichaCandidato({ candidato, open, onClose }: Props) {
             <TrendsCandidatoTab candidato={candidato} />
           </TabsContent>
 
+          <TabsContent value="meta_ads">
+            <MetaAdsTab candidato={candidato} />
+          </TabsContent>
+
           <TabsContent value="trayectoria">
             <TrayectoriaTab candidato={candidato} />
           </TabsContent>
