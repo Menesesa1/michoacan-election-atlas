@@ -576,7 +576,7 @@ async function resolverAyuntamiento(c: Candidato, padron: PadronCache | null): P
   const sec = brechaPp != null
     ? estimarSecciones(secT, brechaPp)
     : { riesgo: null as number | null, pivote: null as number | null };
-  const fragmentacion = await fragMunicipio(muni.clave);
+  const fragmentacion = await fragMunicipio(muni.clave, muni.nombre);
 
   const fuenteHist = ult?.fuente === "DB" ? "IEM (Perplexity/Wikipedia)" : "IEM seed";
   const origenPartes: string[] = [`IEM · Ayuntamiento ${muni.nombre}`];
