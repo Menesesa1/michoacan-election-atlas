@@ -55,19 +55,56 @@ export function EvaluacionDigitalTab({ candidato, onMetricasActualizadas }: Prop
   const [loading, setLoading] = useState(false);
   const [aplicando, setAplicando] = useState(false);
 
-  // Persistencia ligera en localStorage para no perder la evaluación al cambiar pestañas
+  // Persistencia en BD (candidato_analisis tipo='eval_digital') con fallback a localStorage
+  // para no perder lo trabajado entre tabs ni entre dispositivos.
   useEffect(() => {
-    const raw = localStorage.getItem(STORAGE_KEY(candidato.id));
-    if (raw) {
-      try { setEvaluacion(JSON.parse(raw)); } catch { /* noop */ }
-    } else {
-      setEvaluacion(null);
-    }
+    let cancelado = false;
+    (async () => {
+      // 1) Intenta BD
+      const { data } = await supabase
+        .from("candidato_analisis")
+        .select("output_json")
+        .eq("candidato_id", candidato.id)
+        .eq("tipo", "eval_digital")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (cancelado) return;
+      if (data?.output_json) {
+        const ev = data.output_json as unknown as EvaluacionRedes;
+        setEvaluacion(ev);
+        localStorage.setItem(STORAGE_KEY(candidato.id), JSON.stringify(ev));
+        return;
+      }
+      // 2) Fallback: localStorage
+      const raw = localStorage.getItem(STORAGE_KEY(candidato.id));
+      if (raw) {
+        try { setEvaluacion(JSON.parse(raw)); } catch { /* noop */ }
+      } else {
+        setEvaluacion(null);
+      }
+    })();
+    return () => { cancelado = true; };
   }, [candidato.id]);
 
-  const guardarEnStorage = (e: EvaluacionRedes | null) => {
-    if (e) localStorage.setItem(STORAGE_KEY(candidato.id), JSON.stringify(e));
-    else localStorage.removeItem(STORAGE_KEY(candidato.id));
+  const guardarEnStorage = async (e: EvaluacionRedes | null) => {
+    if (e) {
+      localStorage.setItem(STORAGE_KEY(candidato.id), JSON.stringify(e));
+      try {
+        const { data: authData } = await supabase.auth.getUser();
+        if (authData?.user) {
+          await supabase.from("candidato_analisis").insert([{
+            candidato_id: candidato.id,
+            user_id: authData.user.id,
+            tipo: "eval_digital",
+            output_json: e as never,
+            model: "google/gemini-2.5-flash",
+          }]);
+        }
+      } catch { /* no bloquear UI si falla persistencia */ }
+    } else {
+      localStorage.removeItem(STORAGE_KEY(candidato.id));
+    }
   };
 
   const evaluar = async () => {
