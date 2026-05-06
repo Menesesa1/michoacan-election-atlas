@@ -9,7 +9,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
-import { Sparkles, AlertTriangle, RotateCcw, Search, MessageSquare, User, Users2, History, Radar, ExternalLink, TrendingUp, FileText } from "lucide-react";
+import { Sparkles, AlertTriangle, RotateCcw, Search, MessageSquare, User, Users2, History, Radar, ExternalLink, TrendingUp, FileText, Megaphone } from "lucide-react";
+import { MetaAdsTab } from "./MetaAdsTab";
 import { generarBriefingInterno } from "@/lib/pdf-briefing-interno";
 import { toast as sonnerToast } from "sonner";
 import type {
