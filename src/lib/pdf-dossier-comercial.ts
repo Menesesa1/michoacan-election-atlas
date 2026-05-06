@@ -1,9 +1,11 @@
-// Dossier COMERCIAL (miedo + urgencia) personalizado por candidato/distrito.
-// Estilo dark glassmorphism, paleta carbón + dorado + rojo alerta.
-// NO revela metodología; muestra diagnóstico, brecha, riesgo y costo de inacción.
+// Dossier COMERCIAL — versión ligera de "carta de presentación".
+// Objetivo: demostrar que tenemos el territorio BIEN investigado (datos duros: secciones,
+// lista nominal, demografía, presencia digital, histórico) sin meter miedo ni dar estrategia.
+// Tono: profesional, sereno, cercano. Cierre = invitación a conversar.
 
 import jsPDF from "jspdf";
-import type { Candidato } from "./candidatos/types";
+import type { Candidato, MetricasRedes, PlataformaRed } from "./candidatos/types";
+import { PLATAFORMA_LABEL } from "./candidatos/types";
 import type { MetricasOficiales } from "./dossier-data-resolver";
 
 const NIVEL_LABEL: Record<string, string> = {
@@ -13,153 +15,56 @@ const NIVEL_LABEL: Record<string, string> = {
   ayuntamientos: "Presidencia Municipal",
 };
 
-// Cálculo determinista de "métricas locales" a partir del candidato.
-// Hash estable sobre id+territorio para que cada candidato tenga números propios y reproducibles.
-function hashSeed(s: string): number {
-  let h = 2166136261 >>> 0;
-  for (let i = 0; i < s.length; i++) {
-    h ^= s.charCodeAt(i);
-    h = Math.imul(h, 16777619) >>> 0;
-  }
-  return h;
-}
-function rng(seed: number) {
-  let s = seed >>> 0;
-  return () => {
-    s = (s * 1664525 + 1013904223) >>> 0;
-    return s / 0xffffffff;
-  };
-}
-
-interface MetricasLocales {
-  brechaPp: number;            // brecha estimada vs adversario
-  intencionPropia: number;     // %
-  intencionRival: number;      // %
-  rivalPartido: string | null;
-  cicloRef: number | null;
-  listaNominal: number | null;
-  seccionesRiesgo: number;     // # secciones rojas
-  seccionesPivote: number;     // # secciones decisivas
-  seccionesTotal: number | null;
-  costoSemanal: number;        // MXN/semana de inacción
-  diasRestantes: number;       // a la jornada 2027
-  probDerrota: number;         // %
-  amenazasDigitales: number;   // narrativas adversas activas
-  participacionEsperada: number;
-  pctJovenes: number | null;
-  pctMayores: number | null;
-  fuenteResultados: string | null;
-  fuentePadron: string | null;
-  origen: string;
-  esEstimacion: boolean;
-  fragmentacion: MetricasOficiales["fragmentacion"];
-}
-
-function diasA2027(): number {
-  const target = new Date("2027-06-06T00:00:00");
-  const now = new Date();
-  return Math.max(0, Math.ceil((target.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
-}
-
-function calcularMetricas(c: Candidato, oficial?: MetricasOficiales | null): MetricasLocales {
-  const seed = hashSeed(`${c.id}|${c.territorio}|${c.partido}`);
-  const r = rng(seed);
-  const baseBrechaEst = c.es_propio ? 6 + r() * 12 : 8 + r() * 14;
-  const intencionPropiaEst = Math.round((c.es_propio ? 22 + r() * 10 : 18 + r() * 8) * 10) / 10;
-  const intencionRivalEst = Math.round((intencionPropiaEst + baseBrechaEst) * 10) / 10;
-  const escala =
-    c.nivel === "gobernador" ? 8 :
-    c.nivel === "diputados_federales" ? 4 :
-    c.nivel === "diputados" ? 3 : 1;
-
-  // Brecha real → probabilidad real de derrota (sigmoide simple)
-  const brecha = oficial?.brechaPp ?? baseBrechaEst;
-  const probDerrota = Math.round(
-    Math.max(20, Math.min(90, 50 + brecha * 1.6 + (c.es_propio ? -4 : 4))),
-  );
-
-  // Costo semanal escalado por lista nominal real cuando exista
-  const lista = oficial?.listaNominal ?? null;
-  const costoBase = lista
-    ? Math.max(220_000, Math.min(620_000, 0.18 * lista + 80_000))
-    : 280_000 + r() * 240_000;
-  const costoSemanal = Math.round((costoBase * (escala / 2 + 0.5)) / 1000) * 1000;
-
-  // Total real de secciones (oficial > fragmentación INE > null)
-  const seccionesTotalReal =
-    oficial?.seccionesTotal ?? oficial?.fragmentacion?.total ?? null;
-
-  // Riesgo y pivote: SIEMPRE acotados al total real para que nunca excedan
-  // las secciones existentes en el territorio (ej. Quiroga = 14 secs).
-  const brechaUsada = oficial?.brechaPp ?? baseBrechaEst;
-  let seccionesRiesgo: number;
-  let seccionesPivote: number;
-  if (seccionesTotalReal && seccionesTotalReal > 0) {
-    const fr = Math.min(0.55, Math.max(0.10, brechaUsada / 60));
-    const fp = Math.min(0.30, Math.max(0.08, 0.28 - Math.abs(brechaUsada) / 120));
-    seccionesRiesgo = oficial?.seccionesRiesgo ?? Math.round(seccionesTotalReal * fr);
-    seccionesPivote = oficial?.seccionesPivote ?? Math.round(seccionesTotalReal * fp);
-    // Tope duro: nunca más que el total
-    seccionesRiesgo = Math.min(seccionesRiesgo, seccionesTotalReal);
-    seccionesPivote = Math.min(seccionesPivote, seccionesTotalReal - seccionesRiesgo >= 0
-      ? Math.max(0, seccionesTotalReal - seccionesRiesgo) + Math.min(seccionesPivote, Math.ceil(seccionesTotalReal * 0.4))
-      : seccionesPivote);
-    seccionesPivote = Math.min(seccionesPivote, Math.ceil(seccionesTotalReal * 0.4));
-  } else {
-    // Sin total conocido: fallback escalado pero conservador
-    seccionesRiesgo = oficial?.seccionesRiesgo ?? Math.round((8 + r() * 16) * escala);
-    seccionesPivote = oficial?.seccionesPivote ?? Math.round((4 + r() * 10) * escala);
-  }
-
-  return {
-    brechaPp: Math.round((oficial?.brechaPp ?? baseBrechaEst) * 10) / 10,
-    intencionPropia: oficial?.intencionPropia ?? intencionPropiaEst,
-    intencionRival: oficial?.intencionRival ?? intencionRivalEst,
-    rivalPartido: oficial?.rivalPartido ?? null,
-    cicloRef: oficial?.cicloRef ?? null,
-    listaNominal: lista,
-    seccionesRiesgo,
-    seccionesPivote,
-    seccionesTotal: seccionesTotalReal,
-    costoSemanal,
-    diasRestantes: diasA2027(),
-    probDerrota,
-    amenazasDigitales: Math.round(3 + r() * 6),
-    participacionEsperada: oficial?.participacionHist ?? Math.round((52 + r() * 14) * 10) / 10,
-    pctJovenes: oficial?.demografia?.pctJovenes18a29 ?? null,
-    pctMayores: oficial?.demografia?.pctAdultoMayor60mas ?? null,
-    fuenteResultados: oficial?.fuenteResultados ?? null,
-    fuentePadron: oficial?.fuentePadron ?? null,
-    origen: oficial?.origen ?? "Estimación EME",
-    esEstimacion: oficial?.esEstimacion ?? true,
-    fragmentacion: oficial?.fragmentacion ?? null,
-  };
-}
-
 interface Input {
   candidato: Candidato;
   consultor?: string;
   metricasOficiales?: MetricasOficiales | null;
 }
 
+const fmtNum = (n: number | null | undefined) =>
+  n == null ? "—" : n.toLocaleString("es-MX");
+
+const fmtSecs = (arr: number[] | undefined, max = 18): string => {
+  if (!arr || arr.length === 0) return "—";
+  if (arr.length <= max) return arr.join(", ");
+  return arr.slice(0, max).join(", ") + `, … (+${arr.length - max})`;
+};
+
+function plataformasConDatos(m: MetricasRedes | undefined): Array<{
+  plataforma: PlataformaRed;
+  seguidores?: number;
+  engagement?: number;
+}> {
+  if (!m) return [];
+  return Object.entries(m)
+    .map(([p, v]) => ({
+      plataforma: p as PlataformaRed,
+      seguidores: v?.seguidores,
+      engagement: v?.engagement_rate,
+    }))
+    .filter((x) => x.seguidores != null || x.engagement != null);
+}
+
 export function generarDossierComercial({ candidato, consultor = "Job Meneses", metricasOficiales }: Input) {
-  const m = calcularMetricas(candidato, metricasOficiales);
+  const oficial = metricasOficiales ?? null;
+  const frag = oficial?.fragmentacion ?? null;
+
   const doc = new jsPDF({ unit: "pt", format: "letter" });
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
   const margin = 48;
   const contentW = pageW - margin * 2;
 
-  // Paleta dark
-  const C_FONDO: [number, number, number] = [10, 12, 20];
-  const C_PANEL: [number, number, number] = [22, 24, 34];
-  const C_PANEL_2: [number, number, number] = [30, 32, 44];
-  const C_TEXTO: [number, number, number] = [240, 235, 225];
-  const C_MUTED: [number, number, number] = [150, 150, 165];
-  const C_DORADO: [number, number, number] = [200, 162, 95];
-  const C_ROJO: [number, number, number] = [220, 70, 80];
-  const C_AMBAR: [number, number, number] = [240, 175, 60];
-  const C_VERDE: [number, number, number] = [80, 180, 130];
+  // Paleta clara, sobria
+  const C_FONDO: [number, number, number] = [252, 250, 246];
+  const C_PANEL: [number, number, number] = [245, 241, 233];
+  const C_PANEL_2: [number, number, number] = [255, 255, 255];
+  const C_TEXTO: [number, number, number] = [28, 30, 38];
+  const C_MUTED: [number, number, number] = [110, 110, 120];
+  const C_DORADO: [number, number, number] = [165, 130, 60];
+  const C_VERDE: [number, number, number] = [60, 130, 90];
+  const C_AMBAR: [number, number, number] = [200, 145, 50];
+  const C_AZUL: [number, number, number] = [55, 90, 160];
 
   const setT = (c: [number, number, number]) => doc.setTextColor(...c);
   const setF = (c: [number, number, number]) => doc.setFillColor(...c);
@@ -170,32 +75,32 @@ export function generarDossierComercial({ candidato, consultor = "Job Meneses", 
     doc.rect(0, 0, pageW, pageH, "F");
   };
 
-  const headerPag = (eyebrow: string, num: string) => {
+  const headerPag = (eyebrow: string) => {
     setF(C_DORADO);
     doc.rect(margin, margin - 14, 24, 2, "F");
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(7);
+    doc.setFontSize(7.5);
     setT(C_DORADO);
     doc.text(eyebrow, margin + 32, margin - 12);
-    doc.text(num, pageW - margin, margin - 12, { align: "right" });
+    doc.text("EME · INTELIGENCIA ELECTORAL", pageW - margin, margin - 12, { align: "right" });
   };
 
-  const footer = (idx: number) => {
+  const footer = (idx: number, total: number) => {
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(7);
+    doc.setFontSize(7.5);
     setT(C_MUTED);
-    doc.text(`EME · Diagnóstico confidencial · ${candidato.nombre}`, margin, pageH - 24);
-    doc.text(`${String(idx).padStart(2, "0")} / 06`, pageW - margin, pageH - 24, { align: "right" });
+    doc.text(`Reporte de territorio · ${candidato.nombre}`, margin, pageH - 24);
+    doc.text(`${String(idx).padStart(2, "0")} / 0${total}`, pageW - margin, pageH - 24, { align: "right" });
   };
 
-  // ============= PORTADA =============
+  // ============ PORTADA ============
   pintarFondo();
   setF(C_DORADO);
   doc.rect(margin, 70, 50, 2, "F");
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
   setT(C_DORADO);
-  doc.text("DIAGNÓSTICO RESERVADO · CIRCULACIÓN LIMITADA", margin, 90);
+  doc.text("REPORTE DE TERRITORIO · USO RESERVADO", margin, 90);
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
@@ -204,250 +109,133 @@ export function generarDossierComercial({ candidato, consultor = "Job Meneses", 
 
   // Título
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(44);
+  doc.setFontSize(40);
   setT(C_TEXTO);
-  doc.text("Dossier", margin, 240);
+  doc.text("Lo que ya", margin, 220);
   setT(C_DORADO);
-  doc.text("Estratégico", margin, 285);
+  doc.text("sabemos de su", margin, 262);
+  setT(C_TEXTO);
+  doc.text("territorio.", margin, 304);
 
-  // Etiqueta candidato
+  // Subtítulo
   doc.setFont("helvetica", "normal");
   doc.setFontSize(11);
   setT(C_MUTED);
-  doc.text("PREPARADO PARA", margin, 340);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(22);
-  setT(C_TEXTO);
-  const nLines = doc.splitTextToSize(candidato.nombre, contentW);
-  doc.text(nLines, margin, 365);
+  const sub = doc.splitTextToSize(
+    "Una fotografía con datos oficiales del INE y del IEM, integrados con la información pública sobre su candidatura. Sin estrategia. Sin presión. Solo el punto de partida.",
+    contentW - 60,
+  );
+  doc.text(sub, margin, 340, { lineHeightFactor: 1.5 });
+
+  // Tarjeta destinatario
+  const destY = 410;
+  setF(C_PANEL);
+  doc.rect(margin, destY, contentW, 110, "F");
+  setF(C_DORADO);
+  doc.rect(margin, destY, 3, 110, "F");
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(11);
+  doc.setFontSize(8);
+  setT(C_MUTED);
+  doc.text("PREPARADO PARA", margin + 18, destY + 24);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(20);
+  setT(C_TEXTO);
+  const nLines = doc.splitTextToSize(candidato.nombre, contentW - 36);
+  doc.text(nLines, margin + 18, destY + 52);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
   setT(C_MUTED);
   doc.text(
     `${candidato.cargo_buscado || NIVEL_LABEL[candidato.nivel] || candidato.nivel} · ${candidato.territorio} · ${candidato.partido}`,
-    margin,
-    365 + nLines.length * 22 + 6,
+    margin + 18,
+    destY + 52 + nLines.length * 20 + 8,
   );
 
-  // Reloj de campaña destacado
-  const relojY = pageH - 240;
-  setF(C_PANEL);
-  doc.rect(margin, relojY, contentW, 110, "F");
-  setF(C_ROJO);
-  doc.rect(margin, relojY, 3, 110, "F");
+  // Pie portada
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
-  setT(C_ROJO);
-  doc.text("RELOJ DE CAMPAÑA · JORNADA 2027", margin + 18, relojY + 22);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(56);
-  setT(C_TEXTO);
-  doc.text(String(m.diasRestantes), margin + 18, relojY + 78);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(11);
   setT(C_MUTED);
-  doc.text("días para el cierre del tablero.", margin + 18 + 130, relojY + 78);
-  doc.setFontSize(9);
+  doc.text(
+    `${consultor} · ${new Date().toLocaleDateString("es-MX", { year: "numeric", month: "long", day: "numeric" })}`,
+    margin,
+    pageH - 60,
+  );
   setT(C_DORADO);
-  doc.text("Cada semana sin estructura cuesta votos que no se recuperan.", margin + 18, relojY + 98);
-
-  doc.setFont("helvetica", "normal");
+  doc.text("WhatsApp +52 443 528 1340", pageW - margin, pageH - 60, { align: "right" });
   doc.setFontSize(7.5);
   setT(C_MUTED);
   doc.text(
-    `Entregado por ${consultor} · ${new Date().toLocaleDateString("es-MX", { year: "numeric", month: "long", day: "numeric" })}`,
+    "Datos: INE-DERFE 2026 · IEM cómputos oficiales · Catálogo INE de secciones · Información pública del candidato.",
     margin,
-    pageH - 50,
+    pageH - 40,
   );
-  setT(C_DORADO);
-  doc.text("WhatsApp +52 443 528 1340", pageW - margin, pageH - 50, { align: "right" });
 
-  // ============= P2: DIAGNÓSTICO BRECHA =============
+  // ============ P2 · TERRITORIO ============
   doc.addPage();
   pintarFondo();
-  headerPag("01 · DIAGNÓSTICO", "P2");
+  headerPag("01 · TERRITORIO");
   let y = margin + 30;
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(26);
+  doc.setFontSize(22);
   setT(C_TEXTO);
-  doc.text("La brecha que define la elección", margin, y);
+  doc.text("Su territorio en datos", margin, y);
   y += 14;
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(10.5);
-  setT(C_MUTED);
-  const subt = doc.splitTextToSize(
-    `Hoy, en ${candidato.territorio}, los números no están a su favor. Esta es la fotografía cruda del territorio antes de cualquier intervención.`,
-    contentW,
-  );
-  doc.text(subt, margin, y + 14, { lineHeightFactor: 1.5 });
-  y += subt.length * 11 * 1.5 + 30;
-
-  // Dos paneles comparativos — altura mayor para acomodar líneas extra
-  const panelH = 145;
-  const panelW = (contentW - 16) / 2;
-  // Propio
-  setF(C_PANEL);
-  doc.rect(margin, y, panelW, panelH, "F");
-  setF(c_color(candidato.es_propio ? C_DORADO : C_MUTED));
-  doc.rect(margin, y, 3, panelH, "F");
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8);
-  setT(C_MUTED);
-  doc.text("INTENCIÓN ESTIMADA · USTED", margin + 18, y + 24);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(38);
-  setT(C_TEXTO);
-  doc.text(`${m.intencionPropia.toFixed(1)}%`, margin + 18, y + 78);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8.5);
-  setT(C_MUTED);
-  const baseTxt = doc.splitTextToSize(
-    `Base: voto duro de ${candidato.partido} en ${candidato.territorio}`,
-    panelW - 32,
-  );
-  doc.text(baseTxt, margin + 18, y + 100, { lineHeightFactor: 1.4 });
-  doc.text(
-    `Sin movilización adicional al ${m.participacionEsperada.toFixed(1)}%`,
-    margin + 18,
-    y + 100 + baseTxt.length * 11,
-  );
-
-  // Rival
-  const xR = margin + panelW + 16;
-  setF(C_PANEL);
-  doc.rect(xR, y, panelW, panelH, "F");
-  setF(C_ROJO);
-  doc.rect(xR, y, 3, panelH, "F");
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8);
-  setT(C_ROJO);
-  const labelRival = m.rivalPartido
-    ? `INTENCIÓN HISTÓRICA · ADVERSARIO (${m.rivalPartido})`
-    : "INTENCIÓN ESTIMADA · ADVERSARIO";
-  doc.text(labelRival, xR + 18, y + 24);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(38);
-  setT(C_TEXTO);
-  doc.text(`${m.intencionRival.toFixed(1)}%`, xR + 18, y + 78);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8.5);
-  setT(C_MUTED);
-  doc.text(
-    m.cicloRef
-      ? `Resultado real ciclo ${m.cicloRef} en este territorio`
-      : "Construyendo ventaja desde hace meses",
-    xR + 18, y + 100,
-  );
-  doc.text(
-    m.listaNominal
-      ? `Lista nominal: ${m.listaNominal.toLocaleString("es-MX")}`
-      : "Narrativa instalada en medios locales",
-    xR + 18, y + 115,
-  );
-  if (m.pctJovenes != null && m.pctMayores != null) {
-    doc.text(
-      `${m.pctJovenes.toFixed(0)}% jóvenes 18-29 · ${m.pctMayores.toFixed(0)}% adulto mayor 60+`,
-      xR + 18, y + 130,
-    );
-  }
-  y += panelH + 18;
-
-  // Brecha grande
-  setF(C_PANEL_2);
-  doc.rect(margin, y, contentW, 90, "F");
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8);
-  setT(C_AMBAR);
-  doc.text("BRECHA ACTUAL EN PUNTOS PORCENTUALES", margin + 18, y + 22);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(48);
-  setT(C_AMBAR);
-  doc.text(`-${m.brechaPp.toFixed(1)} pp`, margin + 18, y + 68);
-  doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
-  setT(C_TEXTO);
-  const brechaT = doc.splitTextToSize(
-    `Cerrar esta brecha requiere convertir ~${Math.round(m.brechaPp * 1.5)} de cada 100 indecisos en votantes movilizados. Sin método, ese cierre no ocurre solo.`,
-    contentW - 220,
-  );
-  doc.text(brechaT, margin + 220, y + 40, { lineHeightFactor: 1.4 });
-  footer(2);
-
-  // ============= P3: RIESGO TERRITORIAL =============
-  doc.addPage();
-  pintarFondo();
-  headerPag("02 · RIESGO TERRITORIAL", "P3");
-  y = margin + 30;
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(26);
-  setT(C_TEXTO);
-  doc.text("El mapa que su rival ya tiene", margin, y);
-  y += 36;
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(10.5);
   setT(C_MUTED);
-  const txt = doc.splitTextToSize(
-    `${candidato.territorio} no es un territorio uniforme. Cada sección electoral tiene un comportamiento distinto, y sin lectura quirúrgica del padrón, los recursos se dispersan donde menos rinden.`,
+  const intro = doc.splitTextToSize(
+    `Esto es lo que el INE y el IEM registran hoy para ${candidato.territorio}. Son los mismos números con los que cualquier equipo serio empieza a trabajar.`,
     contentW,
   );
-  doc.text(txt, margin, y, { lineHeightFactor: 1.55 });
-  y += txt.length * 10.5 * 1.55 + 24;
+  doc.text(intro, margin, y + 14, { lineHeightFactor: 1.5 });
+  y += intro.length * 10 * 1.5 + 24;
 
-  // 3 KPIs en fila — siempre en contexto del total real de secciones
-  const totalRef = m.seccionesTotal ?? m.fragmentacion?.total ?? null;
-  const subRiesgo = totalRef
-    ? `de ${totalRef} secciones del territorio donde el voto propio se erosiona`
-    : "secciones donde su voto se está erosionando";
-  const subPivote = totalRef
-    ? `de ${totalRef} secciones que se definirán por menos de 5 pp`
-    : "decidirán la elección por menos de 5 pp";
+  // KPIs simples: Lista nominal · Total secciones · Participación histórica
   const kpis = [
-    { label: "SECCIONES EN ROJO", val: m.seccionesRiesgo.toString(), sub: subRiesgo, color: C_ROJO },
-    { label: "SECCIONES PIVOTE", val: m.seccionesPivote.toString(), sub: subPivote, color: C_AMBAR },
-    { label: "AMENAZAS DIGITALES", val: m.amenazasDigitales.toString(), sub: "narrativas adversas activas en redes", color: C_ROJO },
+    { label: "LISTA NOMINAL", val: fmtNum(oficial?.listaNominal), sub: "Padrón INE-DERFE 2026", color: C_AZUL },
+    { label: "SECCIONES", val: fmtNum(oficial?.seccionesTotal ?? frag?.total ?? null), sub: "Catálogo oficial INE", color: C_DORADO },
+    { label: "PARTICIPACIÓN HIST.", val: oficial?.participacionHist != null ? `${oficial.participacionHist.toFixed(1)}%` : "—", sub: "Promedio ciclos previos", color: C_VERDE },
   ];
   const kw = (contentW - 24) / 3;
   kpis.forEach((k, i) => {
     const x = margin + i * (kw + 12);
-    setF(C_PANEL);
-    doc.rect(x, y, kw, 130, "F");
-    setF(c_color(k.color));
-    doc.rect(x, y, 3, 130, "F");
+    setF(C_PANEL_2);
+    doc.rect(x, y, kw, 110, "F");
+    setF(k.color);
+    doc.rect(x, y, 3, 110, "F");
     doc.setFont("helvetica", "normal");
     doc.setFontSize(7.5);
-    setT(c_color(k.color));
+    setT(k.color);
     doc.text(k.label, x + 14, y + 22);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(42);
+    doc.setFontSize(26);
     setT(C_TEXTO);
-    doc.text(k.val, x + 14, y + 78);
+    doc.text(k.val, x + 14, y + 62);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8.5);
     setT(C_MUTED);
-    const ls = doc.splitTextToSize(k.sub, kw - 28);
-    doc.text(ls, x + 14, y + 100, { lineHeightFactor: 1.4 });
+    doc.text(k.sub, x + 14, y + 88);
   });
-  y += 150;
+  y += 130;
 
-  // Fragmentación territorial INE (catálogo SECCION.dbf) — solo si hay datos oficiales
-  if (m.fragmentacion) {
-    const f = m.fragmentacion;
-    const fragH = 110;
-    setF(C_PANEL);
+  // Composición territorial (urbano/mixto/rural) — sin alarmismo
+  if (frag) {
+    setF(C_PANEL_2);
+    const fragH = 130;
     doc.rect(margin, y, contentW, fragH, "F");
     setF(C_DORADO);
     doc.rect(margin, y, 3, fragH, "F");
     doc.setFont("helvetica", "normal");
     doc.setFontSize(7.5);
     setT(C_DORADO);
-    doc.text(`FRAGMENTACIÓN TERRITORIAL INE · PERFIL ${f.perfil.toUpperCase()}`, margin + 18, y + 22);
+    doc.text(`COMPOSICIÓN TERRITORIAL · PERFIL ${frag.perfil.toUpperCase()}`, margin + 18, y + 22);
 
     const subW = (contentW - 40 - 24) / 3;
     const subY = y + 38;
     const items: Array<{ label: string; n: number; pct: number; color: [number, number, number] }> = [
-      { label: "URBANAS", n: f.urbanas, pct: f.pctUrbano, color: C_VERDE },
-      { label: "MIXTAS", n: f.mixtas, pct: f.pctMixto, color: C_AMBAR },
-      { label: "RURALES", n: f.rurales, pct: f.pctRural, color: C_ROJO },
+      { label: "URBANAS", n: frag.urbanas, pct: frag.pctUrbano, color: C_AZUL },
+      { label: "MIXTAS", n: frag.mixtas, pct: frag.pctMixto, color: C_AMBAR },
+      { label: "RURALES", n: frag.rurales, pct: frag.pctRural, color: C_VERDE },
     ];
     items.forEach((it, i) => {
       const sx = margin + 18 + i * (subW + 12);
@@ -456,14 +244,14 @@ export function generarDossierComercial({ candidato, consultor = "Job Meneses", 
       setT(C_MUTED);
       doc.text(it.label, sx, subY);
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(22);
+      doc.setFontSize(20);
       setT(it.color);
       doc.text(`${it.n}`, sx, subY + 22);
       doc.setFont("helvetica", "normal");
       doc.setFontSize(9);
       setT(C_MUTED);
       doc.text(`${it.pct.toFixed(1)}% del territorio`, sx, subY + 38);
-      setF([40, 42, 56]);
+      setF([225, 222, 215]);
       doc.rect(sx, subY + 46, subW, 4, "F");
       setF(it.color);
       doc.rect(sx, subY + 46, (subW * it.pct) / 100, 4, "F");
@@ -473,212 +261,230 @@ export function generarDossierComercial({ candidato, consultor = "Job Meneses", 
     doc.setFontSize(8.5);
     setT(C_TEXTO);
     doc.text(
-      `${f.noDigitales} secciones rurales/mixtas requieren operación NO digital · Fuente: catálogo INE (SECCION.dbf)`,
+      `Fuente: catálogo INE (clasificación oficial de secciones por tipo de área).`,
       margin + 18,
       y + fragH - 14,
     );
     y += fragH + 16;
+
+    // Lista explícita de secciones — DEMUESTRA precisión
+    const listaH = 150;
+    setF(C_PANEL);
+    doc.rect(margin, y, contentW, listaH, "F");
+    setF(C_DORADO);
+    doc.rect(margin, y, 3, listaH, "F");
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7.5);
+    setT(C_DORADO);
+    doc.text(`SECCIONES IDENTIFICADAS · ${frag.alcance.toUpperCase()}`, margin + 18, y + 22);
+
+    let ly = y + 40;
+    const renderLinea = (label: string, count: number, secs: number[] | undefined, color: [number, number, number]) => {
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9);
+      setT(color);
+      doc.text(`${label} (${count})`, margin + 18, ly);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8.5);
+      setT(C_TEXTO);
+      const txt = doc.splitTextToSize(fmtSecs(secs, 22), contentW - 130);
+      doc.text(txt, margin + 110, ly, { lineHeightFactor: 1.4 });
+      ly += Math.max(14, txt.length * 11);
+    };
+    renderLinea("Urbanas", frag.urbanas, frag.seccionesUrbanas, C_AZUL);
+    renderLinea("Mixtas", frag.mixtas, frag.seccionesMixtas, C_AMBAR);
+    renderLinea("Rurales", frag.rurales, frag.seccionesRurales, C_VERDE);
+    y += listaH + 16;
   }
 
-  // Bloque cita — altura dinámica para que el texto no sobresalga
-  doc.setFont("helvetica", "bolditalic");
-  doc.setFontSize(12);
-  const cita = doc.splitTextToSize(
-    `"Mientras usted lee esto, el equipo de su adversario ya está priorizando estas mismas secciones. La diferencia entre ganar y perder no es el dinero — es quién tiene el mapa primero."`,
-    contentW - 40,
-  );
-  const citaH = Math.max(80, 28 + cita.length * 12 * 1.45 + 22);
-  setF(C_PANEL_2);
-  doc.rect(margin, y, contentW, citaH, "F");
-  setF(C_DORADO);
-  doc.rect(margin, y, 3, citaH, "F");
-  setT(C_TEXTO);
-  doc.text(cita, margin + 20, y + 30, { lineHeightFactor: 1.45 });
-  footer(3);
+  // Demografía breve
+  if (oficial?.demografia && (oficial.demografia.pctJovenes18a29 != null || oficial.demografia.pctAdultoMayor60mas != null)) {
+    setF(C_PANEL_2);
+    doc.rect(margin, y, contentW, 70, "F");
+    setF(C_VERDE);
+    doc.rect(margin, y, 3, 70, "F");
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7.5);
+    setT(C_VERDE);
+    doc.text("PERFIL DEMOGRÁFICO DEL PADRÓN", margin + 18, y + 22);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    setT(C_TEXTO);
+    const partes: string[] = [];
+    if (oficial.demografia.pctJovenes18a29 != null) partes.push(`${oficial.demografia.pctJovenes18a29.toFixed(0)}% jóvenes 18-29`);
+    if (oficial.demografia.pctAdultoMayor60mas != null) partes.push(`${oficial.demografia.pctAdultoMayor60mas.toFixed(0)}% adulto mayor 60+`);
+    if (oficial.demografia.hombres != null && oficial.demografia.mujeres != null) {
+      const total = oficial.demografia.hombres + oficial.demografia.mujeres;
+      if (total > 0) {
+        const pctM = (oficial.demografia.mujeres / total) * 100;
+        partes.push(`${pctM.toFixed(0)}% mujeres`);
+      }
+    }
+    doc.text(partes.join("  ·  ") || "—", margin + 18, y + 48);
+  }
 
-  // ============= P4: COSTO DE LA INACCIÓN =============
+  footer(2, 4);
+
+  // ============ P3 · LO QUE ENCONTRAMOS DE USTED ============
   doc.addPage();
   pintarFondo();
-  headerPag("03 · COSTO DE LA INACCIÓN", "P4");
+  headerPag("02 · SU CANDIDATURA");
   y = margin + 30;
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(26);
+  doc.setFontSize(22);
   setT(C_TEXTO);
-  doc.text("Cada semana que pasa, cuesta", margin, y);
-  y += 36;
-
-  // Costo semanal grande
-  const panelCostoH = 175;
-  setF(C_PANEL);
-  doc.rect(margin, y, contentW, panelCostoH, "F");
-  setF(C_ROJO);
-  doc.rect(margin, y, 3, panelCostoH, "F");
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8);
-  setT(C_ROJO);
-  doc.text("COSTO ESTIMADO POR SEMANA SIN WAR ROOM ACTIVO", margin + 20, y + 26);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(46);
-  setT(C_TEXTO);
-  doc.text(
-    `$${m.costoSemanal.toLocaleString("es-MX")} MXN`,
-    margin + 20,
-    y + 90,
-  );
+  doc.text("Lo que vemos públicamente de usted", margin, y);
+  y += 14;
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
   setT(C_MUTED);
-  const c1 = doc.splitTextToSize(
-    "Equivale a contenidos no producidos, brigadistas no entrenados, prensa no atendida y crisis no contenidas. No es un gasto teórico: es voto que se va al adversario.",
-    contentW - 40,
+  const introP = doc.splitTextToSize(
+    "Resumen de su huella pública: redes, trayectoria registrada y cómo se ve desde fuera. Solo lo que cualquiera puede consultar.",
+    contentW,
   );
-  doc.text(c1, margin + 20, y + 122, { lineHeightFactor: 1.5 });
-  y += panelCostoH + 20;
+  doc.text(introP, margin, y + 14, { lineHeightFactor: 1.5 });
+  y += introP.length * 10 * 1.5 + 24;
 
-  // Proyección a la jornada
-  const semanas = Math.max(1, Math.ceil(m.diasRestantes / 7));
-  const acumulado = m.costoSemanal * semanas;
-  const panelProyH = 110;
-  setF(C_PANEL_2);
-  doc.rect(margin, y, contentW, panelProyH, "F");
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8);
-  setT(C_AMBAR);
-  doc.text(`PROYECCIÓN ACUMULADA A LA JORNADA (${semanas} semanas restantes)`, margin + 20, y + 24);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(30);
-  setT(C_AMBAR);
-  doc.text(
-    `$${(acumulado / 1_000_000).toFixed(1)}M MXN`,
-    margin + 20,
-    y + 64,
-  );
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(9.5);
-  setT(C_TEXTO);
-  doc.text(
-    "Equivalente en valor de oportunidad perdido si la decisión se posterga.",
-    margin + 20,
-    y + 90,
-  );
-  footer(4);
+  // Bio breve si existe
+  if (candidato.bio_breve) {
+    setF(C_PANEL_2);
+    const bioLines = doc.splitTextToSize(candidato.bio_breve, contentW - 36);
+    const bioH = Math.max(60, 30 + bioLines.length * 12 * 1.4 + 14);
+    doc.rect(margin, y, contentW, bioH, "F");
+    setF(C_DORADO);
+    doc.rect(margin, y, 3, bioH, "F");
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7.5);
+    setT(C_DORADO);
+    doc.text("PERFIL REGISTRADO", margin + 18, y + 22);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    setT(C_TEXTO);
+    doc.text(bioLines, margin + 18, y + 40, { lineHeightFactor: 1.4 });
+    y += bioH + 16;
+  }
 
-  // ============= P5: ESCENARIO PROBABILÍSTICO =============
+  // Presencia en redes
+  const redes = plataformasConDatos(candidato.metricas_redes);
+  const redesDeclaradas = Object.entries(candidato.redes || {}).filter(([_, v]) => !!v).map(([k]) => k);
+  if (redes.length > 0 || redesDeclaradas.length > 0) {
+    const redesH = redes.length > 0 ? 40 + redes.length * 22 + 30 : 80;
+    setF(C_PANEL);
+    doc.rect(margin, y, contentW, redesH, "F");
+    setF(C_AZUL);
+    doc.rect(margin, y, 3, redesH, "F");
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7.5);
+    setT(C_AZUL);
+    doc.text("PRESENCIA DIGITAL DETECTADA", margin + 18, y + 22);
+
+    if (redes.length > 0) {
+      let ry = y + 40;
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8.5);
+      setT(C_MUTED);
+      doc.text("Plataforma", margin + 18, ry);
+      doc.text("Seguidores", margin + 220, ry);
+      doc.text("Engagement", margin + 350, ry);
+      ry += 14;
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      setT(C_TEXTO);
+      redes.forEach((r) => {
+        doc.text(PLATAFORMA_LABEL[r.plataforma] ?? r.plataforma, margin + 18, ry);
+        doc.text(r.seguidores != null ? r.seguidores.toLocaleString("es-MX") : "—", margin + 220, ry);
+        doc.text(r.engagement != null ? `${r.engagement.toFixed(2)}%` : "—", margin + 350, ry);
+        ry += 18;
+      });
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      setT(C_MUTED);
+      doc.text(
+        `Plataformas declaradas en sitios públicos: ${redesDeclaradas.join(", ") || "—"}`,
+        margin + 18,
+        y + redesH - 14,
+      );
+    } else {
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      setT(C_TEXTO);
+      doc.text(
+        `Detectamos perfiles públicos en: ${redesDeclaradas.join(", ")}.`,
+        margin + 18,
+        y + 48,
+      );
+    }
+    y += redesH + 16;
+  }
+
+  // Trayectoria breve (top 4 hitos)
+  if (candidato.trayectoria && candidato.trayectoria.length > 0) {
+    const hitos = [...candidato.trayectoria]
+      .sort((a, b) => (b.anio || 0) - (a.anio || 0))
+      .slice(0, 4);
+    const trH = 40 + hitos.length * 22 + 12;
+    setF(C_PANEL_2);
+    doc.rect(margin, y, contentW, trH, "F");
+    setF(C_VERDE);
+    doc.rect(margin, y, 3, trH, "F");
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7.5);
+    setT(C_VERDE);
+    doc.text("TRAYECTORIA REGISTRADA", margin + 18, y + 22);
+    let ty = y + 42;
+    hitos.forEach((h) => {
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9);
+      setT(C_TEXTO);
+      doc.text(String(h.anio ?? "—"), margin + 18, ty);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      const linea = `${h.cargo}${h.partido ? ` · ${h.partido}` : ""}`;
+      const t = doc.splitTextToSize(linea, contentW - 80);
+      doc.text(t, margin + 70, ty);
+      ty += Math.max(18, t.length * 11);
+    });
+    y += trH + 16;
+  }
+
+  footer(3, 4);
+
+  // ============ P4 · CIERRE INVITACIÓN ============
   doc.addPage();
   pintarFondo();
-  headerPag("04 · ESCENARIO", "P5");
+  headerPag("03 · SIGUIENTE PASO");
   y = margin + 30;
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(26);
+  doc.setFontSize(24);
   setT(C_TEXTO);
-  doc.text("Si nada cambia hoy", margin, y);
+  doc.text("Esto es solo el inicio.", margin, y);
   y += 36;
 
-  // Probabilidad gigante — altura dinámica para acomodar el texto explicativo
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(11);
-  const e1 = doc.splitTextToSize(
-    `Modelo basado en brecha actual (-${m.brechaPp.toFixed(1)} pp), participación esperada (${m.participacionEsperada.toFixed(1)}%) y comportamiento histórico de ${candidato.territorio}. La probabilidad sube cada semana sin intervención estructurada.`,
-    contentW - 40,
-  );
-  const probH = 150 + e1.length * 11 * 1.5 + 24;
-  setF(C_PANEL);
-  doc.rect(margin, y, contentW, probH, "F");
-  setF(C_ROJO);
-  doc.rect(margin, y, 3, probH, "F");
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8);
-  setT(C_ROJO);
-  doc.text("PROBABILIDAD ESTIMADA DE DERROTA", margin + 20, y + 26);
-
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(96);
-  setT(C_ROJO);
-  doc.text(`${m.probDerrota}%`, margin + 20, y + 130);
-
   doc.setFont("helvetica", "normal");
   doc.setFontSize(11);
   setT(C_TEXTO);
-  doc.text(e1, margin + 20, y + 160, { lineHeightFactor: 1.5 });
-  y += probH + 18;
-
-  // Línea pivote
-  setF(C_PANEL_2);
-  doc.rect(margin, y, contentW, 70, "F");
-  setF(C_VERDE);
-  doc.rect(margin, y, 3, 70, "F");
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(12);
-  setT(C_VERDE);
-  doc.text("Esta probabilidad es reversible.", margin + 18, y + 28);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(9.5);
-  setT(C_TEXTO);
-  doc.text(
-    "Pero solo dentro de la ventana operativa. Después del banderazo formal, la elasticidad cae a la mitad.",
-    margin + 18,
-    y + 50,
-  );
-  footer(5);
-
-  // ============= P6: URGENCIA / CIERRE =============
-  doc.addPage();
-  pintarFondo();
-  headerPag("05 · DECISIÓN", "P6");
-  y = margin + 30;
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(28);
-  setT(C_TEXTO);
-  const tFin = doc.splitTextToSize("La ventana se cierra. La decisión es suya.", contentW);
-  doc.text(tFin, margin, y);
-  y += tFin.length * 28 + 24;
-
-  // Escasez — altura dinámica para no overflow
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(10);
-  const cupoTxt1 = doc.splitTextToSize(
-    `Operamos con número limitado de candidaturas para garantizar profundidad. ${candidato.partido} en ${candidato.territorio} sigue abierto — por ahora.`,
+  const cierreLines = doc.splitTextToSize(
+    "Lo que acaba de ver son los datos públicos integrados — territorio, padrón, secciones, su huella digital. Es la base con la que arrancamos cualquier conversación seria. Si decide platicar, le mostramos lo que esos números significan para su elección y qué se puede hacer con ellos.",
     contentW - 40,
   );
-  const cupoTxt2 = doc.splitTextToSize(
-    "Una vez asignados los cupos, la siguiente ventana abre después de la jornada.",
-    contentW - 40,
-  );
-  const cupoH = 70 + (cupoTxt1.length + cupoTxt2.length) * 14 + 18;
+  doc.text(cierreLines, margin, y, { lineHeightFactor: 1.6 });
+  y += cierreLines.length * 11 * 1.6 + 30;
+
+  // Tarjeta consultor
   setF(C_PANEL);
-  doc.rect(margin, y, contentW, cupoH, "F");
-  setF(C_DORADO);
-  doc.rect(margin, y, 3, cupoH, "F");
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8);
-  setT(C_DORADO);
-  doc.text("CUPO EME · CICLO 2027", margin + 20, y + 24);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(18);
-  setT(C_TEXTO);
-  doc.text("2 contiendas disponibles este trimestre", margin + 20, y + 52);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(10);
-  setT(C_MUTED);
-  doc.text(cupoTxt1, margin + 20, y + 78, { lineHeightFactor: 1.45 });
-  doc.text(cupoTxt2, margin + 20, y + 78 + cupoTxt1.length * 14 + 8, { lineHeightFactor: 1.45 });
-  y += cupoH + 20;
-
-  // CTA destacado
-  setF([28, 30, 42]);
   doc.rect(margin, y, contentW, 130, "F");
   setF(C_DORADO);
   doc.rect(margin, y, 3, 130, "F");
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
   setT(C_DORADO);
-  doc.text("AGENDAR DIAGNÓSTICO ESTRATÉGICO RESERVADO", margin + 18, y + 24);
+  doc.text("CONVERSEMOS", margin + 18, y + 24);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(20);
   setT(C_TEXTO);
   doc.text(consultor, margin + 18, y + 56);
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(11);
+  doc.setFontSize(10);
   setT(C_MUTED);
   doc.text("Director de Estrategia · EME Desarrollo Electoral", margin + 18, y + 76);
   doc.setFont("helvetica", "bold");
@@ -689,20 +495,20 @@ export function generarDossierComercial({ candidato, consultor = "Job Meneses", 
   doc.setFontSize(8.5);
   setT(C_MUTED);
   doc.text(
-    "Reunión de 60 minutos. Sin compromiso. Bajo acuerdo de confidencialidad mutuo.",
+    "Una llamada de 30 minutos. Sin compromiso. Bajo confidencialidad.",
     margin + 18,
     y + 120,
   );
 
-  // Footer confidencial
+  // Pie con fuentes
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7);
   setT(C_MUTED);
-  const fuentesEtiqueta = m.esEstimacion
-    ? "Métricas estimadas con modelo interno EME"
-    : `Cómputos: ${m.fuenteResultados ?? "—"} · Padrón: ${m.fuentePadron ?? "—"} · Modelo EME`;
+  const fuentesEtiqueta = oficial?.esEstimacion === false
+    ? `Cómputos: ${oficial?.fuenteResultados ?? "—"} · Padrón: ${oficial?.fuentePadron ?? "—"}`
+    : "Datos integrados con fuentes públicas oficiales";
   doc.text(
-    `Fuente: ${m.origen}. ${fuentesEtiqueta}.`,
+    `Fuentes: INE-DERFE 2026 · Catálogo INE de secciones · IEM Michoacán. ${fuentesEtiqueta}.`,
     pageW / 2,
     pageH - 24,
     { align: "center" },
@@ -713,10 +519,5 @@ export function generarDossierComercial({ candidato, consultor = "Job Meneses", 
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-zA-Z0-9]+/g, "-")
     .toLowerCase();
-  doc.save(`dossier-comercial-${safe}.pdf`);
-}
-
-// helper porque jsPDF setFillColor exige spread y TS se enoja con tuplas opcionales
-function c_color(c: [number, number, number]): [number, number, number] {
-  return c;
+  doc.save(`reporte-territorio-${safe}.pdf`);
 }
