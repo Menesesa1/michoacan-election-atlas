@@ -6,6 +6,7 @@ import { PieChart, Users } from "lucide-react";
 import Socioeconomico from "@/pages/Socioeconomico";
 import Demografia from "@/pages/Demografia";
 import { ListaNominalBadge } from "@/components/ListaNominalBadge";
+import SeccionesPorMunicipio from "@/components/datos/SeccionesPorMunicipio";
 
 export default function ContextoPanel() {
   const [capa, setCapa] = useState<"socioeconomico" | "demografia">("demografia");
@@ -24,6 +25,7 @@ export default function ContextoPanel() {
         </Tabs>
         <ListaNominalBadge />
       </Card>
+      <SeccionesPorMunicipio />
       {capa === "demografia" ? <Demografia /> : <Socioeconomico />}
     </div>
   );
