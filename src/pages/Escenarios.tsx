@@ -214,13 +214,28 @@ export default function Escenarios() {
           </p>
         </div>
         {output && (
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <ExportarPDF snapshot={snapshot} data={output} />
+            {propioId && (
+              <Button
+                onClick={() => {
+                  toast({ title: "Generando libro de campaña…", description: "Compilando todas las capas. Toma 10-20s." });
+                  descargarLibroDeCampana(propioId).catch((e) =>
+                    toast({ title: "Error", description: e.message, variant: "destructive" })
+                  );
+                }}
+                size="sm"
+                className="bg-gradient-to-r from-primary to-purple-600 text-white hover:opacity-90"
+              >
+                <BookOpen className="w-4 h-4 mr-1.5" /> Libro de campaña completo
+              </Button>
+            )}
             <Button onClick={guardar} variant="outline" size="sm" disabled={saving}>
               {saving ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Save className="w-4 h-4 mr-1.5" />}
               Guardar versión
             </Button>
           </div>
+
         )}
       </div>
 
