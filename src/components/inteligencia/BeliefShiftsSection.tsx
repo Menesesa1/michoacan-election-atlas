@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Brain, RefreshCw, TrendingUp, TrendingDown, Sparkles, EyeOff, Activity } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
+import BeliefShiftDetail from "./BeliefShiftDetail";
 
 interface BeliefShift {
   id: string;
