@@ -183,6 +183,8 @@ export default function BeliefShiftsSection() {
           })}
         </div>
       )}
+
+      <BeliefShiftDetail shift={activo} onClose={() => setActivo(null)} />
     </div>
   );
 }
