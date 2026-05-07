@@ -4,6 +4,7 @@ import {
   ShieldAlert,
   Bot,
   Brain,
+  BrainCircuit,
   Map as MapIcon,
   Megaphone,
   Activity,
@@ -16,12 +17,17 @@ import CibAlertasSection from "@/components/inteligencia/CibAlertasSection";
 import PsicoIntSection from "@/components/inteligencia/PsicoIntSection";
 import GeoIntSection from "@/components/inteligencia/GeoIntSection";
 import NarrativasSection from "@/components/inteligencia/NarrativasSection";
+import BeliefShiftsSection from "@/components/inteligencia/BeliefShiftsSection";
 import { ListeningPanel } from "@/components/ListeningPanel";
 import { MapaCalorSentimiento } from "@/components/MapaCalorSentimiento";
 
 const sections = [
   { id: "alertas", label: "Alertas", icon: ShieldAlert, Component: AlertasOperacion },
   { id: "cib", label: "CIB / Bots", icon: Bot, Component: CibAlertasSection },
+  { id: "creencias", label: "Creencias", icon: BrainCircuit, Component: BeliefShiftsSection },
+  { id: "emociones", label: "Emociones", icon: Brain, Component: PsicoIntSection },
+  { id: "geoint", label: "GEOINT", icon: MapIcon, Component: GeoIntSection },
+  { id: "narrativas", label: "Narrativas", icon: Megaphone, Component: NarrativasSection },
   { id: "emociones", label: "Emociones", icon: Brain, Component: PsicoIntSection },
   { id: "geoint", label: "GEOINT", icon: MapIcon, Component: GeoIntSection },
   { id: "narrativas", label: "Narrativas", icon: Megaphone, Component: NarrativasSection },
