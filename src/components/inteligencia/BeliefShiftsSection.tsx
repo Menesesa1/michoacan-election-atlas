@@ -128,7 +128,11 @@ export default function BeliefShiftsSection() {
             const Icon = ICONO[s.tipo_shift] ?? Activity;
             const isNeg = (s.delta ?? 0) < 0;
             return (
-              <Card key={s.id} className="p-4 space-y-2 bg-card/50 backdrop-blur border-border/50">
+              <Card
+                key={s.id}
+                onClick={() => setActivo(s)}
+                className="p-4 space-y-2 bg-card/50 backdrop-blur border-border/50 cursor-pointer hover:border-primary/50 transition-colors"
+              >
                 <div className="flex items-start gap-3">
                   <Icon className={`w-4 h-4 mt-0.5 ${isNeg ? "text-red-400" : "text-fuchsia-400"}`} />
                   <div className="flex-1">
