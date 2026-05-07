@@ -221,12 +221,11 @@ export default function CibGrafoMaltego() {
     dragRef.current = { x: e.clientX, y: e.clientY, vx: view.x, vy: view.y };
   };
   const onMouseMove = (e: React.MouseEvent) => {
-    if (!dragRef.current) return;
-    setView(v => ({
-      ...v,
-      x: dragRef.current!.vx + (e.clientX - dragRef.current!.x),
-      y: dragRef.current!.vy + (e.clientY - dragRef.current!.y),
-    }));
+    const d = dragRef.current;
+    if (!d) return;
+    const dx = e.clientX - d.x;
+    const dy = e.clientY - d.y;
+    setView(v => ({ ...v, x: d.vx + dx, y: d.vy + dy }));
   };
   const onMouseUp = () => { dragRef.current = null; };
 
