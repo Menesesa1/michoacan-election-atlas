@@ -402,12 +402,12 @@ export async function descargarLibroDeCampana(candidatoId: string) {
 
   // ========== CAP: PARIDAD 2027 ==========
   if (historicoMuni.length || metricas?.cicloRef) {
-    const generoCand = inferirGenero(candidato.nombre) as Genero;
+    const generoCand = inferirGenero(candidato.nombre).genero;
     const histParidad: HistoricoTerritorial[] = historicoMuni
       .filter((h) => h.partido_ganador && h.pct_ganador != null && h.candidato_ganador)
       .map((h) => ({
         anio: h.anio,
-        generoGanador: inferirGenero(h.candidato_ganador) as Genero,
+        generoGanador: inferirGenero(h.candidato_ganador).genero,
         partidoGanador: h.partido_ganador!,
         porcentajeGanador: Number(h.pct_ganador),
       }));
