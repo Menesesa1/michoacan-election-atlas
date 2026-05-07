@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ShieldAlert, Activity, Users, Copy, Zap, RefreshCw, ExternalLink } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
+import CibGrafoMaltego from "./CibGrafoMaltego";
 
 interface CibAlerta {
   id: string;
