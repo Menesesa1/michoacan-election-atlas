@@ -146,6 +146,102 @@ export type Database = {
         }
         Relationships: []
       }
+      belief_shifts: {
+        Row: {
+          batch_id: string | null
+          candidato_id: string | null
+          created_at: string
+          delta: number | null
+          descripcion: string
+          detectado_en: string
+          entidad_nombre: string
+          evidencia: Json
+          id: string
+          severidad: string
+          temas_abandonados: Json
+          temas_nuevos: Json
+          tipo_shift: string
+          titulo: string
+          valor_actual: number | null
+          valor_anterior: number | null
+          ventana_actual: string | null
+          ventana_anterior: string | null
+        }
+        Insert: {
+          batch_id?: string | null
+          candidato_id?: string | null
+          created_at?: string
+          delta?: number | null
+          descripcion: string
+          detectado_en?: string
+          entidad_nombre: string
+          evidencia?: Json
+          id?: string
+          severidad: string
+          temas_abandonados?: Json
+          temas_nuevos?: Json
+          tipo_shift: string
+          titulo: string
+          valor_actual?: number | null
+          valor_anterior?: number | null
+          ventana_actual?: string | null
+          ventana_anterior?: string | null
+        }
+        Update: {
+          batch_id?: string | null
+          candidato_id?: string | null
+          created_at?: string
+          delta?: number | null
+          descripcion?: string
+          detectado_en?: string
+          entidad_nombre?: string
+          evidencia?: Json
+          id?: string
+          severidad?: string
+          temas_abandonados?: Json
+          temas_nuevos?: Json
+          tipo_shift?: string
+          titulo?: string
+          valor_actual?: number | null
+          valor_anterior?: number | null
+          ventana_actual?: string | null
+          ventana_anterior?: string | null
+        }
+        Relationships: []
+      }
+      belief_shifts_runs: {
+        Row: {
+          duracion_ms: number | null
+          ejecutada_en: string
+          entidades_analizadas: number
+          error: string | null
+          id: string
+          por_tipo: Json
+          shifts_detectados: number
+          trigger: string
+        }
+        Insert: {
+          duracion_ms?: number | null
+          ejecutada_en?: string
+          entidades_analizadas?: number
+          error?: string | null
+          id?: string
+          por_tipo?: Json
+          shifts_detectados?: number
+          trigger?: string
+        }
+        Update: {
+          duracion_ms?: number | null
+          ejecutada_en?: string
+          entidades_analizadas?: number
+          error?: string | null
+          id?: string
+          por_tipo?: Json
+          shifts_detectados?: number
+          trigger?: string
+        }
+        Relationships: []
+      }
       candidato_analisis: {
         Row: {
           candidato_id: string
