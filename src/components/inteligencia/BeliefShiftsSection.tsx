@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Brain, RefreshCw, TrendingUp, TrendingDown, Sparkles, EyeOff, Activity } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
+import BeliefShiftDetail from "./BeliefShiftDetail";
 
 interface BeliefShift {
   id: string;
@@ -48,6 +49,7 @@ const SEV_COLOR: Record<string, string> = {
 
 export default function BeliefShiftsSection() {
   const [shifts, setShifts] = useState<BeliefShift[]>([]);
+  const [activo, setActivo] = useState<BeliefShift | null>(null);
   const [loading, setLoading] = useState(true);
   const [running, setRunning] = useState(false);
   const [filtro, setFiltro] = useState<string>("todos");
@@ -126,7 +128,11 @@ export default function BeliefShiftsSection() {
             const Icon = ICONO[s.tipo_shift] ?? Activity;
             const isNeg = (s.delta ?? 0) < 0;
             return (
-              <Card key={s.id} className="p-4 space-y-2 bg-card/50 backdrop-blur border-border/50">
+              <Card
+                key={s.id}
+                onClick={() => setActivo(s)}
+                className="p-4 space-y-2 bg-card/50 backdrop-blur border-border/50 cursor-pointer hover:border-primary/50 transition-colors"
+              >
                 <div className="flex items-start gap-3">
                   <Icon className={`w-4 h-4 mt-0.5 ${isNeg ? "text-red-400" : "text-fuchsia-400"}`} />
                   <div className="flex-1">
@@ -177,6 +183,8 @@ export default function BeliefShiftsSection() {
           })}
         </div>
       )}
+
+      <BeliefShiftDetail shift={activo} onClose={() => setActivo(null)} />
     </div>
   );
 }
