@@ -49,6 +49,7 @@ const SEV_COLOR: Record<string, string> = {
 
 export default function BeliefShiftsSection() {
   const [shifts, setShifts] = useState<BeliefShift[]>([]);
+  const [activo, setActivo] = useState<BeliefShift | null>(null);
   const [loading, setLoading] = useState(true);
   const [running, setRunning] = useState(false);
   const [filtro, setFiltro] = useState<string>("todos");
