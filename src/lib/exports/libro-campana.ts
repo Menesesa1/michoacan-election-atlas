@@ -1,14 +1,28 @@
 // LIBRO DE CAMPAÑA — informe integral por candidato
-// Compila TODO: perfil, FODA, estrategia 360 (si existe), social listening, Trends,
-// Meta Ads, OSINT, narrativa, belief shifts, CIB relevante, histórico territorial,
-// proyecciones, calendario, presupuesto, KPIs, anexos.
-// Estructura larga, paginada, con portada, índice, secciones numeradas y back-cover.
+// Compila TODO con las MISMAS fuentes que el briefing interno y el dossier:
+//  • Métricas oficiales (padrón INE 2026 + cómputos INE/IEM por nivel) vía resolverMetricasOficiales
+//  • Histórico territorial (historico_municipios DB + seeds IEM)
+//  • Análisis IA por candidato (perfil/OSINT/discurso/eval. digital)
+//  • Estrategia 360 guardada
+//  • Escucha social (social_resumen + social_menciones)
+//  • Belief shifts, CIB, narrativas sugeridas
+//  • Trends, Meta Ads
+//  • Alertas de crisis del territorio
+//  • Discurso ciudadano (analizar-discurso-ciudadano)
+//  • Sugerencia de paridad 2027
+// REGLA: si una sección no tiene datos reales, se OMITE (no se imprime "sin datos").
+// REGLA: capítulos numerados dinámicamente.
+
 import { supabase } from "@/integrations/supabase/client";
 import {
-  createPDF, addHeader, addSection, addParagraph, addKPIs, addTable,
+  createPDF, addParagraph, addKPIs, addTable,
   descargarPDF, fmtFecha, fmtNum, fmtPct, BRAND,
 } from "./utils";
 import type jsPDF from "jspdf";
+import { resolverMetricasOficiales, type MetricasOficiales } from "@/lib/dossier-data-resolver";
+import type { Candidato } from "@/lib/candidatos/types";
+import { sugerirGenero2027, type HistoricoTerritorial } from "@/lib/paridad/paridad-2027";
+import { inferirGenero, type Genero } from "@/lib/paridad/inferir-genero";
 
 const PRIMARY: [number, number, number] = [29, 78, 216];
 const INK: [number, number, number] = [15, 23, 42];
@@ -20,7 +34,17 @@ const slug = (s: string) =>
     .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 50);
 
 const arr = (v: any): string[] =>
-  Array.isArray(v) ? v.map(String) : v ? [String(v)] : [];
+  Array.isArray(v) ? v.map(String).filter(Boolean) : v ? [String(v)] : [];
+
+const hasData = (v: any): boolean => {
+  if (v == null) return false;
+  if (Array.isArray(v)) return v.length > 0;
+  if (typeof v === "object") return Object.keys(v).length > 0;
+  if (typeof v === "string") return v.trim().length > 0;
+  return true;
+};
+
+// ─────────── CARGA DE DATOS ───────────
 
 async function cargarTodo(candidatoId: string) {
   const { data: candidato } = await supabase
@@ -30,6 +54,8 @@ async function cargarTodo(candidatoId: string) {
   const [
     analisisRes, resumenRes, mencionesRes, trendsRes,
     metaAdsRes, beliefRes, cibRes, estrategiaRes,
+    narrativasRes, alertasCrisisRes, histMuniRes,
+    metricasRes, discursoCiudadanoRes,
   ] = await Promise.all([
     supabase.from("candidato_analisis")
       .select("tipo, output_json, created_at, model")
@@ -63,6 +89,24 @@ async function cargarTodo(candidatoId: string) {
       .eq("nivel", candidato.nivel)
       .ilike("territorio", `%${candidato.territorio}%`)
       .order("created_at", { ascending: false }).limit(1).maybeSingle(),
+    supabase.from("narrativas_sugeridas")
+      .select("tipo, mensaje, tono, urgencia, plataforma, emocion_objetivo, contexto, created_at")
+      .eq("entidad_nombre", candidato.nombre)
+      .order("created_at", { ascending: false }).limit(15),
+    supabase.from("alertas_crisis")
+      .select("prioridad, titulo, descripcion, distrito, fuente, url_fuente, timestamp")
+      .or(`distrito.ilike.%${candidato.territorio}%,distrito.ilike.%Michoacán%`)
+      .order("timestamp", { ascending: false }).limit(20),
+    candidato.nivel === "ayuntamientos"
+      ? supabase.from("historico_municipios")
+          .select("anio,partido_ganador,candidato_ganador,pct_ganador,partido_segundo,pct_segundo,participacion_pct")
+          .ilike("municipio_nombre", `%${candidato.territorio}%`)
+          .order("anio", { ascending: false }).limit(5)
+      : Promise.resolve({ data: [] }),
+    resolverMetricasOficiales(candidato as unknown as Candidato).catch(() => null as MetricasOficiales | null),
+    supabase.functions.invoke("analizar-discurso-ciudadano", { body: {} })
+      .then((r) => (r.data?.success ? r.data : null))
+      .catch(() => null),
   ]);
 
   return {
@@ -75,20 +119,23 @@ async function cargarTodo(candidatoId: string) {
     beliefShifts: beliefRes.data ?? [],
     cib: cibRes.data ?? [],
     estrategia: estrategiaRes.data,
+    narrativas: narrativasRes.data ?? [],
+    alertasCrisis: alertasCrisisRes.data ?? [],
+    historicoMuni: (histMuniRes.data ?? []) as any[],
+    metricas: metricasRes,
+    discursoCiudadano: discursoCiudadanoRes,
   };
 }
 
-// ========= Helpers de formato =========
+// ─────────── HELPERS DE LAYOUT ───────────
 
 function portada(doc: jsPDF, c: any) {
   const w = doc.internal.pageSize.getWidth();
   const h = doc.internal.pageSize.getHeight();
-  // Fondo
   doc.setFillColor(...PRIMARY);
   doc.rect(0, 0, w, h, "F");
   doc.setFillColor(...ACCENT);
   doc.rect(0, h * 0.55, w, h * 0.45, "F");
-
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(11);
@@ -96,65 +143,26 @@ function portada(doc: jsPDF, c: any) {
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
   doc.text("Inteligencia electoral · Producto verificado", 36, 70);
-
-  // Etiqueta
   doc.setFillColor(255, 255, 255);
-  doc.roundedRect(36, h * 0.30, 200, 24, 4, 4, "F");
+  doc.roundedRect(36, h * 0.30, 220, 24, 4, 4, "F");
   doc.setTextColor(...PRIMARY);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
   doc.text("LIBRO DE CAMPAÑA · EDICIÓN COMPLETA", 46, h * 0.30 + 16);
-
-  // Título
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(34);
   doc.setFont("helvetica", "bold");
   const lineas = doc.splitTextToSize(c.nombre.toUpperCase(), w - 72);
   doc.text(lineas, 36, h * 0.40);
-
   doc.setFontSize(14);
   doc.setFont("helvetica", "normal");
   doc.text(`${c.partido} · ${c.cargo_buscado || c.nivel}`, 36, h * 0.40 + 32 + lineas.length * 12);
   doc.text(`${c.territorio}`, 36, h * 0.40 + 50 + lineas.length * 12);
-
-  // Pie
   doc.setFontSize(10);
   doc.text(`Edición: ${fmtFecha()}`, 36, h - 60);
   doc.setFontSize(9);
   doc.text("Documento confidencial · Uso restringido al war room", 36, h - 44);
   doc.text("Producto verificado por Job Meneses · EME", 36, h - 30);
-}
-
-function indice(doc: jsPDF, secciones: { num: string; titulo: string; pagina: number }[]) {
-  doc.addPage();
-  const w = doc.internal.pageSize.getWidth();
-  doc.setFillColor(...PRIMARY);
-  doc.rect(0, 0, w, 56, "F");
-  doc.setTextColor(255, 255, 255);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(20);
-  doc.text("Índice general", 36, 36);
-  doc.setTextColor(...INK);
-  let y = 90;
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(11);
-  secciones.forEach((s) => {
-    if (y > doc.internal.pageSize.getHeight() - 60) { doc.addPage(); y = 60; }
-    doc.setTextColor(...PRIMARY);
-    doc.setFont("helvetica", "bold");
-    doc.text(s.num, 36, y);
-    doc.setTextColor(...INK);
-    doc.setFont("helvetica", "normal");
-    const tw = doc.getTextWidth(s.titulo);
-    doc.text(s.titulo, 80, y);
-    doc.setDrawColor(220, 220, 220);
-    doc.setLineDashPattern([1, 2], 0);
-    doc.line(80 + tw + 6, y - 3, w - 60, y - 3);
-    doc.setLineDashPattern([], 0);
-    doc.setTextColor(...SUB);
-    doc.text(String(s.pagina), w - 36, y, { align: "right" });
-    y += 18;
-  });
 }
 
 function tituloCapitulo(doc: jsPDF, num: string, titulo: string, subtitulo?: string) {
@@ -226,126 +234,216 @@ function listaBullets(doc: jsPDF, y: number, items: string[]): number {
   return y + 4;
 }
 
-// ========= GENERADOR PRINCIPAL =========
+// ─────────── GENERADOR ───────────
 
 export async function descargarLibroDeCampana(candidatoId: string) {
   const data = await cargarTodo(candidatoId);
-  const { candidato, analisis, resumenes, menciones, trends, metaAds, beliefShifts, cib, estrategia } = data;
-
-  const doc = createPDF("p");
-  portada(doc, candidato);
+  const {
+    candidato, analisis, resumenes, menciones, trends, metaAds,
+    beliefShifts, cib, estrategia, narrativas, alertasCrisis,
+    historicoMuni, metricas, discursoCiudadano,
+  } = data;
 
   const perfil = analisis.find((a: any) => a.tipo === "perfil")?.output_json as any;
-  const osint = analisis.find((a: any) => a.tipo === "osint")?.output_json as any;
+  const osint = analisis.find((a: any) => a.tipo === "osint" || a.tipo === "osint_profundo")?.output_json as any;
   const discurso = analisis.find((a: any) => a.tipo === "discurso")?.output_json as any;
   const evalDigital = analisis.find((a: any) => a.tipo === "evaluacion_digital")?.output_json as any;
   const estrat = (estrategia?.output_json ?? null) as any;
   const resumen = resumenes[0];
 
-  // Reservamos espacio para índice (lo escribimos al final con páginas reales)
-  const indiceMarker: { num: string; titulo: string; pagina: number }[] = [];
-  // Página placeholder para índice
+  const doc = createPDF("p");
+  portada(doc, candidato);
+
+  // Reservar página para índice
   doc.addPage();
   const indiceMarkerPage = doc.getNumberOfPages();
+  const indiceMarker: { num: string; titulo: string; pagina: number }[] = [];
 
-  // ============ CAP 1: SÍNTESIS EJECUTIVA ============
-  let pagInicio = doc.getNumberOfPages() + 1;
-  let y = tituloCapitulo(doc, "01", "Síntesis ejecutiva", "Lectura de 90 segundos para el comité estratégico");
-  indiceMarker.push({ num: "01", titulo: "Síntesis ejecutiva", pagina: pagInicio });
+  // Numeración dinámica de capítulos
+  let capNum = 0;
+  const nextCap = () => String(++capNum).padStart(2, "0");
 
+  const abrirCap = (titulo: string, subtitulo?: string) => {
+    const num = nextCap();
+    const pag = doc.getNumberOfPages() + 1;
+    indiceMarker.push({ num, titulo, pagina: pag });
+    return tituloCapitulo(doc, num, titulo, subtitulo);
+  };
+
+  // ========== CAP: SÍNTESIS EJECUTIVA (siempre) ==========
+  let y = abrirCap("Síntesis ejecutiva", "Lectura de 90 segundos para el comité estratégico");
   const tipoLabel = candidato.es_propio ? "Candidatura propia" : "Contendiente externo";
   y = addParagraph(doc, y,
     `${candidato.nombre} (${candidato.partido}) compite por ${candidato.cargo_buscado || candidato.nivel} en ${candidato.territorio}. ` +
-    `Fase actual: ${candidato.fase}. Clasificación interna: ${tipoLabel}. ` +
-    (candidato.bio_breve ? candidato.bio_breve : "Aún no se registra biografía operativa.")
+    `Fase actual: ${candidato.fase}. Clasificación interna: ${tipoLabel}.` +
+    (candidato.bio_breve ? ` ${candidato.bio_breve}` : "")
   );
 
-  y = addKPIs(doc, y, [
-    { label: "Menciones 7d", value: fmtNum(resumen?.total_menciones ?? 0) },
-    { label: "Sentimiento", value: (resumen?.sentimiento_promedio ?? 0).toFixed(2),
-      color: (resumen?.sentimiento_promedio ?? 0) >= 0 ? BRAND.ok : BRAND.bad },
-    { label: "% Positivo", value: fmtPct(resumen?.pct_positivo) },
-    { label: "% Negativo", value: fmtPct(resumen?.pct_negativo), color: BRAND.bad },
-  ]);
+  // KPIs combinados (oficiales + escucha)
+  const kpisCore: { label: string; value: string; color?: string }[] = [];
+  if (metricas?.listaNominal) kpisCore.push({ label: "Lista nominal", value: fmtNum(metricas.listaNominal) });
+  if (metricas?.intencionPropia != null) kpisCore.push({ label: "Intención propia", value: fmtPct(metricas.intencionPropia) });
+  if (metricas?.intencionRival != null) kpisCore.push({ label: `Rival ${metricas.rivalPartido ?? ""}`, value: fmtPct(metricas.intencionRival), color: BRAND.bad });
+  if (metricas?.brechaPp != null) kpisCore.push({ label: "Brecha (pp)", value: `${metricas.brechaPp > 0 ? "+" : ""}${metricas.brechaPp}`, color: metricas.brechaPp <= 0 ? BRAND.ok : BRAND.bad });
+  if (kpisCore.length) y = addKPIs(doc, y, kpisCore.slice(0, 4));
 
-  y = addKPIs(doc, y, [
-    { label: "Anuncios Meta", value: fmtNum(metaAds.length) },
-    { label: "Inversión Meta MXN", value: fmtNum(metaAds.reduce((s, a) => s + (Number(a.spend_upper) || 0), 0)) },
-    { label: "Pico Trends", value: fmtNum(trends[0]?.pico_interes ?? 0, 0) },
-    { label: "Belief shifts", value: fmtNum(beliefShifts.length) },
-  ]);
+  if (resumen) {
+    y = addKPIs(doc, y, [
+      { label: "Menciones (último batch)", value: fmtNum(resumen.total_menciones ?? 0) },
+      { label: "Sentimiento", value: (resumen.sentimiento_promedio ?? 0).toFixed(2),
+        color: (resumen.sentimiento_promedio ?? 0) >= 0 ? BRAND.ok : BRAND.bad },
+      { label: "% Positivo", value: fmtPct(resumen.pct_positivo) },
+      { label: "% Negativo", value: fmtPct(resumen.pct_negativo), color: BRAND.bad },
+    ]);
+  }
 
   if (perfil?.resumen) {
     y = subseccion(doc, y, "Lectura del analista");
     y = addParagraph(doc, y, perfil.resumen);
   }
 
-  // ============ CAP 2: PERFIL Y TRAYECTORIA ============
-  pagInicio = doc.getNumberOfPages() + 1;
-  y = tituloCapitulo(doc, "02", "Perfil y trayectoria", "Quién es, de dónde viene, qué representa");
-  indiceMarker.push({ num: "02", titulo: "Perfil y trayectoria", pagina: pagInicio });
-
-  y = subseccion(doc, y, "Datos básicos");
-  y = addTable(doc, {
-    startY: y,
-    head: [["Campo", "Valor"]],
-    body: [
-      ["Nombre", candidato.nombre],
-      ["Partido / coalición", candidato.partido],
-      ["Cargo buscado", candidato.cargo_buscado || candidato.nivel],
-      ["Territorio", candidato.territorio],
-      ["Fase", candidato.fase],
-      ["Tipo", tipoLabel],
-      ["Tags", arr(candidato.tags).join(", ") || "—"],
-    ],
-  });
-
-  if (Array.isArray(candidato.trayectoria) && candidato.trayectoria.length) {
-    y = subseccion(doc, y, "Trayectoria pública");
+  // ========== CAP: PERFIL Y TRAYECTORIA ==========
+  if (candidato.bio_breve || hasData(candidato.trayectoria) || hasData(perfil)) {
+    y = abrirCap("Perfil y trayectoria", "Quién es, de dónde viene, qué representa");
+    y = subseccion(doc, y, "Datos básicos");
     y = addTable(doc, {
       startY: y,
-      head: [["Año", "Cargo / hito", "Resultado"]],
-      body: candidato.trayectoria.map((t: any) => [
-        t.anio || t.año || "—", t.cargo || t.descripcion || "—", t.resultado || "—",
-      ]),
+      head: [["Campo", "Valor"]],
+      body: [
+        ["Nombre", candidato.nombre],
+        ["Partido / coalición", candidato.partido],
+        ["Cargo buscado", candidato.cargo_buscado || candidato.nivel],
+        ["Territorio", candidato.territorio],
+        ["Fase", candidato.fase],
+        ["Tipo", tipoLabel],
+        ...(arr(candidato.tags).length ? [["Tags", arr(candidato.tags).join(", ")]] : []),
+      ],
     });
+
+    if (Array.isArray(candidato.trayectoria) && candidato.trayectoria.length) {
+      y = subseccion(doc, y, "Trayectoria pública");
+      y = addTable(doc, {
+        startY: y,
+        head: [["Año", "Cargo / hito", "Resultado"]],
+        body: candidato.trayectoria.map((t: any) => [
+          t.anio || t.año || "—", t.cargo || t.descripcion || "—", t.resultado || "—",
+        ]),
+      });
+    }
+
+    if (perfil?.fortalezas?.length || perfil?.debilidades?.length) {
+      y = subseccion(doc, y, "FODA del perfil");
+      (["fortalezas","debilidades","oportunidades","amenazas"] as const).forEach((k) => {
+        if (perfil[k]?.length) {
+          y = addParagraph(doc, y, k.toUpperCase());
+          y = listaBullets(doc, y, arr(perfil[k]));
+        }
+      });
+    }
   }
 
-  if (perfil?.fortalezas?.length || perfil?.debilidades?.length) {
-    y = subseccion(doc, y, "FODA del perfil");
-    if (perfil.fortalezas?.length) {
-      y = addParagraph(doc, y, "FORTALEZAS");
-      y = listaBullets(doc, y, arr(perfil.fortalezas));
+  // ========== CAP: DATOS ELECTORALES OFICIALES (padrón INE + cómputos) ==========
+  if (metricas && (metricas.listaNominal || metricas.cicloRef || metricas.fragmentacion)) {
+    y = abrirCap("Datos electorales oficiales", "Padrón INE 2026 + cómputos por nivel");
+    y = addParagraph(doc, y, `Fuente: ${metricas.origen}.`);
+
+    const kpisOf: { label: string; value: string; color?: string }[] = [];
+    if (metricas.listaNominal) kpisOf.push({ label: "Lista nominal", value: fmtNum(metricas.listaNominal) });
+    if (metricas.seccionesTotal) kpisOf.push({ label: "Secciones", value: fmtNum(metricas.seccionesTotal) });
+    if (metricas.participacionHist != null) kpisOf.push({ label: `Participación ${metricas.cicloRef ?? ""}`, value: fmtPct(metricas.participacionHist) });
+    if (metricas.seccionesPivote != null) kpisOf.push({ label: "Secc. pivote (est.)", value: fmtNum(metricas.seccionesPivote) });
+    if (kpisOf.length) y = addKPIs(doc, y, kpisOf.slice(0, 4));
+
+    if (metricas.demografia.hombres || metricas.demografia.mujeres) {
+      y = subseccion(doc, y, "Demografía del padrón (INE-DERFE 2026)");
+      y = addTable(doc, {
+        startY: y,
+        head: [["Indicador", "Valor"]],
+        body: [
+          ["Hombres", fmtNum(metricas.demografia.hombres)],
+          ["Mujeres", fmtNum(metricas.demografia.mujeres)],
+          ["% Jóvenes 18-29", fmtPct(metricas.demografia.pctJovenes18a29)],
+          ["% Adulto mayor 60+", fmtPct(metricas.demografia.pctAdultoMayor60mas)],
+        ],
+      });
     }
-    if (perfil.debilidades?.length) {
-      y = addParagraph(doc, y, "DEBILIDADES");
-      y = listaBullets(doc, y, arr(perfil.debilidades));
+
+    if (metricas.fragmentacion) {
+      const f = metricas.fragmentacion;
+      y = subseccion(doc, y, `Fragmentación territorial · ${f.alcance}`);
+      y = addKPIs(doc, y, [
+        { label: "Total secciones", value: fmtNum(f.total) },
+        { label: "Urbanas", value: `${f.urbanas} (${f.pctUrbano}%)` },
+        { label: "Mixtas", value: `${f.mixtas} (${f.pctMixto}%)` },
+        { label: "Rurales", value: `${f.rurales} (${f.pctRural}%)` },
+      ]);
+      y = addParagraph(doc, y,
+        `Perfil del territorio: ${f.perfil.toUpperCase()}. Secciones que requieren operación NO digital (mixta + rural): ${fmtNum(f.noDigitales)}.`
+      );
     }
-    if (perfil.oportunidades?.length) {
-      y = addParagraph(doc, y, "OPORTUNIDADES");
-      y = listaBullets(doc, y, arr(perfil.oportunidades));
-    }
-    if (perfil.amenazas?.length) {
-      y = addParagraph(doc, y, "AMENAZAS");
-      y = listaBullets(doc, y, arr(perfil.amenazas));
+
+    if (historicoMuni.length) {
+      y = subseccion(doc, y, "Histórico municipal (DB)");
+      y = addTable(doc, {
+        startY: y,
+        head: [["Año", "Ganador", "Partido", "% gana", "2°", "% 2°", "Particip."]],
+        body: historicoMuni.map((h) => [
+          h.anio,
+          (h.candidato_ganador || "—").slice(0, 30),
+          h.partido_ganador || "—",
+          fmtPct(h.pct_ganador),
+          h.partido_segundo || "—",
+          fmtPct(h.pct_segundo),
+          fmtPct(h.participacion_pct),
+        ]),
+      });
     }
   }
 
-  // ============ CAP 3: TERRITORIO Y CONTEXTO ============
-  pagInicio = doc.getNumberOfPages() + 1;
-  y = tituloCapitulo(doc, "03", "Territorio y contexto electoral", "El terreno donde se libra la batalla");
-  indiceMarker.push({ num: "03", titulo: "Territorio y contexto electoral", pagina: pagInicio });
+  // ========== CAP: PARIDAD 2027 ==========
+  if (historicoMuni.length || metricas?.cicloRef) {
+    const generoCand = inferirGenero(candidato.nombre) as Genero;
+    const histParidad: HistoricoTerritorial[] = historicoMuni
+      .filter((h) => h.partido_ganador && h.pct_ganador != null && h.candidato_ganador)
+      .map((h) => ({
+        anio: h.anio,
+        generoGanador: inferirGenero(h.candidato_ganador) as Genero,
+        partidoGanador: h.partido_ganador!,
+        porcentajeGanador: Number(h.pct_ganador),
+      }));
 
-  y = addParagraph(doc, y,
-    `El territorio de competencia es ${candidato.territorio}, en el nivel ${candidato.nivel}. ` +
-    `Michoacán organiza sus elecciones en 113 municipios, 24 distritos locales y 11 distritos federales, ` +
-    `con la sección electoral como unidad atómica. Los municipios de autogobierno (Cherán, Nahuatzen y otros) ` +
-    `no instalan casillas locales y se procesan como "sin proceso", no como datos faltantes.`
-  );
+    if (histParidad.length || metricas?.intencionRival != null) {
+      y = abrirCap("Paridad de género 2027", "Cumplimiento horizontal y alternancia IEM/TEEM");
+      const sug = sugerirGenero2027(histParidad, candidato.partido);
+      y = addTable(doc, {
+        startY: y,
+        head: [["Aspecto", "Valor"]],
+        body: [
+          ["Género del candidato", generoCand === "M" ? "Mujer" : generoCand === "H" ? "Hombre" : "No determinado"],
+          ["Sugerencia 2027", sug.generoSugerido === "M" ? "Mujer" : sug.generoSugerido === "H" ? "Hombre" : "Ambiguo"],
+          ["Bloque competitividad", sug.bloqueCompetitividad.toUpperCase()],
+          ["Confianza", sug.confianza.toUpperCase()],
+          ...(sug.generoHistorico2021 ? [["Ganador 2021", sug.generoHistorico2021 === "M" ? "Mujer" : "Hombre"]] : []),
+          ...(sug.generoHistorico2018 ? [["Ganador 2018", sug.generoHistorico2018 === "M" ? "Mujer" : "Hombre"]] : []),
+        ],
+      });
+      y = addParagraph(doc, y, sug.motivo);
 
+      if (generoCand !== "ambiguo" && sug.generoSugerido !== "ambiguo") {
+        const cumple = generoCand === sug.generoSugerido;
+        y = addParagraph(doc, y,
+          cumple
+            ? "✓ La candidatura COINCIDE con la sugerencia de paridad para este territorio."
+            : `⚠ La candidatura NO coincide con la sugerencia. Riesgo: posible objeción ante TEEM si el partido no equilibra otros bloques.`
+        );
+      }
+    }
+  }
+
+  // ========== CAP: TERRITORIO Y CAMINO A LA VICTORIA ==========
   if (estrat?.meta_victoria) {
+    y = abrirCap("Camino a la victoria", "Estimación cuantitativa territorial");
     const mv = estrat.meta_victoria;
-    y = subseccion(doc, y, "Camino a la victoria · estimación cuantitativa");
     y = addKPIs(doc, y, [
       { label: "Votos objetivo", value: fmtNum(mv.votos_objetivo) },
       { label: "Participación", value: fmtPct(mv.participacion_supuesta_pct) },
@@ -373,113 +471,166 @@ export async function descargarLibroDeCampana(candidatoId: string) {
     }
   }
 
-  // ============ CAP 4: ESCUCHA SOCIAL Y CONVERSACIÓN ============
-  pagInicio = doc.getNumberOfPages() + 1;
-  y = tituloCapitulo(doc, "04", "Escucha social y conversación", "Qué dicen, cómo lo dicen, qué sienten");
-  indiceMarker.push({ num: "04", titulo: "Escucha social y conversación", pagina: pagInicio });
-
-  if (resumen) {
-    y = addKPIs(doc, y, [
-      { label: "Total menciones", value: fmtNum(resumen.total_menciones) },
-      { label: "Sentimiento", value: (resumen.sentimiento_promedio ?? 0).toFixed(2) },
-      { label: "% Positivo", value: fmtPct(resumen.pct_positivo), color: BRAND.ok },
-      { label: "% Negativo", value: fmtPct(resumen.pct_negativo), color: BRAND.bad },
-    ]);
+  // ========== CAP: ESCUCHA SOCIAL ==========
+  if (resumen || menciones.length) {
+    y = abrirCap("Escucha social y conversación", "Qué dicen, cómo lo dicen, qué sienten");
+    if (resumen) {
+      y = addKPIs(doc, y, [
+        { label: "Total menciones", value: fmtNum(resumen.total_menciones) },
+        { label: "Sentimiento", value: (resumen.sentimiento_promedio ?? 0).toFixed(2) },
+        { label: "% Positivo", value: fmtPct(resumen.pct_positivo), color: BRAND.ok },
+        { label: "% Negativo", value: fmtPct(resumen.pct_negativo), color: BRAND.bad },
+      ]);
+    }
+    if (Array.isArray(resumen?.top_temas) && resumen.top_temas.length) {
+      y = subseccion(doc, y, "Top temas en conversación");
+      y = addTable(doc, {
+        startY: y,
+        head: [["Tema", "Menciones"]],
+        body: resumen.top_temas.map((t: any) => [t.value || t.tema, t.count || t.n]),
+      });
+    }
+    if (Array.isArray(resumen?.top_hashtags) && resumen.top_hashtags.length) {
+      y = subseccion(doc, y, "Hashtags dominantes");
+      y = addParagraph(doc, y, resumen.top_hashtags.map((h: any) => `#${h.value || h}`).join("  "));
+    }
+    if (menciones.length) {
+      y = subseccion(doc, y, `Menciones representativas (top ${Math.min(menciones.length, 25)})`);
+      y = addTable(doc, {
+        startY: y,
+        head: [["Fecha", "Sent.", "Fuente", "Tema", "Título"]],
+        body: menciones.slice(0, 25).map((m: any) => [
+          new Date(m.detectada_en).toLocaleDateString("es-MX"),
+          (m.sentimiento ?? 0).toFixed(2),
+          (m.fuente || "—").slice(0, 18),
+          (m.tema || "—").slice(0, 14),
+          (m.titulo || "").slice(0, 70),
+        ]),
+      });
+    }
   }
 
-  if (Array.isArray(resumen?.top_temas) && resumen.top_temas.length) {
-    y = subseccion(doc, y, "Top temas en conversación");
+  // ========== CAP: DISCURSO CIUDADANO ESTATAL ==========
+  if (discursoCiudadano && (discursoCiudadano.resumen_ejecutivo || discursoCiudadano.temas_relevantes?.length)) {
+    y = abrirCap("Discurso ciudadano (estatal)", "Qué le preocupa al votante michoacano");
+    if (discursoCiudadano.resumen_ejecutivo) y = addParagraph(doc, y, discursoCiudadano.resumen_ejecutivo);
+    if (discursoCiudadano.temas_relevantes?.length) {
+      y = subseccion(doc, y, "Temas dominantes");
+      y = addTable(doc, {
+        startY: y,
+        head: [["Tema", "Intensidad", "Descripción"]],
+        body: discursoCiudadano.temas_relevantes.slice(0, 10).map((t: any) => [
+          t.tema, String(Math.round(t.intensidad ?? 0)), (t.descripcion ?? "—").slice(0, 90),
+        ]),
+      });
+    }
+    if (discursoCiudadano.emociones?.length) {
+      y = subseccion(doc, y, "Emociones que mueven al votante");
+      y = listaBullets(doc, y, discursoCiudadano.emociones.slice(0, 8).map((e: any) =>
+        `${e.emocion} (${Math.round(e.intensidad ?? 0)}/100): ${e.disparador ?? ""}`
+      ));
+    }
+    if (discursoCiudadano.insumos_discurso?.que_decir?.length) {
+      y = subseccion(doc, y, "Qué decir (insumos)");
+      y = listaBullets(doc, y, arr(discursoCiudadano.insumos_discurso.que_decir));
+    }
+    if (discursoCiudadano.insumos_discurso?.que_evitar?.length) {
+      y = subseccion(doc, y, "Qué evitar (insumos)");
+      y = listaBullets(doc, y, arr(discursoCiudadano.insumos_discurso.que_evitar));
+    }
+    if (discursoCiudadano.palabras_clave?.length) {
+      y = subseccion(doc, y, "Palabras clave en la conversación");
+      y = addParagraph(doc, y, discursoCiudadano.palabras_clave.slice(0, 30)
+        .map((p: any) => typeof p === "string" ? p : `${p.palabra}(${p.peso})`).join("  ·  "));
+    }
+  }
+
+  // ========== CAP: INTELIGENCIA — CIB + BELIEF SHIFTS ==========
+  if (beliefShifts.length || cib.length) {
+    y = abrirCap("Inteligencia digital", "Cambios de creencias y comportamiento coordinado");
+    if (beliefShifts.length) {
+      y = subseccion(doc, y, "Belief shift detector");
+      y = addTable(doc, {
+        startY: y,
+        head: [["Fecha", "Tipo", "Severidad", "Δ", "Título"]],
+        body: beliefShifts.map((s: any) => [
+          new Date(s.detectado_en).toLocaleDateString("es-MX"),
+          (s.tipo_shift || "").replace("_", " "),
+          s.severidad,
+          s.delta != null ? Number(s.delta).toFixed(2) : "—",
+          (s.titulo || "").slice(0, 60),
+        ]),
+      });
+      beliefShifts.slice(0, 4).forEach((s: any) => {
+        y = addParagraph(doc, y, `• ${s.titulo} — ${s.descripcion}`);
+      });
+    }
+    if (cib.length) {
+      y = subseccion(doc, y, "Comportamiento coordinado inauténtico (CIB)");
+      y = addTable(doc, {
+        startY: y,
+        head: [["Fecha", "Patrón", "Severidad", "Descripción"]],
+        body: cib.map((c: any) => [
+          new Date(c.detectada_en).toLocaleDateString("es-MX"),
+          (c.tipo_patron || "").replace("_", " "),
+          c.severidad,
+          (c.descripcion || c.titulo || "").slice(0, 80),
+        ]),
+      });
+    }
+  }
+
+  // ========== CAP: ALERTAS DE CRISIS ==========
+  if (alertasCrisis.length) {
+    y = abrirCap("Alertas de crisis del territorio", "Monitor de eventos de impacto reputacional");
     y = addTable(doc, {
       startY: y,
-      head: [["Tema", "Menciones"]],
-      body: resumen.top_temas.map((t: any) => [t.value || t.tema, t.count || t.n]),
-    });
-  }
-  if (Array.isArray(resumen?.top_hashtags) && resumen.top_hashtags.length) {
-    y = subseccion(doc, y, "Hashtags dominantes");
-    y = addParagraph(doc, y, resumen.top_hashtags.map((h: any) => `#${h.value || h}`).join("  "));
-  }
-
-  if (menciones.length) {
-    y = subseccion(doc, y, `Menciones recientes representativas (top ${Math.min(menciones.length, 25)})`);
-    y = addTable(doc, {
-      startY: y,
-      head: [["Fecha", "Sent.", "Fuente", "Tema", "Título"]],
-      body: menciones.slice(0, 25).map((m: any) => [
-        new Date(m.detectada_en).toLocaleDateString("es-MX"),
-        (m.sentimiento ?? 0).toFixed(2),
-        (m.fuente || "—").slice(0, 18),
-        (m.tema || "—").slice(0, 14),
-        (m.titulo || "").slice(0, 70),
+      head: [["Fecha", "Prioridad", "Título", "Distrito", "Fuente"]],
+      body: alertasCrisis.slice(0, 15).map((a: any) => [
+        new Date(a.timestamp).toLocaleDateString("es-MX"),
+        a.prioridad,
+        (a.titulo || "").slice(0, 60),
+        (a.distrito || "—").slice(0, 25),
+        (a.fuente || "—").slice(0, 18),
       ]),
     });
-  }
-
-  // ============ CAP 5: BELIEF SHIFTS Y CIB ============
-  pagInicio = doc.getNumberOfPages() + 1;
-  y = tituloCapitulo(doc, "05", "Cambios de creencias y comportamiento coordinado",
-    "Movimientos en la opinión pública y operaciones detectadas");
-  indiceMarker.push({ num: "05", titulo: "Cambios de creencias y CIB", pagina: pagInicio });
-
-  if (beliefShifts.length) {
-    y = subseccion(doc, y, "Belief shift detector");
-    y = addTable(doc, {
-      startY: y,
-      head: [["Fecha", "Tipo", "Severidad", "Δ", "Título"]],
-      body: beliefShifts.map((s: any) => [
-        new Date(s.detectado_en).toLocaleDateString("es-MX"),
-        s.tipo_shift.replace("_", " "),
-        s.severidad,
-        s.delta != null ? Number(s.delta).toFixed(2) : "—",
-        (s.titulo || "").slice(0, 60),
-      ]),
-    });
-    beliefShifts.slice(0, 4).forEach((s: any) => { y = addParagraph(doc, y, `• ${s.titulo} — ${s.descripcion}`); });
-  } else {
-    y = addParagraph(doc, y, "Aún no se han detectado cambios significativos de creencias para este candidato.");
-  }
-
-  if (cib.length) {
-    y = subseccion(doc, y, "Comportamiento Coordinado Inauténtico (CIB)");
-    y = addTable(doc, {
-      startY: y,
-      head: [["Fecha", "Patrón", "Severidad", "Descripción"]],
-      body: cib.map((c: any) => [
-        new Date(c.detectada_en).toLocaleDateString("es-MX"),
-        c.tipo_patron.replace("_", " "),
-        c.severidad,
-        (c.descripcion || c.titulo || "").slice(0, 80),
-      ]),
+    alertasCrisis.slice(0, 3).forEach((a: any) => {
+      if (a.descripcion) y = addParagraph(doc, y, `• ${a.titulo}: ${a.descripcion}`);
     });
   }
 
-  // ============ CAP 6: GOOGLE TRENDS ============
-  pagInicio = doc.getNumberOfPages() + 1;
-  y = tituloCapitulo(doc, "06", "Google Trends y búsqueda activa", "Qué busca Michoacán sobre el candidato");
-  indiceMarker.push({ num: "06", titulo: "Google Trends y búsqueda activa", pagina: pagInicio });
+  // ========== CAP: NARRATIVAS ACCIONABLES ==========
+  if (narrativas.length) {
+    y = abrirCap("Narrativas accionables sugeridas", "Mensajes listos para war room");
+    narrativas.slice(0, 10).forEach((n: any) => {
+      y = subseccion(doc, y, `${(n.tipo || "").toUpperCase()} · ${n.tono || ""} · urgencia ${n.urgencia ?? "—"}`);
+      if (n.contexto) y = addParagraph(doc, y, `Contexto: ${n.contexto}`);
+      y = citaDestacada(doc, y, n.mensaje);
+      if (n.plataforma || n.emocion_objetivo) {
+        y = addParagraph(doc, y, `Plataforma: ${n.plataforma || "—"} · Emoción objetivo: ${n.emocion_objetivo || "—"}`);
+      }
+    });
+  }
 
+  // ========== CAP: GOOGLE TRENDS ==========
   if (trends.length) {
+    y = abrirCap("Google Trends", "Búsqueda activa sobre el candidato");
     y = addTable(doc, {
       startY: y,
       head: [["Término", "Promedio", "Pico", "Última corrida"]],
       body: trends.map((t: any) => [t.termino, fmtNum(t.promedio_interes, 1), fmtNum(t.pico_interes, 1), fmtFecha(t.ejecutada_en)]),
     });
-    if (trends[0]?.contexto_narrativo) y = addParagraph(doc, y, `Contexto narrativo: ${trends[0].contexto_narrativo}`);
+    if (trends[0]?.contexto_narrativo) y = addParagraph(doc, y, `Contexto: ${trends[0].contexto_narrativo}`);
     const top = trends[0]?.related_top;
     if (Array.isArray(top) && top.length) {
       y = subseccion(doc, y, "Búsquedas relacionadas top");
       y = listaBullets(doc, y, top.slice(0, 10).map((r: any) => `${r.query || r.value} (${r.value || r.score || ""})`));
     }
-  } else {
-    y = addParagraph(doc, y, "Sin corridas de Google Trends para este candidato. Ejecuta el módulo Trends en la ficha para poblar esta sección.");
   }
 
-  // ============ CAP 7: META ADS / PUBLICIDAD DIGITAL ============
-  pagInicio = doc.getNumberOfPages() + 1;
-  y = tituloCapitulo(doc, "07", "Publicidad digital · Meta Ads Library", "Qué se está pagando en redes");
-  indiceMarker.push({ num: "07", titulo: "Publicidad digital · Meta Ads", pagina: pagInicio });
-
+  // ========== CAP: META ADS ==========
   if (metaAds.length) {
+    y = abrirCap("Publicidad digital · Meta Ads Library", "Qué se está pagando en redes");
     const totalSpend = metaAds.reduce((s: number, a: any) => s + (Number(a.spend_upper) || 0), 0);
     const totalImp = metaAds.reduce((s: number, a: any) => s + (Number(a.impressions_upper) || 0), 0);
     y = addKPIs(doc, y, [
@@ -504,45 +655,40 @@ export async function descargarLibroDeCampana(candidatoId: string) {
       y = subseccion(doc, y, "Muestra de creatividad");
       y = citaDestacada(doc, y, String(conCreativo.ad_creative_body).slice(0, 500));
     }
-  } else {
-    y = addParagraph(doc, y, "Sin anuncios activos detectados en Meta Ad Library. Ejecuta el monitor desde la ficha del candidato para refrescar.");
   }
 
-  // ============ CAP 8: OSINT Y RIESGO REPUTACIONAL ============
-  pagInicio = doc.getNumberOfPages() + 1;
-  y = tituloCapitulo(doc, "08", "OSINT y riesgo reputacional", "Hallazgos abiertos sobre el candidato");
-  indiceMarker.push({ num: "08", titulo: "OSINT y riesgo reputacional", pagina: pagInicio });
-
-  if (osint?.hallazgos && Array.isArray(osint.hallazgos)) {
-    y = addTable(doc, {
-      startY: y,
-      head: [["Severidad", "Hallazgo", "Fuente"]],
-      body: osint.hallazgos.slice(0, 20).map((h: any) => [
-        h.severidad || "—", h.descripcion || h.titulo || "—", h.fuente || "—",
-      ]),
-    });
-  } else {
-    y = addParagraph(doc, y, "No hay hallazgos OSINT estructurados aún. Genera el análisis OSINT desde la ficha del candidato.");
+  // ========== CAP: OSINT ==========
+  if (osint && (osint.hallazgos?.length || osint.resumen)) {
+    y = abrirCap("OSINT y riesgo reputacional", "Hallazgos abiertos sobre el candidato");
+    if (osint.resumen) y = addParagraph(doc, y, osint.resumen);
+    if (Array.isArray(osint.hallazgos) && osint.hallazgos.length) {
+      y = addTable(doc, {
+        startY: y,
+        head: [["Severidad", "Hallazgo", "Fuente"]],
+        body: osint.hallazgos.slice(0, 20).map((h: any) => [
+          h.severidad || "—", h.descripcion || h.titulo || "—", h.fuente || "—",
+        ]),
+      });
+    }
+    if (Array.isArray(osint.controversias) && osint.controversias.length) {
+      y = subseccion(doc, y, "Controversias documentadas");
+      osint.controversias.slice(0, 5).forEach((c: any) => {
+        y = addParagraph(doc, y, `• ${c.titulo || c.descripcion} (${c.anio || "—"})`);
+      });
+    }
   }
-  if (osint?.resumen) y = addParagraph(doc, y, osint.resumen);
 
-  // ============ CAP 9: ESTRATEGIA 360 ============
+  // ========== CAP: ESTRATEGIA 360 ==========
   if (estrat) {
-    pagInicio = doc.getNumberOfPages() + 1;
-    y = tituloCapitulo(doc, "09", "Estrategia 360", `Plan integral · ${estrategia?.titulo || "última versión"}`);
-    indiceMarker.push({ num: "09", titulo: "Estrategia 360", pagina: pagInicio });
-
+    y = abrirCap("Estrategia 360", `Plan integral · ${estrategia?.titulo || "última versión"}`);
     if (estrat.resumen_ejecutivo) y = addParagraph(doc, y, estrat.resumen_ejecutivo);
 
     if (estrat.narrativa_central) {
       y = subseccion(doc, y, "Narrativa central");
       if (estrat.narrativa_central.slogan) y = citaDestacada(doc, y, estrat.narrativa_central.slogan);
       if (estrat.narrativa_central.tesis) y = addParagraph(doc, y, estrat.narrativa_central.tesis);
-      if (estrat.narrativa_central.tres_pilares?.length) {
-        y = listaBullets(doc, y, estrat.narrativa_central.tres_pilares);
-      }
+      if (estrat.narrativa_central.tres_pilares?.length) y = listaBullets(doc, y, estrat.narrativa_central.tres_pilares);
     }
-
     if (estrat.foda) {
       y = subseccion(doc, y, "FODA estratégico");
       (["fortalezas", "oportunidades", "debilidades", "amenazas"] as const).forEach((k) => {
@@ -552,7 +698,6 @@ export async function descargarLibroDeCampana(candidatoId: string) {
         }
       });
     }
-
     if (estrat.escenarios?.length) {
       y = subseccion(doc, y, "Escenarios");
       y = addTable(doc, {
@@ -563,7 +708,6 @@ export async function descargarLibroDeCampana(candidatoId: string) {
         ]),
       });
     }
-
     if (estrat.segmentacion?.length) {
       y = subseccion(doc, y, "Segmentación de votantes");
       estrat.segmentacion.forEach((s: any) => {
@@ -573,7 +717,6 @@ export async function descargarLibroDeCampana(candidatoId: string) {
         y = addParagraph(doc, y, `Táctica: ${s.tactica}`);
       });
     }
-
     if (estrat.plan_territorial?.length) {
       y = subseccion(doc, y, "Plan territorial");
       y = addTable(doc, {
@@ -582,7 +725,6 @@ export async function descargarLibroDeCampana(candidatoId: string) {
         body: estrat.plan_territorial.map((z: any) => [z.zona, z.tipo, z.roi_estimado, z.accion_prioritaria]),
       });
     }
-
     if (estrat.calendario?.length) {
       y = subseccion(doc, y, "Calendario de campaña");
       estrat.calendario.forEach((c: any) => {
@@ -590,7 +732,6 @@ export async function descargarLibroDeCampana(candidatoId: string) {
         y = listaBullets(doc, y, arr(c.hitos));
       });
     }
-
     if (estrat.presupuesto?.length) {
       y = subseccion(doc, y, "Presupuesto sugerido");
       y = addTable(doc, {
@@ -601,14 +742,12 @@ export async function descargarLibroDeCampana(candidatoId: string) {
         ]),
       });
     }
-
     if (estrat.estructura) {
       y = subseccion(doc, y, "Estructura mínima");
       y = addParagraph(doc, y, `Brigadistas estimados: ${fmtNum(estrat.estructura.brigadistas_estimados)} · Casas de campaña: ${estrat.estructura.casas_campaña}`);
       if (estrat.estructura.coordinaciones?.length) y = listaBullets(doc, y, estrat.estructura.coordinaciones);
       if (estrat.estructura.notas) y = addParagraph(doc, y, estrat.estructura.notas);
     }
-
     if (estrat.riesgos?.length) {
       y = subseccion(doc, y, "Matriz de riesgos");
       y = addTable(doc, {
@@ -617,7 +756,6 @@ export async function descargarLibroDeCampana(candidatoId: string) {
         body: estrat.riesgos.map((r: any) => [r.riesgo, r.probabilidad, r.impacto, r.mitigacion]),
       });
     }
-
     if (estrat.kpis?.length) {
       y = subseccion(doc, y, "KPIs de seguimiento");
       y = addTable(doc, {
@@ -628,24 +766,24 @@ export async function descargarLibroDeCampana(candidatoId: string) {
     }
   }
 
-  // ============ CAP 10: ESTRATEGIA DE COMUNICACIÓN ============
+  // ========== CAP: COMUNICACIÓN 360 ==========
   if (estrat?.estrategia_digital_comunicacion) {
     const ec = estrat.estrategia_digital_comunicacion;
-    pagInicio = doc.getNumberOfPages() + 1;
-    y = tituloCapitulo(doc, "10", "Estrategia de comunicación 360", "Mensaje, plataformas, voceros, crisis");
-    indiceMarker.push({ num: "10", titulo: "Estrategia de comunicación 360", pagina: pagInicio });
-
-    y = subseccion(doc, y, "Diagnóstico de sentimiento");
-    y = addParagraph(doc, y, `Tono actual: ${ec.diagnostico_sentimiento?.tono_actual?.toUpperCase()}`);
-    if (ec.diagnostico_sentimiento?.sintesis) y = addParagraph(doc, y, ec.diagnostico_sentimiento.sintesis);
-
-    y = subseccion(doc, y, "Arquitectura de mensaje");
-    if (ec.arquitectura_mensaje?.eje_emocional) y = addParagraph(doc, y, `Eje emocional: ${ec.arquitectura_mensaje.eje_emocional}`);
-    if (ec.arquitectura_mensaje?.eje_racional) y = addParagraph(doc, y, `Eje racional: ${ec.arquitectura_mensaje.eje_racional}`);
-    if (ec.arquitectura_mensaje?.frases_paraguas?.length) {
-      ec.arquitectura_mensaje.frases_paraguas.slice(0, 3).forEach((f: string) => { y = citaDestacada(doc, y, f); });
+    y = abrirCap("Estrategia de comunicación 360", "Mensaje, plataformas, voceros, crisis");
+    if (ec.diagnostico_sentimiento) {
+      y = subseccion(doc, y, "Diagnóstico de sentimiento");
+      if (ec.diagnostico_sentimiento.tono_actual)
+        y = addParagraph(doc, y, `Tono actual: ${String(ec.diagnostico_sentimiento.tono_actual).toUpperCase()}`);
+      if (ec.diagnostico_sentimiento.sintesis) y = addParagraph(doc, y, ec.diagnostico_sentimiento.sintesis);
     }
-
+    if (ec.arquitectura_mensaje) {
+      y = subseccion(doc, y, "Arquitectura de mensaje");
+      if (ec.arquitectura_mensaje.eje_emocional) y = addParagraph(doc, y, `Eje emocional: ${ec.arquitectura_mensaje.eje_emocional}`);
+      if (ec.arquitectura_mensaje.eje_racional) y = addParagraph(doc, y, `Eje racional: ${ec.arquitectura_mensaje.eje_racional}`);
+      if (ec.arquitectura_mensaje.frases_paraguas?.length) {
+        ec.arquitectura_mensaje.frases_paraguas.slice(0, 3).forEach((f: string) => { y = citaDestacada(doc, y, f); });
+      }
+    }
     if (ec.plataformas?.length) {
       y = subseccion(doc, y, "Plataformas y formatos");
       y = addTable(doc, {
@@ -654,18 +792,16 @@ export async function descargarLibroDeCampana(candidatoId: string) {
         body: ec.plataformas.map((p: any) => [p.red, p.prioridad, p.formato_dominante, p.frecuencia_semanal, p.kpi_principal]),
       });
     }
-
     if (ec.calendario_contenido_semanal) {
       y = subseccion(doc, y, "Calendario semanal de contenido");
       y = addTable(doc, {
         startY: y,
         head: [["Día", "Contenido"]],
-        body: (["lunes","martes","miercoles","jueves","viernes","sabado","domingo"] as const).map((d) => [
-          d.toUpperCase(), ec.calendario_contenido_semanal[d] || "—",
-        ]),
+        body: (["lunes","martes","miercoles","jueves","viernes","sabado","domingo"] as const)
+          .filter((d) => ec.calendario_contenido_semanal[d])
+          .map((d) => [d.toUpperCase(), ec.calendario_contenido_semanal[d]]),
       });
     }
-
     if (ec.contraataque_y_crisis) {
       y = subseccion(doc, y, "Protocolo de contraataque y crisis");
       if (ec.contraataque_y_crisis.protocolo_24h) y = addParagraph(doc, y, ec.contraataque_y_crisis.protocolo_24h);
@@ -680,74 +816,83 @@ export async function descargarLibroDeCampana(candidatoId: string) {
     }
   }
 
-  // ============ CAP 11: DISCURSO Y NARRATIVA ============
-  pagInicio = doc.getNumberOfPages() + 1;
-  y = tituloCapitulo(doc, "11", "Discurso recomendado", "Qué decir, qué evitar, cómo encuadrar");
-  indiceMarker.push({ num: "11", titulo: "Discurso recomendado", pagina: pagInicio });
-
-  if (discurso) {
-    if (discurso.que_decir) {
-      y = subseccion(doc, y, "Qué decir");
-      y = listaBullets(doc, y, arr(discurso.que_decir));
+  // ========== CAP: DISCURSO RECOMENDADO (análisis IA del candidato) ==========
+  if (discurso && (discurso.ejes_narrativos?.length || discurso.frames_dominantes?.length || discurso.contraargumentos_sugeridos?.length)) {
+    y = abrirCap("Discurso recomendado", "Qué decir, cómo encuadrar, cómo contrarrestar");
+    if (discurso.tono) y = addParagraph(doc, y, `Tono recomendado: ${discurso.tono}`);
+    if (discurso.ejes_narrativos?.length) {
+      y = subseccion(doc, y, "Ejes narrativos");
+      y = listaBullets(doc, y, arr(discurso.ejes_narrativos));
     }
-    if (discurso.que_evitar) {
-      y = subseccion(doc, y, "Qué evitar");
-      y = listaBullets(doc, y, arr(discurso.que_evitar));
+    if (discurso.frames_dominantes?.length) {
+      y = subseccion(doc, y, "Frames dominantes");
+      y = listaBullets(doc, y, arr(discurso.frames_dominantes));
     }
-    if (discurso.frases_clave) {
-      y = subseccion(doc, y, "Frases clave");
-      arr(discurso.frases_clave).slice(0, 5).forEach((f) => { y = citaDestacada(doc, y, f); });
+    if (discurso.vulnerabilidades_argumentales?.length) {
+      y = subseccion(doc, y, "Vulnerabilidades argumentales");
+      y = listaBullets(doc, y, arr(discurso.vulnerabilidades_argumentales));
     }
-  } else {
-    y = addParagraph(doc, y, "Genera el módulo de Discurso Ciudadano desde la ficha para poblar esta sección.");
+    if (discurso.contraargumentos_sugeridos?.length) {
+      y = subseccion(doc, y, "Contraargumentos sugeridos");
+      y = addTable(doc, {
+        startY: y,
+        head: [["Vs eje", "Respuesta"]],
+        body: discurso.contraargumentos_sugeridos.map((c: any) => [c.vs_eje, c.respuesta]),
+      });
+    }
   }
 
-  // ============ CAP 12: EVALUACIÓN DIGITAL ============
+  // ========== CAP: EVALUACIÓN DIGITAL ==========
   if (evalDigital) {
-    pagInicio = doc.getNumberOfPages() + 1;
-    y = tituloCapitulo(doc, "12", "Evaluación digital de redes", "Diagnóstico cuantitativo y cualitativo");
-    indiceMarker.push({ num: "12", titulo: "Evaluación digital de redes", pagina: pagInicio });
-    if (evalDigital.score_global != null) {
+    y = abrirCap("Evaluación digital de redes", "Diagnóstico cuantitativo y cualitativo");
+    if (evalDigital.diagnostico_global) {
       y = addKPIs(doc, y, [
-        { label: "Score global", value: String(evalDigital.score_global) },
-        { label: "Engagement", value: String(evalDigital.engagement || "—") },
-        { label: "Crecimiento", value: String(evalDigital.crecimiento || "—") },
-        { label: "Calidad", value: String(evalDigital.calidad_contenido || "—") },
+        { label: "Score digital", value: String(evalDigital.diagnostico_global.score_digital ?? "—") },
+        { label: "Nivel presencia", value: String(evalDigital.diagnostico_global.nivel_presencia ?? "—") },
       ]);
+      if (evalDigital.diagnostico_global.resumen_ejecutivo) y = addParagraph(doc, y, evalDigital.diagnostico_global.resumen_ejecutivo);
+      if (evalDigital.diagnostico_global.brecha_vs_cargo) y = addParagraph(doc, y, `Brecha vs cargo: ${evalDigital.diagnostico_global.brecha_vs_cargo}`);
     }
-    if (evalDigital.diagnostico) y = addParagraph(doc, y, evalDigital.diagnostico);
+    if (evalDigital.estimacion_metricas?.length) {
+      y = subseccion(doc, y, "Métricas estimadas");
+      y = addTable(doc, {
+        startY: y,
+        head: [["Plataforma", "Seguidores", "Engagement", "Confianza"]],
+        body: evalDigital.estimacion_metricas.map((m: any) => [
+          m.plataforma, fmtNum(m.seguidores_estimados), `${m.engagement_estimado}%`, m.confianza,
+        ]),
+      });
+    }
     if (evalDigital.recomendaciones?.length) {
       y = subseccion(doc, y, "Recomendaciones");
-      y = listaBullets(doc, y, arr(evalDigital.recomendaciones));
+      y = listaBullets(doc, y, evalDigital.recomendaciones.map((r: any) =>
+        `[${r.prioridad?.toUpperCase()}] ${r.plataforma}: ${r.accion} (KPI: ${r.kpi_objetivo})`
+      ));
     }
   }
 
-  // ============ CAP FINAL: METODOLOGÍA Y FUENTES ============
-  pagInicio = doc.getNumberOfPages() + 1;
-  y = tituloCapitulo(doc, "A", "Metodología, fuentes y notas técnicas", "Cómo se construyó este documento");
-  indiceMarker.push({ num: "A", titulo: "Metodología y fuentes", pagina: pagInicio });
-
+  // ========== CAP FINAL: METODOLOGÍA Y FUENTES ==========
+  y = abrirCap("Metodología, fuentes y notas técnicas", "Cómo se construyó este documento");
   y = addParagraph(doc, y,
     "Este libro de campaña integra todas las capas de inteligencia que la plataforma EME procesa para Michoacán: " +
-    "datos electorales históricos del INE e IEM (2018-2024), padrón nominal, escucha social en medios y redes, " +
+    "datos electorales históricos del INE e IEM (2018-2024), padrón nominal INE-DERFE 2026, escucha social en medios y redes, " +
     "Google Trends estatal y por candidato, monitoreo de Meta Ad Library, análisis OSINT con IA, detección de " +
     "Comportamiento Coordinado Inauténtico (CIB), detección de cambios de creencias por deriva de sentimiento, " +
-    "y la estrategia 360 generada por modelos de razonamiento de última generación."
+    "validación de paridad 2027 con criterios IEM/TEEM, y la estrategia 360 generada por modelos de razonamiento de última generación."
   );
-
   y = subseccion(doc, y, "Inventario de fuentes utilizadas");
   y = listaBullets(doc, y, [
-    `Tabla candidatos: ficha completa de ${candidato.nombre}`,
+    `Ficha del candidato: ${candidato.nombre}`,
+    metricas?.origen ? `Métricas oficiales: ${metricas.origen}` : "Métricas oficiales: no disponibles",
     `Análisis IA registrados: ${analisis.length} (${analisis.map((a: any) => a.tipo).join(", ") || "ninguno"})`,
-    `Resúmenes sociales: ${resumenes.length} corridas`,
-    `Menciones sociales analizadas: ${menciones.length}`,
-    `Corridas Google Trends: ${trends.length}`,
-    `Anuncios Meta capturados: ${metaAds.length}`,
-    `Belief shifts detectados: ${beliefShifts.length}`,
-    `Alertas CIB asociadas: ${cib.length}`,
+    `Resúmenes sociales: ${resumenes.length} corridas · Menciones analizadas: ${menciones.length}`,
+    `Google Trends: ${trends.length} corridas · Anuncios Meta: ${metaAds.length}`,
+    `Belief shifts: ${beliefShifts.length} · CIB: ${cib.length} · Narrativas sugeridas: ${narrativas.length}`,
+    `Alertas de crisis del territorio: ${alertasCrisis.length}`,
+    `Histórico municipal (DB): ${historicoMuni.length} ciclos`,
+    `Discurso ciudadano estatal: ${discursoCiudadano ? "incluido" : "no disponible"}`,
     `Estrategia 360 base: ${estrategia ? `versión "${estrategia.titulo}" del ${new Date(estrategia.created_at).toLocaleDateString("es-MX")}` : "no generada"}`,
   ]);
-
   y = subseccion(doc, y, "Modelo de unidad atómica");
   y = addParagraph(doc, y,
     "Toda agregación territorial se construye sumando secciones electorales del catálogo INE. " +
@@ -755,17 +900,17 @@ export async function descargarLibroDeCampana(candidatoId: string) {
     "(jerarquía cruzada, no 1:1). Las casillas se clasifican en básica, contigua, extraordinaria y especial. " +
     "Los municipios bajo régimen de autogobierno son tratados como 'sin proceso' y excluidos de los conteos locales."
   );
-
-  y = subseccion(doc, y, "Limitaciones y advertencias");
+  y = subseccion(doc, y, "Limitaciones");
   y = listaBullets(doc, y, [
-    "Las estimaciones cuantitativas (votos objetivo, % de apoyo, ROI por zona) son escenarios probabilísticos, no predicciones.",
-    "Los hallazgos OSINT requieren validación legal antes de usarse en comunicación pública.",
-    "El monitoreo de Meta Ads sólo refleja anuncios declarados como político-electorales en la API oficial.",
-    "El detector CIB usa heurísticas (Jaccard ≥0.7, z-score, dominación de fuente, ráfaga temporal); no sustituye análisis forense.",
-    "Este documento es confidencial y de uso interno del war room.",
+    "Las estimaciones cuantitativas son escenarios probabilísticos, no predicciones.",
+    "Los hallazgos OSINT requieren validación legal antes de uso público.",
+    "Meta Ads sólo refleja anuncios declarados como político-electorales en la API oficial.",
+    "El detector CIB usa heurísticas; no sustituye análisis forense.",
+    "La sugerencia de paridad 2027 anticipa criterios IEM/TEEM; lineamientos finales pueden variar.",
+    "Documento confidencial · uso interno del war room.",
   ]);
 
-  // ============ CONTRAPORTADA ============
+  // ========== CONTRAPORTADA ==========
   doc.addPage();
   const w = doc.internal.pageSize.getWidth();
   const h = doc.internal.pageSize.getHeight();
@@ -784,13 +929,10 @@ export async function descargarLibroDeCampana(candidatoId: string) {
   doc.text("Producto verificado por Job Meneses", 36, h - 44);
   doc.text("Documento confidencial · Prohibida su reproducción", 36, h - 30);
 
-  // ============ ESCRIBIR ÍNDICE EN PÁGINA RESERVADA ============
-  // Reescribir la página del índice
+  // ========== ÍNDICE EN PÁGINA RESERVADA ==========
   doc.setPage(indiceMarkerPage);
-  // Limpiar página (dibujar fondo blanco encima)
   doc.setFillColor(255, 255, 255);
   doc.rect(0, 0, w, h, "F");
-  // Header del índice
   doc.setFillColor(...PRIMARY);
   doc.rect(0, 0, w, 80, "F");
   doc.setTextColor(255, 255, 255);
@@ -802,12 +944,11 @@ export async function descargarLibroDeCampana(candidatoId: string) {
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
   doc.text("Libro de campaña · Edición completa", 36, 74);
-
   doc.setTextColor(...INK);
   let yi = 110;
   doc.setFontSize(11);
   indiceMarker.forEach((s) => {
-    if (yi > h - 60) return; // evitar desbordar la página única del índice
+    if (yi > h - 60) return;
     doc.setTextColor(...PRIMARY);
     doc.setFont("helvetica", "bold");
     doc.text(s.num, 36, yi);
