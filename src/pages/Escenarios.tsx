@@ -21,7 +21,8 @@ import { ExportarPDF } from "@/components/estrategia/ExportarPDF";
 import { EstrategiasGuardadas } from "@/components/estrategia/EstrategiasGuardadas";
 import { SelectorCandidatos } from "@/components/estrategia/SelectorCandidatos";
 import type { CandidatoSnapshot } from "@/lib/candidatos/types";
-import { Sparkles, Loader2, ChevronRight, Save, RotateCcw } from "lucide-react";
+import { Sparkles, Loader2, ChevronRight, Save, RotateCcw, BookOpen } from "lucide-react";
+import { descargarLibroDeCampana } from "@/lib/exports/libro-campana";
 
 type Step = 1 | 2 | 3;
 
