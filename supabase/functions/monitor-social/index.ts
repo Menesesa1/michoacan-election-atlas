@@ -408,21 +408,8 @@ Deno.serve(async (req) => {
       user_id: userId,
     });
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        batch_id: batchId,
-        entidades: entidades.length,
-        total_menciones: totalMenciones,
-        descartadas_fuera_michoacan: totalDescartadas,
-        candidatos_monitoreados: candidatos.length,
-        candidatos_propios: candidatosPropios.length,
-        rivales_registrados: candidatos.length - candidatosPropios.length,
-        duracion_ms: Date.now() - startedAt,
-      }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-    );
-  } catch (err) {
+    console.log(`[monitor-social] batch ${batchId} OK — ${totalMenciones} menciones en ${Date.now() - startedAt}ms`);
+   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error("monitor-social error:", msg);
     await supabase.from("social_runs").insert({
@@ -434,15 +421,31 @@ Deno.serve(async (req) => {
       user_id: userId,
       error: msg,
     });
-    return new Response(JSON.stringify({ success: false, error: msg }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  } finally {
+   } finally {
     try {
       await supabase.rpc("liberar_lock_pipeline", { _nombre: lockName });
     } catch (e) {
       console.error("[lock] unlock failed", e);
     }
+   }
+  };
+
+  // @ts-ignore EdgeRuntime existe en Supabase Edge Functions
+  if (typeof EdgeRuntime !== "undefined" && EdgeRuntime.waitUntil) {
+    // @ts-ignore
+    EdgeRuntime.waitUntil(trabajo());
+  } else {
+    // Fallback (dev local): no esperamos
+    trabajo();
   }
+
+  return new Response(
+    JSON.stringify({
+      success: true,
+      queued: true,
+      batch_id: batchId,
+      message: "Monitoreo iniciado en background. Consulta social_runs para el resultado.",
+    }),
+    { status: 202, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+  );
 });
