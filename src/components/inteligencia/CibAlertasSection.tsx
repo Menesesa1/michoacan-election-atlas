@@ -104,6 +104,8 @@ export default function CibAlertasSection() {
         </Button>
       </div>
 
+      <CibGrafoMaltego />
+
       {loading ? (
         <p className="text-sm text-muted-foreground">Cargando…</p>
       ) : alertas.length === 0 ? (
