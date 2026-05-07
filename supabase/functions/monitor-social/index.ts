@@ -280,7 +280,11 @@ Deno.serve(async (req) => {
     );
   }
 
-  try {
+  // Procesamiento en background: retornamos 202 inmediatamente y el trabajo
+  // (que puede tardar varios minutos por Firecrawl + Lovable AI) corre fuera del
+  // ciclo request/response, evitando el IDLE_TIMEOUT de 150s.
+  const trabajo = async () => {
+   try {
     // 1. Cargar TODOS los candidatos del usuario (propios y rivales registrados manualmente).
     //    Ya no auto-detectamos rivales con IA: el usuario decide a quién monitorear desde /candidatos.
     let candidatosQuery = supabase
