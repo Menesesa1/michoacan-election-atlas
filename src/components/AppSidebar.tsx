@@ -21,6 +21,7 @@ import {
   CalendarDays,
   Scale,
   ShieldCheck as ShieldAdmin,
+  FileText,
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 
@@ -51,6 +52,7 @@ const locales = [
   { title: "Paridad de género", url: "/paridad-genero", icon: Scale },
   { title: "Inteligencia", url: "/inteligencia", icon: ShieldAlert },
   { title: "Auditoría técnica", url: "/auditoria", icon: ShieldCheck },
+  { title: "Reportes mensuales", url: "/reportes", icon: FileText },
   { title: "Fuentes", url: "/fuentes", icon: Database },
 ];
 
