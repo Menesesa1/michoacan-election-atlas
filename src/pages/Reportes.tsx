@@ -12,9 +12,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, FileText, GitCompare, Briefcase } from "lucide-react";
+import { Loader2, FileText, GitCompare, Briefcase, Users } from "lucide-react";
 import { toast } from "sonner";
-import { generarReporteMensual } from "@/lib/exports/reporte-mensual";
+import { generarReporteMensual, generarReporteConsolidado } from "@/lib/exports/reporte-mensual";
 
 interface Cand {
   id: string;
@@ -36,6 +36,7 @@ export default function Reportes() {
   const [candidatos, setCandidatos] = useState<Cand[]>([]);
   const [loading, setLoading] = useState(true);
   const [generando, setGenerando] = useState(false);
+  const [generandoBatch, setGenerandoBatch] = useState(false);
 
   const [candidatoId, setCandidatoId] = useState<string>("");
   const [comparativoId, setComparativoId] = useState<string>("");
@@ -80,6 +81,34 @@ export default function Reportes() {
       toast.error(e?.message ?? "Error al generar reporte");
     } finally {
       setGenerando(false);
+    }
+  };
+
+  const aspirantesGubernatura = useMemo(
+    () =>
+      candidatos.filter((c) =>
+        (c.cargo_buscado ?? "").toLowerCase().includes("gobernatura"),
+      ),
+    [candidatos],
+  );
+
+  const generarConsolidado = async () => {
+    if (!aspirantesGubernatura.length) {
+      toast.error("No hay aspirantes a la gubernatura registrados");
+      return;
+    }
+    setGenerandoBatch(true);
+    try {
+      await generarReporteConsolidado({
+        candidatoIds: aspirantesGubernatura.map((c) => c.id),
+        desde: new Date(desde),
+        hasta: new Date(hasta + "T23:59:59"),
+      });
+      toast.success(`Reporte consolidado generado (${aspirantesGubernatura.length} aspirantes)`);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Error al generar consolidado");
+    } finally {
+      setGenerandoBatch(false);
     }
   };
 
@@ -181,6 +210,43 @@ export default function Reportes() {
             ) : (
               <>
                 <FileText className="h-4 w-4 mr-2" /> Generar PDF
+              </>
+            )}
+          </Button>
+        </div>
+      </Card>
+
+      <Card className="p-6 space-y-4 border-primary/30">
+        <div className="flex items-start gap-3">
+          <Users className="h-5 w-5 text-primary mt-0.5" />
+          <div className="flex-1">
+            <h2 className="font-semibold">Reporte consolidado · Gubernatura</h2>
+            <p className="text-xs text-muted-foreground mt-1">
+              Genera un único PDF con ranking, share of voice, comparativo semanal y
+              ficha individual de los <strong>{aspirantesGubernatura.length}</strong>{" "}
+              aspirantes a la Gubernatura de Michoacán registrados, en el mismo periodo
+              seleccionado arriba.
+            </p>
+            {aspirantesGubernatura.length > 0 && (
+              <p className="text-[11px] text-muted-foreground mt-2">
+                Incluye: {aspirantesGubernatura.map((c) => c.nombre.split(" ").slice(0, 2).join(" ")).join(" · ")}
+              </p>
+            )}
+          </div>
+        </div>
+        <div className="flex justify-end">
+          <Button
+            variant="secondary"
+            onClick={generarConsolidado}
+            disabled={generandoBatch || aspirantesGubernatura.length === 0}
+          >
+            {generandoBatch ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Generando consolidado…
+              </>
+            ) : (
+              <>
+                <Users className="h-4 w-4 mr-2" /> Generar consolidado ({aspirantesGubernatura.length})
               </>
             )}
           </Button>
