@@ -591,6 +591,12 @@ export async function generarReporteConsolidado(opts: OpcionesReporteConsolidado
         body: d.medios.map(([m, v]) => [m, String(v)]),
       });
     }
+
+    const kw = extraerKeywords(d.menciones, 30);
+    if (kw.length) {
+      y = addSection(doc, y, "Nube de palabras");
+      y = addWordCloud(doc, y, kw, { maxPalabras: 30, maxFont: 22 });
+    }
   }
 
   // Conclusiones de mando
