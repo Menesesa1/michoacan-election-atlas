@@ -216,6 +216,43 @@ export default function Reportes() {
         </div>
       </Card>
 
+      <Card className="p-6 space-y-4 border-primary/30">
+        <div className="flex items-start gap-3">
+          <Users className="h-5 w-5 text-primary mt-0.5" />
+          <div className="flex-1">
+            <h2 className="font-semibold">Reporte consolidado · Gubernatura</h2>
+            <p className="text-xs text-muted-foreground mt-1">
+              Genera un único PDF con ranking, share of voice, comparativo semanal y
+              ficha individual de los <strong>{aspirantesGubernatura.length}</strong>{" "}
+              aspirantes a la Gubernatura de Michoacán registrados, en el mismo periodo
+              seleccionado arriba.
+            </p>
+            {aspirantesGubernatura.length > 0 && (
+              <p className="text-[11px] text-muted-foreground mt-2">
+                Incluye: {aspirantesGubernatura.map((c) => c.nombre.split(" ").slice(0, 2).join(" ")).join(" · ")}
+              </p>
+            )}
+          </div>
+        </div>
+        <div className="flex justify-end">
+          <Button
+            variant="secondary"
+            onClick={generarConsolidado}
+            disabled={generandoBatch || aspirantesGubernatura.length === 0}
+          >
+            {generandoBatch ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Generando consolidado…
+              </>
+            ) : (
+              <>
+                <Users className="h-4 w-4 mr-2" /> Generar consolidado ({aspirantesGubernatura.length})
+              </>
+            )}
+          </Button>
+        </div>
+      </Card>
+
       <Card className="p-5 bg-muted/30">
         <h2 className="font-semibold text-sm mb-2">Cómo se construye</h2>
         <ul className="text-xs text-muted-foreground space-y-1 list-disc pl-4">
