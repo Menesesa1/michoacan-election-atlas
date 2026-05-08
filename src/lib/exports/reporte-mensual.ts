@@ -258,6 +258,18 @@ function bloqueDeSubset(
     });
   }
 
+  // Nube de palabras
+  const keywords = extraerKeywords(menciones, 35);
+  if (keywords.length) {
+    y = addSection(doc, y, "Nube de palabras");
+    y = addParagraph(
+      doc,
+      y,
+      `Términos más frecuentes en titulares y fragmentos del periodo (tamaño proporcional a la frecuencia, ${keywords.length} términos).`,
+    );
+    y = addWordCloud(doc, y, keywords, { maxPalabras: 35 });
+  }
+
   // Pico narrativo
   y = addParagraph(
     doc,
