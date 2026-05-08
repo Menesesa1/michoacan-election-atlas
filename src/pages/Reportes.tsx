@@ -119,12 +119,15 @@ export default function Reportes() {
             <Label className="flex items-center gap-1.5">
               <GitCompare className="h-3.5 w-3.5" /> Comparativo (opcional)
             </Label>
-            <Select value={comparativoId} onValueChange={setComparativoId}>
+            <Select
+              value={comparativoId || "__none__"}
+              onValueChange={(v) => setComparativoId(v === "__none__" ? "" : v)}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Sin comparación" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">— Sin comparación —</SelectItem>
+                <SelectItem value="__none__">— Sin comparación —</SelectItem>
                 {candidatos
                   .filter((c) => c.id !== candidatoId)
                   .map((c) => (
