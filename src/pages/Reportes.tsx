@@ -84,6 +84,34 @@ export default function Reportes() {
     }
   };
 
+  const aspirantesGubernatura = useMemo(
+    () =>
+      candidatos.filter((c) =>
+        (c.cargo_buscado ?? "").toLowerCase().includes("gobernatura"),
+      ),
+    [candidatos],
+  );
+
+  const generarConsolidado = async () => {
+    if (!aspirantesGubernatura.length) {
+      toast.error("No hay aspirantes a la gubernatura registrados");
+      return;
+    }
+    setGenerandoBatch(true);
+    try {
+      await generarReporteConsolidado({
+        candidatoIds: aspirantesGubernatura.map((c) => c.id),
+        desde: new Date(desde),
+        hasta: new Date(hasta + "T23:59:59"),
+      });
+      toast.success(`Reporte consolidado generado (${aspirantesGubernatura.length} aspirantes)`);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Error al generar consolidado");
+    } finally {
+      setGenerandoBatch(false);
+    }
+  };
+
   return (
     <div className="space-y-6 p-6 max-w-4xl mx-auto">
       <div>
