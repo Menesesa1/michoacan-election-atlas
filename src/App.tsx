@@ -27,6 +27,7 @@ import ParidadGenero from "./pages/ParidadGenero";
 import Administracion from "./pages/Administracion";
 import NotificacionesPreferencias from "./pages/NotificacionesPreferencias";
 import AuditoriaTransparencia from "./pages/AuditoriaTransparencia";
+import Reportes from "./pages/Reportes";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -73,6 +74,7 @@ const App = () => (
                 <Route path="/paridad-genero" element={<ParidadGenero />} />
                 <Route path="/notificaciones/preferencias" element={<NotificacionesPreferencias />} />
                 <Route path="/auditoria" element={<AuditoriaTransparencia />} />
+                <Route path="/reportes" element={<Reportes />} />
                 
                 <Route path="/fuentes" element={<Fuentes />} />
                 <Route

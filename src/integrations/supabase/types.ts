@@ -284,7 +284,9 @@ export type Database = {
         Row: {
           bio_breve: string | null
           cargo_buscado: string | null
+          cargo_publico_actual: string | null
           created_at: string
+          es_funcionario_publico: boolean
           es_propio: boolean
           fase: string
           foto_url: string | null
@@ -305,7 +307,9 @@ export type Database = {
         Insert: {
           bio_breve?: string | null
           cargo_buscado?: string | null
+          cargo_publico_actual?: string | null
           created_at?: string
+          es_funcionario_publico?: boolean
           es_propio?: boolean
           fase?: string
           foto_url?: string | null
@@ -326,7 +330,9 @@ export type Database = {
         Update: {
           bio_breve?: string | null
           cargo_buscado?: string | null
+          cargo_publico_actual?: string | null
           created_at?: string
+          es_funcionario_publico?: boolean
           es_propio?: boolean
           fase?: string
           foto_url?: string | null
@@ -589,6 +595,39 @@ export type Database = {
           procesada_en?: string
           url?: string
           url_hash?: string
+        }
+        Relationships: []
+      }
+      mencion_rol_clasificacion: {
+        Row: {
+          candidato_id: string
+          confianza: number | null
+          created_at: string
+          id: string
+          mencion_id: string
+          modelo: string
+          razonamiento: string | null
+          rol: string
+        }
+        Insert: {
+          candidato_id: string
+          confianza?: number | null
+          created_at?: string
+          id?: string
+          mencion_id: string
+          modelo?: string
+          razonamiento?: string | null
+          rol: string
+        }
+        Update: {
+          candidato_id?: string
+          confianza?: number | null
+          created_at?: string
+          id?: string
+          mencion_id?: string
+          modelo?: string
+          razonamiento?: string | null
+          rol?: string
         }
         Relationships: []
       }
