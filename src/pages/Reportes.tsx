@@ -12,18 +12,34 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, FileText, GitCompare, Briefcase, Users } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import {
+  Loader2,
+  FileText,
+  GitCompare,
+  Briefcase,
+  Users,
+  Calendar,
+  FileSpreadsheet,
+  BookOpen,
+  IdCard,
+  Building2,
+} from "lucide-react";
 import { toast } from "sonner";
-import { generarReporteMensual, generarReporteConsolidado } from "@/lib/exports/reporte-mensual";
-
-interface Cand {
-  id: string;
-  nombre: string;
-  partido: string;
-  cargo_buscado: string | null;
-  es_funcionario_publico: boolean;
-  cargo_publico_actual: string | null;
-}
+import {
+  generarReporteMensual,
+  generarReporteConsolidado,
+} from "@/lib/exports/reporte-mensual";
+import { DossierComercialSelector } from "@/components/candidatos/DossierComercialSelector";
+import { BriefingInternoSelector } from "@/components/candidatos/BriefingInternoSelector";
+import {
+  descargarInformeCandidatoPDF,
+  descargarInformeCandidatoXLSX,
+} from "@/lib/exports/informe-candidato";
+import { descargarLibroDeCampana } from "@/lib/exports/libro-campana";
+import { descargarBriefingPDF } from "@/lib/briefing-pdf";
+import { descargarInformeGeneralXLSX } from "@/lib/exports/informe-general-xlsx";
+import type { Candidato } from "@/lib/candidatos/types";
 
 function inicioMesPrevio(): { desde: Date; hasta: Date } {
   const hoy = new Date();
@@ -33,14 +49,17 @@ function inicioMesPrevio(): { desde: Date; hasta: Date } {
 }
 
 export default function Reportes() {
-  const [candidatos, setCandidatos] = useState<Cand[]>([]);
+  const [candidatos, setCandidatos] = useState<Candidato[]>([]);
   const [loading, setLoading] = useState(true);
   const [generando, setGenerando] = useState(false);
   const [generandoBatch, setGenerandoBatch] = useState(false);
+  const [generandoIndiv, setGenerandoIndiv] = useState<string | null>(null);
+  const [generandoEstado, setGenerandoEstado] = useState<string | null>(null);
 
   const [candidatoId, setCandidatoId] = useState<string>("");
   const [comparativoId, setComparativoId] = useState<string>("");
   const [splitRol, setSplitRol] = useState(true);
+  const [candidatoIndivId, setCandidatoIndivId] = useState<string>("");
 
   const def = useMemo(inicioMesPrevio, []);
   const [desde, setDesde] = useState(def.desde.toISOString().slice(0, 10));
@@ -50,17 +69,15 @@ export default function Reportes() {
     (async () => {
       const { data, error } = await supabase
         .from("candidatos")
-        .select(
-          "id, nombre, partido, cargo_buscado, es_funcionario_publico, cargo_publico_actual",
-        )
+        .select("*")
         .order("nombre");
       if (error) toast.error("No se pudieron cargar candidatos");
-      setCandidatos((data ?? []) as Cand[]);
+      setCandidatos((data ?? []) as unknown as Candidato[]);
       setLoading(false);
     })();
   }, []);
 
-  const candidatoSel = candidatos.find((c) => c.id === candidatoId);
+  const candidatoSel = candidatos.find((c: any) => c.id === candidatoId) as any;
 
   const generar = async () => {
     if (!candidatoId) {
@@ -86,7 +103,7 @@ export default function Reportes() {
 
   const aspirantesGubernatura = useMemo(
     () =>
-      candidatos.filter((c) =>
+      candidatos.filter((c: any) =>
         (c.cargo_buscado ?? "").toLowerCase().includes("gobernatura"),
       ),
     [candidatos],
@@ -100,11 +117,13 @@ export default function Reportes() {
     setGenerandoBatch(true);
     try {
       await generarReporteConsolidado({
-        candidatoIds: aspirantesGubernatura.map((c) => c.id),
+        candidatoIds: aspirantesGubernatura.map((c: any) => c.id),
         desde: new Date(desde),
         hasta: new Date(hasta + "T23:59:59"),
       });
-      toast.success(`Reporte consolidado generado (${aspirantesGubernatura.length} aspirantes)`);
+      toast.success(
+        `Reporte consolidado generado (${aspirantesGubernatura.length} aspirantes)`,
+      );
     } catch (e: any) {
       toast.error(e?.message ?? "Error al generar consolidado");
     } finally {
@@ -112,164 +131,451 @@ export default function Reportes() {
     }
   };
 
+  const ejecutarIndividual = async (
+    key: string,
+    fn: () => Promise<unknown> | unknown,
+    label: string,
+  ) => {
+    setGenerandoIndiv(key);
+    try {
+      await fn();
+      toast.success(`${label} generado`);
+    } catch (e: any) {
+      toast.error(e?.message ?? `Error: ${label}`);
+    } finally {
+      setGenerandoIndiv(null);
+    }
+  };
+
+  const ejecutarEstado = async (
+    key: string,
+    fn: () => Promise<unknown> | unknown,
+    label: string,
+  ) => {
+    setGenerandoEstado(key);
+    try {
+      await fn();
+      toast.success(`${label} generado`);
+    } catch (e: any) {
+      toast.error(e?.message ?? `Error: ${label}`);
+    } finally {
+      setGenerandoEstado(null);
+    }
+  };
+
   return (
-    <div className="space-y-6 p-6 max-w-4xl mx-auto">
+    <div className="space-y-6 p-6 max-w-5xl mx-auto">
       <div>
-        <h1 className="text-3xl font-bold">Reportes mensuales</h1>
+        <h1 className="text-3xl font-bold">Centro de reportes</h1>
         <p className="text-muted-foreground text-sm mt-1">
-          Genera reportes ejecutivos de monitoreo mediático estilo briefing semanal,
-          ajustados a un periodo de un mes. Incluye separación opcional de rol
-          candidato vs funcionario y comparativo con un segundo contendiente.
+          Hub único para generar todos los entregables: mensuales por candidato,
+          consolidados por contienda, fichas comerciales, briefings internos,
+          informes de campaña e informes ejecutivos del estado.
         </p>
       </div>
 
-      <Card className="p-6 space-y-5">
-        <div className="grid md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label className="flex items-center gap-1.5">
-              <FileText className="h-3.5 w-3.5" /> Candidato principal
-            </Label>
-            <Select value={candidatoId} onValueChange={setCandidatoId} disabled={loading}>
-              <SelectTrigger>
-                <SelectValue placeholder={loading ? "Cargando..." : "Selecciona"} />
-              </SelectTrigger>
-              <SelectContent>
-                {candidatos.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.nombre} · {c.partido}
-                    {c.es_funcionario_publico ? " · Funcionario" : ""}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+      <Tabs defaultValue="mensual" className="w-full">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="mensual" className="gap-1.5">
+            <Calendar className="h-3.5 w-3.5" /> Mensual
+          </TabsTrigger>
+          <TabsTrigger value="consolidado" className="gap-1.5">
+            <Users className="h-3.5 w-3.5" /> Consolidado
+          </TabsTrigger>
+          <TabsTrigger value="candidato" className="gap-1.5">
+            <IdCard className="h-3.5 w-3.5" /> Por candidato
+          </TabsTrigger>
+          <TabsTrigger value="estado" className="gap-1.5">
+            <Building2 className="h-3.5 w-3.5" /> Estado
+          </TabsTrigger>
+        </TabsList>
 
-          <div className="space-y-2">
-            <Label className="flex items-center gap-1.5">
-              <GitCompare className="h-3.5 w-3.5" /> Comparativo (opcional)
-            </Label>
-            <Select
-              value={comparativoId || "__none__"}
-              onValueChange={(v) => setComparativoId(v === "__none__" ? "" : v)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Sin comparación" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__none__">— Sin comparación —</SelectItem>
-                {candidatos
-                  .filter((c) => c.id !== candidatoId)
-                  .map((c) => (
+        {/* ─────────── MENSUAL ─────────── */}
+        <TabsContent value="mensual" className="space-y-4">
+          <Card className="p-6 space-y-5">
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="flex items-center gap-1.5">
+                  <FileText className="h-3.5 w-3.5" /> Candidato principal
+                </Label>
+                <Select
+                  value={candidatoId}
+                  onValueChange={setCandidatoId}
+                  disabled={loading}
+                >
+                  <SelectTrigger>
+                    <SelectValue
+                      placeholder={loading ? "Cargando..." : "Selecciona"}
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {candidatos.map((c: any) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.nombre} · {c.partido}
+                        {c.es_funcionario_publico ? " · Funcionario" : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="flex items-center gap-1.5">
+                  <GitCompare className="h-3.5 w-3.5" /> Comparativo (opcional)
+                </Label>
+                <Select
+                  value={comparativoId || "__none__"}
+                  onValueChange={(v) =>
+                    setComparativoId(v === "__none__" ? "" : v)
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sin comparación" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">— Sin comparación —</SelectItem>
+                    {candidatos
+                      .filter((c: any) => c.id !== candidatoId)
+                      .map((c: any) => (
+                        <SelectItem key={c.id} value={c.id}>
+                          {c.nombre} · {c.partido}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Desde</Label>
+                <Input
+                  type="date"
+                  value={desde}
+                  onChange={(e) => setDesde(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Hasta</Label>
+                <Input
+                  type="date"
+                  value={hasta}
+                  onChange={(e) => setHasta(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {candidatoSel?.es_funcionario_publico && (
+              <div className="flex items-start gap-3 p-3 rounded-md border border-primary/30 bg-primary/5">
+                <Briefcase className="h-4 w-4 text-primary mt-0.5" />
+                <div className="flex-1">
+                  <div className="flex items-center justify-between gap-3">
+                    <Label htmlFor="split" className="font-semibold">
+                      Separar rol candidato / funcionario
+                    </Label>
+                    <Switch
+                      id="split"
+                      checked={splitRol}
+                      onCheckedChange={setSplitRol}
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {candidatoSel.nombre} ocupa actualmente:{" "}
+                    <span className="font-medium">
+                      {candidatoSel.cargo_publico_actual ?? "cargo público"}
+                    </span>
+                    . La IA clasificará cada mención como actividad de campaña o
+                    gestión institucional, generando dos secciones separadas en
+                    el PDF.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-end">
+              <Button onClick={generar} disabled={generando || !candidatoId}>
+                {generando ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Generando…
+                  </>
+                ) : (
+                  <>
+                    <FileText className="h-4 w-4 mr-2" /> Generar PDF mensual
+                  </>
+                )}
+              </Button>
+            </div>
+          </Card>
+        </TabsContent>
+
+        {/* ─────────── CONSOLIDADO ─────────── */}
+        <TabsContent value="consolidado" className="space-y-4">
+          <Card className="p-6 space-y-4 border-primary/30">
+            <div className="flex items-start gap-3">
+              <Users className="h-5 w-5 text-primary mt-0.5" />
+              <div className="flex-1">
+                <h2 className="font-semibold">
+                  Reporte consolidado · Gubernatura
+                </h2>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Un único PDF con ranking, share of voice, comparativo semanal
+                  y ficha individual de los{" "}
+                  <strong>{aspirantesGubernatura.length}</strong> aspirantes
+                  registrados, en el periodo seleccionado en la tab Mensual.
+                </p>
+                {aspirantesGubernatura.length > 0 && (
+                  <p className="text-[11px] text-muted-foreground mt-2">
+                    Incluye:{" "}
+                    {aspirantesGubernatura
+                      .map((c: any) => c.nombre.split(" ").slice(0, 2).join(" "))
+                      .join(" · ")}
+                  </p>
+                )}
+              </div>
+            </div>
+            <div className="grid md:grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>Desde</Label>
+                <Input
+                  type="date"
+                  value={desde}
+                  onChange={(e) => setDesde(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Hasta</Label>
+                <Input
+                  type="date"
+                  value={hasta}
+                  onChange={(e) => setHasta(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="flex justify-end">
+              <Button
+                variant="secondary"
+                onClick={generarConsolidado}
+                disabled={
+                  generandoBatch || aspirantesGubernatura.length === 0
+                }
+              >
+                {generandoBatch ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Generando
+                    consolidado…
+                  </>
+                ) : (
+                  <>
+                    <Users className="h-4 w-4 mr-2" /> Generar consolidado (
+                    {aspirantesGubernatura.length})
+                  </>
+                )}
+              </Button>
+            </div>
+          </Card>
+        </TabsContent>
+
+        {/* ─────────── POR CANDIDATO ─────────── */}
+        <TabsContent value="candidato" className="space-y-4">
+          <Card className="p-6 space-y-4">
+            <div>
+              <h2 className="font-semibold flex items-center gap-2">
+                <IdCard className="h-4 w-4" /> Dossier comercial
+              </h2>
+              <p className="text-xs text-muted-foreground mt-1">
+                Ficha de prospección con métricas oficiales para presentar a un
+                aspirante.
+              </p>
+              <div className="mt-3">
+                <DossierComercialSelector candidatos={candidatos} />
+              </div>
+            </div>
+          </Card>
+
+          <Card className="p-6 space-y-4">
+            <div>
+              <h2 className="font-semibold flex items-center gap-2">
+                <FileText className="h-4 w-4" /> Briefing interno
+              </h2>
+              <p className="text-xs text-muted-foreground mt-1">
+                Análisis táctico interno (perfil, OSINT y discurso) para war
+                room.
+              </p>
+              <div className="mt-3">
+                <BriefingInternoSelector candidatos={candidatos} />
+              </div>
+            </div>
+          </Card>
+
+          <Card className="p-6 space-y-4">
+            <h2 className="font-semibold flex items-center gap-2">
+              <BookOpen className="h-4 w-4" /> Informe de campaña y libro de
+              campaña
+            </h2>
+            <div className="space-y-2">
+              <Label>Candidato</Label>
+              <Select
+                value={candidatoIndivId}
+                onValueChange={setCandidatoIndivId}
+                disabled={loading}
+              >
+                <SelectTrigger>
+                  <SelectValue
+                    placeholder={loading ? "Cargando..." : "Selecciona"}
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {candidatos.map((c: any) => (
                     <SelectItem key={c.id} value={c.id}>
                       {c.nombre} · {c.partido}
                     </SelectItem>
                   ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label>Desde</Label>
-            <Input type="date" value={desde} onChange={(e) => setDesde(e.target.value)} />
-          </div>
-
-          <div className="space-y-2">
-            <Label>Hasta</Label>
-            <Input type="date" value={hasta} onChange={(e) => setHasta(e.target.value)} />
-          </div>
-        </div>
-
-        {candidatoSel?.es_funcionario_publico && (
-          <div className="flex items-start gap-3 p-3 rounded-md border border-primary/30 bg-primary/5">
-            <Briefcase className="h-4 w-4 text-primary mt-0.5" />
-            <div className="flex-1">
-              <div className="flex items-center justify-between gap-3">
-                <Label htmlFor="split" className="font-semibold">
-                  Separar rol candidato / funcionario
-                </Label>
-                <Switch id="split" checked={splitRol} onCheckedChange={setSplitRol} />
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                {candidatoSel.nombre} ocupa actualmente:{" "}
-                <span className="font-medium">
-                  {candidatoSel.cargo_publico_actual ?? "cargo público"}
-                </span>
-                . La IA clasificará cada mención como actividad de campaña o gestión
-                institucional, generando dos secciones separadas en el PDF.
-              </p>
+                </SelectContent>
+              </Select>
             </div>
-          </div>
-        )}
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={!candidatoIndivId || generandoIndiv === "info-pdf"}
+                onClick={() =>
+                  ejecutarIndividual(
+                    "info-pdf",
+                    () => descargarInformeCandidatoPDF(candidatoIndivId),
+                    "Informe candidato PDF",
+                  )
+                }
+              >
+                {generandoIndiv === "info-pdf" ? (
+                  <Loader2 className="h-3 w-3 mr-1.5 animate-spin" />
+                ) : (
+                  <FileText className="h-3 w-3 mr-1.5" />
+                )}
+                Informe candidato (PDF)
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={!candidatoIndivId || generandoIndiv === "info-xlsx"}
+                onClick={() =>
+                  ejecutarIndividual(
+                    "info-xlsx",
+                    () => descargarInformeCandidatoXLSX(candidatoIndivId),
+                    "Informe candidato Excel",
+                  )
+                }
+              >
+                {generandoIndiv === "info-xlsx" ? (
+                  <Loader2 className="h-3 w-3 mr-1.5 animate-spin" />
+                ) : (
+                  <FileSpreadsheet className="h-3 w-3 mr-1.5" />
+                )}
+                Informe candidato (Excel)
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={!candidatoIndivId || generandoIndiv === "libro"}
+                onClick={() =>
+                  ejecutarIndividual(
+                    "libro",
+                    () => descargarLibroDeCampana(candidatoIndivId),
+                    "Libro de campaña",
+                  )
+                }
+              >
+                {generandoIndiv === "libro" ? (
+                  <Loader2 className="h-3 w-3 mr-1.5 animate-spin" />
+                ) : (
+                  <BookOpen className="h-3 w-3 mr-1.5" />
+                )}
+                Libro de campaña
+              </Button>
+            </div>
+          </Card>
+        </TabsContent>
 
-        <div className="flex justify-end">
-          <Button onClick={generar} disabled={generando || !candidatoId}>
-            {generando ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Generando…
-              </>
-            ) : (
-              <>
-                <FileText className="h-4 w-4 mr-2" /> Generar PDF
-              </>
-            )}
-          </Button>
-        </div>
-      </Card>
-
-      <Card className="p-6 space-y-4 border-primary/30">
-        <div className="flex items-start gap-3">
-          <Users className="h-5 w-5 text-primary mt-0.5" />
-          <div className="flex-1">
-            <h2 className="font-semibold">Reporte consolidado · Gubernatura</h2>
-            <p className="text-xs text-muted-foreground mt-1">
-              Genera un único PDF con ranking, share of voice, comparativo semanal y
-              ficha individual de los <strong>{aspirantesGubernatura.length}</strong>{" "}
-              aspirantes a la Gubernatura de Michoacán registrados, en el mismo periodo
-              seleccionado arriba.
+        {/* ─────────── ESTADO ─────────── */}
+        <TabsContent value="estado" className="space-y-4">
+          <Card className="p-6 space-y-4">
+            <h2 className="font-semibold flex items-center gap-2">
+              <Building2 className="h-4 w-4" /> Reportes ejecutivos del estado
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              Consolidados de todo Michoacán: KPIs electorales, contiendas
+              activas, alertas y datos completos por sección.
             </p>
-            {aspirantesGubernatura.length > 0 && (
-              <p className="text-[11px] text-muted-foreground mt-2">
-                Incluye: {aspirantesGubernatura.map((c) => c.nombre.split(" ").slice(0, 2).join(" ")).join(" · ")}
-              </p>
-            )}
-          </div>
-        </div>
-        <div className="flex justify-end">
-          <Button
-            variant="secondary"
-            onClick={generarConsolidado}
-            disabled={generandoBatch || aspirantesGubernatura.length === 0}
-          >
-            {generandoBatch ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Generando consolidado…
-              </>
-            ) : (
-              <>
-                <Users className="h-4 w-4 mr-2" /> Generar consolidado ({aspirantesGubernatura.length})
-              </>
-            )}
-          </Button>
-        </div>
-      </Card>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={generandoEstado === "brief"}
+                onClick={() =>
+                  ejecutarEstado(
+                    "brief",
+                    () => descargarBriefingPDF(),
+                    "Briefing ejecutivo PDF",
+                  )
+                }
+              >
+                {generandoEstado === "brief" ? (
+                  <Loader2 className="h-3 w-3 mr-1.5 animate-spin" />
+                ) : (
+                  <FileText className="h-3 w-3 mr-1.5" />
+                )}
+                Briefing ejecutivo (PDF)
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={generandoEstado === "xlsx"}
+                onClick={() =>
+                  ejecutarEstado(
+                    "xlsx",
+                    () => descargarInformeGeneralXLSX(),
+                    "Informe general Excel",
+                  )
+                }
+              >
+                {generandoEstado === "xlsx" ? (
+                  <Loader2 className="h-3 w-3 mr-1.5 animate-spin" />
+                ) : (
+                  <FileSpreadsheet className="h-3 w-3 mr-1.5" />
+                )}
+                Informe general (Excel)
+              </Button>
+            </div>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       <Card className="p-5 bg-muted/30">
         <h2 className="font-semibold text-sm mb-2">Cómo se construye</h2>
         <ul className="text-xs text-muted-foreground space-y-1 list-disc pl-4">
-          <li>Toma todas las menciones del candidato registradas en el periodo.</li>
           <li>
-            Calcula KPIs: volumen, sentimiento, distribución diaria/semanal, día pico,
-            top medios y temas dominantes.
+            <strong>Mensual:</strong> menciones del candidato en el periodo,
+            KPIs, sentimiento, top medios, temas y comparativo opcional.
           </li>
           <li>
-            Si el candidato es funcionario público y activas el split, llama a la IA
-            para etiquetar cada mención como rol candidato o rol funcionario.
+            <strong>Split rol:</strong> si es funcionario público, la IA
+            clasifica cada mención como campaña o gestión institucional.
           </li>
           <li>
-            Si seleccionas un comparativo, agrega una sección con tabla cruzada de
-            volumen, sentimiento y diferencial semanal.
+            <strong>Consolidado:</strong> un solo PDF con todos los aspirantes a
+            la gubernatura, ranking, share of voice y fichas individuales.
+          </li>
+          <li>
+            <strong>Por candidato:</strong> dossier comercial, briefing interno,
+            informe de campaña (PDF/Excel) y libro de campaña.
+          </li>
+          <li>
+            <strong>Estado:</strong> briefing ejecutivo y dataset completo de
+            Michoacán a nivel sección.
           </li>
         </ul>
+        <p className="text-[11px] text-muted-foreground mt-3">
+          Los accesos rápidos siguen disponibles en Candidatos, Datos, Mando
+          Central e Inteligencia para no romper flujos existentes.
+        </p>
       </Card>
     </div>
   );
