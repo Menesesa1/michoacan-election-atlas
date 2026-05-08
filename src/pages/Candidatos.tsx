@@ -449,6 +449,48 @@ export default function Candidatos() {
         open={!!fichaAbierta}
         onClose={() => setFichaAbierta(null)}
       />
+
+      {/* Barra flotante de selección para comparar */}
+      {seleccionados.length > 0 && !comparando && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 max-w-[95vw]">
+          <div className="flex items-center gap-3 px-4 py-2.5 rounded-full bg-card/95 backdrop-blur border border-primary/40 shadow-2xl shadow-primary/20">
+            <div className="flex items-center gap-2">
+              <GitCompare className="w-4 h-4 text-primary" />
+              <span className="text-xs font-mono uppercase tracking-widest text-muted-foreground">
+                Selección
+              </span>
+              <Badge className="bg-primary/20 text-primary border-primary/40 font-mono">
+                {seleccionados.length}
+              </Badge>
+            </div>
+            <div className="hidden sm:flex items-center gap-1 max-w-xs overflow-hidden">
+              {candidatosCompare.slice(0, 3).map((c) => (
+                <Badge key={c.id} variant="secondary" className="text-[10px] truncate max-w-[120px]">
+                  {c.nombre.split(" ")[0]} {c.nombre.split(" ")[1] ?? ""}
+                </Badge>
+              ))}
+              {candidatosCompare.length > 3 && (
+                <span className="text-[10px] text-muted-foreground">+{candidatosCompare.length - 3}</span>
+              )}
+            </div>
+            <div className="flex items-center gap-1.5 border-l border-border pl-3">
+              <Button
+                size="sm"
+                onClick={() => setComparando(true)}
+                disabled={seleccionados.length < 2}
+                className="h-8"
+                title={seleccionados.length < 2 ? "Selecciona al menos 2 candidatos" : "Comparar lado a lado"}
+              >
+                <GitCompare className="w-3.5 h-3.5 mr-1.5" />
+                {seleccionados.length < 2 ? "Selecciona 2+" : `Comparar (${seleccionados.length})`}
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => setSeleccionados([])} className="h-8">
+                Limpiar
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
