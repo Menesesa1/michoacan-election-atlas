@@ -412,3 +412,160 @@ export async function generarReporteMensual(opts: OpcionesReporte) {
     `reporte-mensual-${slug}-${opts.desde.toISOString().slice(0, 10)}.pdf`,
   );
 }
+
+// ──────────────────────────────────────────────────────────────────
+// REPORTE CONSOLIDADO: todos los aspirantes a un mismo cargo (ej. gubernatura)
+export interface OpcionesReporteConsolidado {
+  candidatoIds: string[];
+  desde: Date;
+  hasta: Date;
+  titulo?: string;
+}
+
+export async function generarReporteConsolidado(opts: OpcionesReporteConsolidado) {
+  if (!opts.candidatoIds.length) throw new Error("Sin candidatos seleccionados");
+
+  const datos = await Promise.all(
+    opts.candidatoIds.map(async (id) => {
+      const cand = await cargarCandidato(id);
+      const menciones = await cargarMenciones(id, opts.desde, opts.hasta);
+      const sent = sentimientoPcts(menciones);
+      const pico = picoDelMes(menciones);
+      const medios = topMedios(menciones, 5);
+      const temas = topTemas(menciones, 4);
+      return { cand, menciones, sent, pico, medios, temas };
+    }),
+  );
+
+  // ranking por menciones
+  datos.sort((a, b) => b.menciones.length - a.menciones.length);
+
+  const doc = createPDF("p");
+  const periodo = `${opts.desde.toLocaleDateString("es-MX", { day: "2-digit", month: "short" })} – ${opts.hasta.toLocaleDateString("es-MX", { day: "2-digit", month: "short", year: "numeric" })}`;
+  const titulo = opts.titulo ?? "Reporte consolidado · Aspirantes a la Gubernatura";
+  addHeader(doc, titulo, periodo);
+  let y = 80;
+
+  // Lectura ejecutiva
+  y = addSection(doc, y, "Lectura ejecutiva");
+  const lider = datos[0];
+  const totalMenc = datos.reduce((s, d) => s + d.menciones.length, 0);
+  y = addParagraph(
+    doc,
+    y,
+    `Universo analizado: ${datos.length} aspirantes con ${fmtNum(totalMenc)} menciones agregadas en el periodo. Lidera la conversación ${lider.cand.nombre} (${lider.cand.partido}) con ${fmtNum(lider.menciones.length)} menciones (${fmtPct((lider.menciones.length / Math.max(totalMenc, 1)) * 100)} del total). Sentimiento neto del bloque: ${(datos.reduce((s, d) => s + d.sent.prom * d.menciones.length, 0) / Math.max(totalMenc, 1)).toFixed(2)}.`,
+  );
+
+  // Tabla comparativa principal
+  y = addSection(doc, y, "Ranking comparativo");
+  y = addTable(doc, {
+    startY: y,
+    head: [["#", "Aspirante", "Partido", "Menc.", "Sent.", "% Pos", "% Neg", "Día pico"]],
+    body: datos.map((d, i) => [
+      String(i + 1),
+      d.cand.nombre,
+      d.cand.partido,
+      fmtNum(d.menciones.length),
+      d.sent.prom.toFixed(2),
+      fmtPct(d.sent.pos),
+      fmtPct(d.sent.neg),
+      d.pico.fecha,
+    ]),
+  });
+
+  // Share of voice
+  y = addSection(doc, y, "Share of voice");
+  y = addTable(doc, {
+    startY: y,
+    head: [["Aspirante", "Menciones", "% del total"]],
+    body: datos.map((d) => [
+      d.cand.nombre,
+      fmtNum(d.menciones.length),
+      fmtPct((d.menciones.length / Math.max(totalMenc, 1)) * 100),
+    ]),
+  });
+
+  // Comparativo semanal cruzado
+  const semanasMap = new Map<string, Map<string, number>>();
+  for (const d of datos) {
+    for (const [k, v] of agruparPorSemana(d.menciones)) {
+      if (!semanasMap.has(k)) semanasMap.set(k, new Map());
+      semanasMap.get(k)!.set(d.cand.nombre, v);
+    }
+  }
+  const semanasOrden = Array.from(semanasMap.keys()).sort();
+  if (semanasOrden.length) {
+    doc.addPage();
+    y = 80;
+    addHeader(doc, titulo, periodo);
+    y = 80;
+    y = addSection(doc, y, "Volumen semanal por aspirante");
+    y = addTable(doc, {
+      startY: y,
+      head: [["Semana", ...datos.map((d) => d.cand.nombre.split(" ")[0])]],
+      body: semanasOrden.map((s) => [
+        s,
+        ...datos.map((d) => String(semanasMap.get(s)?.get(d.cand.nombre) ?? 0)),
+      ]),
+    });
+  }
+
+  // Ficha por aspirante
+  for (const d of datos) {
+    doc.addPage();
+    y = 80;
+    addHeader(doc, `${d.cand.nombre} · ${d.cand.partido}`, periodo);
+    y = 80;
+    y = addSection(doc, y, "Síntesis individual");
+    y = addParagraph(
+      doc,
+      y,
+      `${d.cand.nombre} (${d.cand.partido}) — aspirante a ${d.cand.cargo_buscado || "la Gubernatura"}. Registra ${fmtNum(d.menciones.length)} menciones con sentimiento ${d.sent.prom.toFixed(2)} (${fmtPct(d.sent.pos)} positivo / ${fmtPct(d.sent.neg)} negativo). Pico el ${d.pico.fecha} con ${d.pico.count} menciones en torno a: "${d.pico.ejemplo.slice(0, 140)}".`,
+    );
+    y = addKPIs(doc, y, [
+      { label: "Menciones", value: fmtNum(d.menciones.length) },
+      { label: "Sentimiento", value: d.sent.prom.toFixed(2), color: d.sent.prom >= 0 ? BRAND.ok : BRAND.bad },
+      { label: "% Positivo", value: fmtPct(d.sent.pos), color: BRAND.ok },
+      { label: "% Negativo", value: fmtPct(d.sent.neg), color: BRAND.bad },
+    ]);
+
+    if (d.temas.length) {
+      y = addSection(doc, y, "Temas dominantes");
+      y = addTable(doc, {
+        startY: y,
+        head: [["Tema", "Menciones", "Ejemplo"]],
+        body: d.temas.map(([t, v]) => [t, String(v.count), v.ejemplos[0]?.slice(0, 70) ?? "—"]),
+      });
+    }
+
+    if (d.medios.length) {
+      y = addSection(doc, y, "Top medios");
+      y = addTable(doc, {
+        startY: y,
+        head: [["Medio", "Menciones"]],
+        body: d.medios.map(([m, v]) => [m, String(v)]),
+      });
+    }
+  }
+
+  // Conclusiones de mando
+  doc.addPage();
+  y = 80;
+  addHeader(doc, titulo, periodo);
+  y = 80;
+  y = addSection(doc, y, "Conclusiones de mando");
+  const segundo = datos[1];
+  const ultimo = datos[datos.length - 1];
+  const conclusiones = [
+    `1. Liderazgo mediático: ${lider.cand.nombre} concentra ${fmtPct((lider.menciones.length / Math.max(totalMenc, 1)) * 100)} del share of voice del bloque. ${segundo ? `La distancia con ${segundo.cand.nombre} es de ${fmtNum(lider.menciones.length - segundo.menciones.length)} menciones.` : ""}`,
+    `2. Tono del bloque: el aspirante con sentimiento más favorable es ${[...datos].sort((a, b) => b.sent.prom - a.sent.prom)[0].cand.nombre}; el más adverso es ${[...datos].sort((a, b) => a.sent.prom - b.sent.prom)[0].cand.nombre}. Esto define quién va a la ofensiva narrativa y quién requiere contención.`,
+    `3. Brecha de exposición: entre ${lider.cand.nombre} (${fmtNum(lider.menciones.length)}) y ${ultimo.cand.nombre} (${fmtNum(ultimo.menciones.length)}) hay un diferencial de ${fmtNum(lider.menciones.length - ultimo.menciones.length)} menciones, lo que marca la asimetría real de la contienda mediática.`,
+    `4. Recomendación operativa: monitorear semanalmente la migración de share of voice; cualquier aspirante que crezca dos semanas consecutivas requiere lectura inmediata de sus temas dominantes para anticipar reposicionamiento.`,
+  ];
+  for (const c of conclusiones) y = addParagraph(doc, y, c);
+
+  descargarPDF(
+    doc,
+    `reporte-consolidado-${opts.desde.toISOString().slice(0, 10)}.pdf`,
+  );
+}
