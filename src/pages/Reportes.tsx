@@ -36,6 +36,7 @@ export default function Reportes() {
   const [candidatos, setCandidatos] = useState<Cand[]>([]);
   const [loading, setLoading] = useState(true);
   const [generando, setGenerando] = useState(false);
+  const [generandoBatch, setGenerandoBatch] = useState(false);
 
   const [candidatoId, setCandidatoId] = useState<string>("");
   const [comparativoId, setComparativoId] = useState<string>("");
