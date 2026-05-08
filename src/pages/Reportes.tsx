@@ -12,9 +12,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, FileText, GitCompare, Briefcase } from "lucide-react";
+import { Loader2, FileText, GitCompare, Briefcase, Users } from "lucide-react";
 import { toast } from "sonner";
-import { generarReporteMensual } from "@/lib/exports/reporte-mensual";
+import { generarReporteMensual, generarReporteConsolidado } from "@/lib/exports/reporte-mensual";
 
 interface Cand {
   id: string;
