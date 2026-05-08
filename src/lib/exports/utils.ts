@@ -132,6 +132,58 @@ export function addKPIs(
   return y + 64;
 }
 
+/** Nube de palabras renderizada como bloque de texto con tamaño proporcional a la frecuencia. */
+export function addWordCloud(
+  doc: jsPDF,
+  y: number,
+  palabras: { palabra: string; peso: number }[],
+  opts: { maxFont?: number; minFont?: number; maxPalabras?: number } = {},
+): number {
+  if (!palabras.length) return y;
+  const items = palabras.slice(0, opts.maxPalabras ?? 40);
+  const max = Math.max(...items.map((p) => p.peso));
+  const min = Math.min(...items.map((p) => p.peso));
+  const fMax = opts.maxFont ?? 26;
+  const fMin = opts.minFont ?? 9;
+  const palette = [BRAND.primary, BRAND.ink, BRAND.ok, BRAND.warn, BRAND.sub];
+
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const left = 36;
+  const right = pageW - 36;
+  const lineGap = 6;
+
+  let x = left;
+  let lineH = 0;
+
+  for (let i = 0; i < items.length; i++) {
+    const { palabra, peso } = items[i];
+    const t = max === min ? 1 : (peso - min) / (max - min);
+    const fs = Math.round(fMin + t * (fMax - fMin));
+    const color = palette[i % palette.length];
+    doc.setFont("helvetica", t > 0.6 ? "bold" : "normal");
+    doc.setFontSize(fs);
+    doc.setTextColor(color);
+    const w = doc.getTextWidth(palabra);
+    if (x + w > right) {
+      y += lineH + lineGap;
+      x = left;
+      lineH = 0;
+      if (y > pageH - 80) {
+        doc.addPage();
+        y = 80;
+      }
+    }
+    doc.text(palabra, x, y + fs);
+    x += w + 10;
+    if (fs > lineH) lineH = fs;
+  }
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  doc.setTextColor(BRAND.ink);
+  return y + lineH + 14;
+}
+
 export function addTable(
   doc: jsPDF,
   options: UserOptions & { head: any[][]; body: any[][] },

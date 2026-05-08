@@ -8,12 +8,45 @@ import {
   addParagraph,
   addKPIs,
   addTable,
+  addWordCloud,
   descargarPDF,
   fmtFecha,
   fmtNum,
   fmtPct,
   BRAND,
 } from "./utils";
+
+const STOPWORDS = new Set<string>(
+  "a al algo algun alguna algunas alguno algunos ante antes así aun aunque cada como con contra cual cuales cuando de del desde donde dos el él ella ellas ellos en entre era eran es esa esas ese eso esos esta están estar estas este esto estos eu fue fueron ha han hasta hay la las le les lo los más me menos mi mis mucho muy ni no nos nuestra nuestras nuestro nuestros o otra otras otro otros para pero poco por porque que qué quien quienes se ser sera será si sí sin sino sobre solo son su sus también te tiene tienen toda todas todo todos tras tu tus un una unas uno unos vs ya y vía via the and for with from este esta esto es ese esa eso muy más sólo solo sus el la los las uno una unos unas tras hacia ante bajo durante mediante según sin so sobre tras versus".split(
+    /\s+/,
+  ),
+);
+
+function extraerKeywords(
+  menciones: { titulo: string; fragmento: string | null }[],
+  n = 35,
+): { palabra: string; peso: number }[] {
+  const counts = new Map<string, number>();
+  for (const m of menciones) {
+    const txt = `${m.titulo ?? ""} ${m.fragmento ?? ""}`.toLowerCase();
+    const tokens = txt
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9ñ\s-]/g, " ")
+      .split(/\s+/)
+      .filter((w) => w.length >= 4 && !STOPWORDS.has(w) && !/^\d+$/.test(w));
+    const seen = new Set<string>();
+    for (const t of tokens) {
+      if (seen.has(t)) continue;
+      seen.add(t);
+      counts.set(t, (counts.get(t) ?? 0) + 1);
+    }
+  }
+  return Array.from(counts.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, n)
+    .map(([palabra, peso]) => ({ palabra, peso }));
+}
 
 interface Mencion {
   id: string;
@@ -223,6 +256,18 @@ function bloqueDeSubset(
       head: [["Tema", "Menciones", "Ejemplo"]],
       body: temas.map(([t, v]) => [t, String(v.count), v.ejemplos[0]?.slice(0, 80) ?? "—"]),
     });
+  }
+
+  // Nube de palabras
+  const keywords = extraerKeywords(menciones, 35);
+  if (keywords.length) {
+    y = addSection(doc, y, "Nube de palabras");
+    y = addParagraph(
+      doc,
+      y,
+      `Términos más frecuentes en titulares y fragmentos del periodo (tamaño proporcional a la frecuencia, ${keywords.length} términos).`,
+    );
+    y = addWordCloud(doc, y, keywords, { maxPalabras: 35 });
   }
 
   // Pico narrativo
@@ -545,6 +590,12 @@ export async function generarReporteConsolidado(opts: OpcionesReporteConsolidado
         head: [["Medio", "Menciones"]],
         body: d.medios.map(([m, v]) => [m, String(v)]),
       });
+    }
+
+    const kw = extraerKeywords(d.menciones, 30);
+    if (kw.length) {
+      y = addSection(doc, y, "Nube de palabras");
+      y = addWordCloud(doc, y, kw, { maxPalabras: 30, maxFont: 22 });
     }
   }
 
