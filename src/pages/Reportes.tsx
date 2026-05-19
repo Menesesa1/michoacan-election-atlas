@@ -24,6 +24,7 @@ import {
   BookOpen,
   IdCard,
   Building2,
+  Cloud,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -40,6 +41,7 @@ import { descargarLibroDeCampana } from "@/lib/exports/libro-campana";
 import { descargarBriefingPDF } from "@/lib/briefing-pdf";
 import { descargarInformeGeneralXLSX } from "@/lib/exports/informe-general-xlsx";
 import type { Candidato } from "@/lib/candidatos/types";
+import { setDriveContext } from "@/lib/gdrive";
 
 function inicioMesPrevio(): { desde: Date; hasta: Date } {
   const hoy = new Date();
@@ -64,6 +66,23 @@ export default function Reportes() {
   const def = useMemo(inicioMesPrevio, []);
   const [desde, setDesde] = useState(def.desde.toISOString().slice(0, 10));
   const [hasta, setHasta] = useState(def.hasta.toISOString().slice(0, 10));
+
+  // Google Drive auto-save
+  const [driveEnabled, setDriveEnabled] = useState(false);
+  const [driveEleccion, setDriveEleccion] = useState("Gubernatura 2027");
+  const periodoAuto = useMemo(() => {
+    const d = new Date(desde);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+  }, [desde]);
+  const [drivePeriodo, setDrivePeriodo] = useState(periodoAuto);
+  useEffect(() => setDrivePeriodo(periodoAuto), [periodoAuto]);
+  useEffect(() => {
+    setDriveContext({
+      enabled: driveEnabled,
+      eleccion: driveEleccion || null,
+      periodo: drivePeriodo || null,
+    });
+  }, [driveEnabled, driveEleccion, drivePeriodo]);
 
   useEffect(() => {
     (async () => {
@@ -173,6 +192,53 @@ export default function Reportes() {
           informes de campaña e informes ejecutivos del estado.
         </p>
       </div>
+
+      <Card className="p-4 border-primary/30 bg-primary/5">
+        <div className="flex items-start gap-3">
+          <Cloud className="h-5 w-5 text-primary mt-0.5" />
+          <div className="flex-1 space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <Label htmlFor="drive" className="font-semibold">
+                  Guardar automáticamente en Google Drive
+                </Label>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Cada PDF/Excel se sube a{" "}
+                  <code className="text-[11px]">
+                    Analista Electoral Michoacán / {driveEleccion || "(elección)"} /{" "}
+                    {drivePeriodo || "(periodo)"}
+                  </code>
+                </p>
+              </div>
+              <Switch
+                id="drive"
+                checked={driveEnabled}
+                onCheckedChange={setDriveEnabled}
+              />
+            </div>
+            {driveEnabled && (
+              <div className="grid md:grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Elección</Label>
+                  <Input
+                    value={driveEleccion}
+                    onChange={(e) => setDriveEleccion(e.target.value)}
+                    placeholder="Gubernatura 2027"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Periodo</Label>
+                  <Input
+                    value={drivePeriodo}
+                    onChange={(e) => setDrivePeriodo(e.target.value)}
+                    placeholder="2026-04"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </Card>
 
       <Tabs defaultValue="mensual" className="w-full">
         <TabsList className="grid w-full grid-cols-4">
