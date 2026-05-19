@@ -67,6 +67,23 @@ export default function Reportes() {
   const [desde, setDesde] = useState(def.desde.toISOString().slice(0, 10));
   const [hasta, setHasta] = useState(def.hasta.toISOString().slice(0, 10));
 
+  // Google Drive auto-save
+  const [driveEnabled, setDriveEnabled] = useState(false);
+  const [driveEleccion, setDriveEleccion] = useState("Gubernatura 2027");
+  const periodoAuto = useMemo(() => {
+    const d = new Date(desde);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+  }, [desde]);
+  const [drivePeriodo, setDrivePeriodo] = useState(periodoAuto);
+  useEffect(() => setDrivePeriodo(periodoAuto), [periodoAuto]);
+  useEffect(() => {
+    setDriveContext({
+      enabled: driveEnabled,
+      eleccion: driveEleccion || null,
+      periodo: drivePeriodo || null,
+    });
+  }, [driveEnabled, driveEleccion, drivePeriodo]);
+
   useEffect(() => {
     (async () => {
       const { data, error } = await supabase
