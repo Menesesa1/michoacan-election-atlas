@@ -193,6 +193,53 @@ export default function Reportes() {
         </p>
       </div>
 
+      <Card className="p-4 border-primary/30 bg-primary/5">
+        <div className="flex items-start gap-3">
+          <Cloud className="h-5 w-5 text-primary mt-0.5" />
+          <div className="flex-1 space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <Label htmlFor="drive" className="font-semibold">
+                  Guardar automáticamente en Google Drive
+                </Label>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Cada PDF/Excel se sube a{" "}
+                  <code className="text-[11px]">
+                    Analista Electoral Michoacán / {driveEleccion || "(elección)"} /{" "}
+                    {drivePeriodo || "(periodo)"}
+                  </code>
+                </p>
+              </div>
+              <Switch
+                id="drive"
+                checked={driveEnabled}
+                onCheckedChange={setDriveEnabled}
+              />
+            </div>
+            {driveEnabled && (
+              <div className="grid md:grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Elección</Label>
+                  <Input
+                    value={driveEleccion}
+                    onChange={(e) => setDriveEleccion(e.target.value)}
+                    placeholder="Gubernatura 2027"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Periodo</Label>
+                  <Input
+                    value={drivePeriodo}
+                    onChange={(e) => setDrivePeriodo(e.target.value)}
+                    placeholder="2026-04"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </Card>
+
       <Tabs defaultValue="mensual" className="w-full">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="mensual" className="gap-1.5">
