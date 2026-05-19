@@ -24,6 +24,7 @@ import {
   BookOpen,
   IdCard,
   Building2,
+  Cloud,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -40,6 +41,7 @@ import { descargarLibroDeCampana } from "@/lib/exports/libro-campana";
 import { descargarBriefingPDF } from "@/lib/briefing-pdf";
 import { descargarInformeGeneralXLSX } from "@/lib/exports/informe-general-xlsx";
 import type { Candidato } from "@/lib/candidatos/types";
+import { setDriveContext } from "@/lib/gdrive";
 
 function inicioMesPrevio(): { desde: Date; hasta: Date } {
   const hoy = new Date();
