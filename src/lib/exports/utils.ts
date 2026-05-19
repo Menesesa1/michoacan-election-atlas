@@ -2,6 +2,7 @@
 import jsPDF from "jspdf";
 import autoTable, { type UserOptions } from "jspdf-autotable";
 import * as XLSX from "xlsx";
+import { autoSubirSiActivo } from "@/lib/gdrive";
 
 export const BRAND = {
   primary: "#1D4ED8",
@@ -215,9 +216,24 @@ export function generarXLSX(filename: string, sheets: SheetSpec[]) {
     XLSX.utils.book_append_sheet(wb, ws, s.name.slice(0, 31));
   });
   XLSX.writeFile(wb, filename);
+  try {
+    const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+    const blob = new Blob([wbout], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+    autoSubirSiActivo(blob, filename);
+  } catch {
+    /* noop */
+  }
 }
 
 export function descargarPDF(doc: jsPDF, filename: string) {
   addFooter(doc);
   doc.save(filename);
+  try {
+    const blob = doc.output("blob") as Blob;
+    autoSubirSiActivo(blob, filename);
+  } catch {
+    /* noop */
+  }
 }
