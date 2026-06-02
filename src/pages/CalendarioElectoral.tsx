@@ -63,9 +63,9 @@ export default function CalendarioElectoral() {
           </h1>
           <p className="text-sm text-muted-foreground mt-1 max-w-3xl">
             Hoja de ruta del proceso: aspirantes → precandidatos → candidatos → jornada electoral.
-            <span className="block text-amber-400 mt-1 text-xs">
-              ⚠ Fechas estimadas con base en el proceso 2024. Se actualizarán cuando el IEM publique
-              el acuerdo oficial del proceso 2026-2027.
+            <span className="block text-green-400 mt-1 text-xs">
+              ✓ Calendario oficial actualizado con las reformas de la Gaceta Parlamentaria 115-07
+              (27 de mayo de 2026, Transitorio Décimo aplicado).
             </span>
           </p>
         </div>
@@ -156,6 +156,11 @@ export default function CalendarioElectoral() {
                       <Badge variant="outline" className={cn("text-[10px] font-mono uppercase", colorClasses)}>
                         {ETAPA_LABEL[h.etapa]}
                       </Badge>
+                      {h.reformado && (
+                        <Badge className="text-[9px] bg-blue-500/15 text-blue-400 border-blue-500/40">
+                          REFORMADO · Gaceta 115-07
+                        </Badge>
+                      )}
                       {!h.oficial && (
                         <span className="text-[9px] font-mono uppercase text-amber-400/80">
                           Estimado
@@ -177,6 +182,11 @@ export default function CalendarioElectoral() {
                   </div>
                   <h3 className="text-sm font-semibold">{h.titulo}</h3>
                   <p className="text-xs text-muted-foreground mt-1">{h.descripcion}</p>
+                  {h.fundamento && (
+                    <p className="text-[10px] font-mono text-primary/80 mt-1.5">
+                      Fundamento: <span className="italic">{h.fundamento}</span>
+                    </p>
+                  )}
                   <div className="flex items-center gap-2 mt-2 flex-wrap">
                     {h.cargos.map((c) => (
                       <span
