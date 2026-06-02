@@ -34,6 +34,8 @@ export interface HitoCalendario {
   cargos: ("gobernador" | "diputados_locales" | "ayuntamientos" | "diputados_federales" | "senadores")[];
   fuente: string;
   oficial: boolean; // false = estimado
+  fundamento?: string; // Artículo CEEMO / norma aplicable
+  reformado?: boolean; // true = modificado por Gaceta Parlamentaria 115-07 (27 mayo 2026)
 }
 
 export const ETAPA_LABEL: Record<EtapaCalendario, string> = {
