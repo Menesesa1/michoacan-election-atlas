@@ -156,6 +156,11 @@ export default function CalendarioElectoral() {
                       <Badge variant="outline" className={cn("text-[10px] font-mono uppercase", colorClasses)}>
                         {ETAPA_LABEL[h.etapa]}
                       </Badge>
+                      {h.reformado && (
+                        <Badge className="text-[9px] bg-blue-500/15 text-blue-400 border-blue-500/40">
+                          REFORMADO · Gaceta 115-07
+                        </Badge>
+                      )}
                       {!h.oficial && (
                         <span className="text-[9px] font-mono uppercase text-amber-400/80">
                           Estimado
