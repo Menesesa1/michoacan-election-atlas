@@ -63,9 +63,9 @@ export default function CalendarioElectoral() {
           </h1>
           <p className="text-sm text-muted-foreground mt-1 max-w-3xl">
             Hoja de ruta del proceso: aspirantes → precandidatos → candidatos → jornada electoral.
-            <span className="block text-amber-400 mt-1 text-xs">
-              ⚠ Fechas estimadas con base en el proceso 2024. Se actualizarán cuando el IEM publique
-              el acuerdo oficial del proceso 2026-2027.
+            <span className="block text-green-400 mt-1 text-xs">
+              ✓ Calendario oficial actualizado con las reformas de la Gaceta Parlamentaria 115-07
+              (27 de mayo de 2026, Transitorio Décimo aplicado).
             </span>
           </p>
         </div>
