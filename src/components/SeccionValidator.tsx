@@ -19,6 +19,7 @@ import {
   type JerarquiaSeccion,
   type SeverityLevel,
 } from "@/lib/seccion-validator";
+import { FichaSeccion } from "@/components/FichaSeccion";
 
 interface Props {
   /** Sección inicial opcional. */
@@ -90,7 +91,18 @@ export function SeccionValidator({ defaultSeccion, onValidate, embed = false }: 
       </div>
 
       {jerarquia ? (
-        <ReporteJerarquia jerarquia={jerarquia} />
+        <>
+          <ReporteJerarquia jerarquia={jerarquia} />
+          {jerarquia.existe && (
+            <FichaSeccion
+              seccion={jerarquia.seccion}
+              municipio={jerarquia.municipio?.nombre}
+              distritoLocal={jerarquia.distritoLocal?.clave}
+              distritoFederal={jerarquia.distritoFederal?.clave}
+              tipo={jerarquia.tipo?.nombre}
+            />
+          )}
+        </>
       ) : input.length === 0 ? (
         <p className="text-[11px] text-muted-foreground">
           Escribe un número de sección para confirmar su jerarquía cruzada
