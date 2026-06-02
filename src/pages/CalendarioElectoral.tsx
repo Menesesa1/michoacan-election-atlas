@@ -182,6 +182,11 @@ export default function CalendarioElectoral() {
                   </div>
                   <h3 className="text-sm font-semibold">{h.titulo}</h3>
                   <p className="text-xs text-muted-foreground mt-1">{h.descripcion}</p>
+                  {h.fundamento && (
+                    <p className="text-[10px] font-mono text-primary/80 mt-1.5">
+                      Fundamento: <span className="italic">{h.fundamento}</span>
+                    </p>
+                  )}
                   <div className="flex items-center gap-2 mt-2 flex-wrap">
                     {h.cargos.map((c) => (
                       <span
