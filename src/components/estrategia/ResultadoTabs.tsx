@@ -8,6 +8,7 @@ import {
 import {
   Sparkles, ShieldAlert, Users, Target, MapPin, Calendar, DollarSign, AlertTriangle, Activity, FileText, TrendingUp, Trophy, Megaphone, Flame,
 } from "lucide-react";
+import { SeccionesClaveDetalle } from "./SeccionesClaveDetalle";
 
 export interface MetaVictoriaOutput {
   votos_objetivo: number;
@@ -212,6 +213,11 @@ export function ResultadoTabs({ data }: { data: EstrategiaOutput }) {
                     </div>
                   </div>
                   <div className="text-[11px] text-foreground/80">{s.justificacion}</div>
+                  <SeccionesClaveDetalle
+                    municipio={s.municipio}
+                    tipoSeccion={s.tipo_seccion}
+                    numSecciones={s.num_secciones}
+                  />
                 </div>
               ))}
             </div>
