@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -9,6 +9,8 @@ import { PARTIDO_COLOR, type PartidoSigla } from "@/data/locales/partidos";
 import { ANIOS_LOCALES, type AnioLocal } from "@/data/locales/diputados-locales";
 import { Building2, RotateCcw, TrendingUp, Users, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { loadCatalogo, seccionesDeMunicipio } from "@/lib/secciones-catalogo";
+import { ComposicionTerritorial } from "@/components/ComposicionTerritorial";
 
 const fmt = (n: number) => new Intl.NumberFormat("es-MX").format(Math.round(n));
 
@@ -17,6 +19,9 @@ const CLAVES_CON_HISTORICO = new Set(MUNICIPIOS_ESTRATEGICOS.map((m) => m.clave)
 export default function Ayuntamientos() {
   const [seleccionado, setSeleccionado] = useState<number | null>(null);
   const [filtro, setFiltro] = useState("");
+  const [catReady, setCatReady] = useState(false);
+
+  useEffect(() => { loadCatalogo().then(() => setCatReady(true)).catch(() => {}); }, []);
 
   // Universo COMPLETO: 113 municipios INEGI. Marcamos cuáles tienen histórico verificado.
   const universo = useMemo(() => {
@@ -218,6 +223,14 @@ export default function Ayuntamientos() {
             ))}
           </div>
         </Card>
+      )}
+
+      {seleccionado && muniSel && catReady && (
+        <ComposicionTerritorial
+          titulo={muniSel.nombre}
+          subtitulo={`Municipio · Clave INEGI ${muniSel.clave}`}
+          secciones={seccionesDeMunicipio(muniSel.clave)}
+        />
       )}
 
       <Card className="p-4 bg-muted/30">

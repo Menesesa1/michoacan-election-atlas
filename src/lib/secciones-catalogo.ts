@@ -115,3 +115,9 @@ export function setSeccionesDistritoFederal(dis: number): Set<number> {
   return new Set((secsByDistritoFederal?.get(dis) ?? []).map((s) => s.sec));
 }
 
+/** Lista de claves de sección que pertenecen a un municipio (clave INEGI). */
+export function seccionesDeMunicipio(mun: number): number[] {
+  if (!cache) return [];
+  return cache.filter((s) => s.mun === mun).map((s) => s.sec);
+}
+
