@@ -8,6 +8,7 @@ import {
 import {
   Sparkles, ShieldAlert, Users, Target, MapPin, Calendar, DollarSign, AlertTriangle, Activity, FileText, TrendingUp, Trophy, Megaphone, Flame,
 } from "lucide-react";
+import { SeccionesClaveDetalle } from "./SeccionesClaveDetalle";
 
 export interface MetaVictoriaOutput {
   votos_objetivo: number;
