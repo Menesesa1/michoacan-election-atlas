@@ -213,6 +213,11 @@ export function ResultadoTabs({ data }: { data: EstrategiaOutput }) {
                     </div>
                   </div>
                   <div className="text-[11px] text-foreground/80">{s.justificacion}</div>
+                  <SeccionesClaveDetalle
+                    municipio={s.municipio}
+                    tipoSeccion={s.tipo_seccion}
+                    numSecciones={s.num_secciones}
+                  />
                 </div>
               ))}
             </div>
