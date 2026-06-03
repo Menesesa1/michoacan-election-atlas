@@ -13,6 +13,7 @@ import {
 import { PARTIDO_COLOR, type PartidoSigla } from "@/data/locales/partidos";
 import { loadCatalogo, getDistritosLocales, infoDistritoLocal, type DistritoLocal } from "@/lib/secciones-catalogo";
 import { Building, Vote, MapPin } from "lucide-react";
+import { ComposicionTerritorial } from "@/components/ComposicionTerritorial";
 
 export default function DiputadosLocales() {
   const [anio, setAnio] = useState<AnioLocal>(2024);
@@ -159,6 +160,14 @@ export default function DiputadosLocales() {
             ))}
           </div>
         </Card>
+      )}
+
+      {seleccionado && infoSel && (
+        <ComposicionTerritorial
+          titulo={`D${String(seleccionado).padStart(2, "0")} · ${infoSel.cabecera}`}
+          subtitulo={`Distrito local IEM · Municipios: ${infoSel.municipios.join(", ")}`}
+          secciones={infoSel.secciones}
+        />
       )}
 
       <Card className="p-4 bg-muted/30">
