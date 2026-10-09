@@ -242,9 +242,16 @@ Deno.serve(async (req) => {
   } catch (err) {
     const errorMsg = err instanceof Error ? err.message : "Error desconocido";
     console.error("trends-candidato error", errorMsg);
+    const sinCuota = /\[429\]|run out of searches/i.test(errorMsg);
     return new Response(
-      JSON.stringify({ ok: false, error: errorMsg }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      JSON.stringify({
+        ok: false,
+        code: sinCuota ? "QUOTA_EXCEEDED" : "ERROR",
+        error: sinCuota
+          ? "Se agotaron las búsquedas de Google Trends (SerpApi) del plan actual. Renueva o amplía el plan para seguir consultando."
+          : errorMsg,
+      }),
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
 });
