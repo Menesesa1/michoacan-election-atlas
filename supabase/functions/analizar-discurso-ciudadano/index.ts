@@ -42,14 +42,14 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (!run) {
-      return new Response(JSON.stringify({ success: false, error: "No hay batch reciente" }), {
-        status: 404,
+      return new Response(JSON.stringify({ success: false, error: "Aún no hay monitoreo social con datos. Ejecuta el monitoreo primero." }), {
+        status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // 2. Cargar menciones estatales (foco ciudadano)
-    const { data: menciones } = await supabase
+    // 2. Cargar menciones estatales (foco ciudadano); si no hay, usar todas las del batch
+    let { data: menciones } = await supabase
       .from("social_menciones")
       .select("titulo, fragmento, tema, hashtags, sentimiento, fuente")
       .eq("batch_id", run.batch_id)
@@ -57,8 +57,17 @@ Deno.serve(async (req) => {
       .limit(80);
 
     if (!menciones || menciones.length === 0) {
-      return new Response(JSON.stringify({ success: false, error: "Sin menciones estatales" }), {
-        status: 404,
+      const fb = await supabase
+        .from("social_menciones")
+        .select("titulo, fragmento, tema, hashtags, sentimiento, fuente")
+        .eq("batch_id", run.batch_id)
+        .limit(80);
+      menciones = fb.data ?? [];
+    }
+
+    if (menciones.length === 0) {
+      return new Response(JSON.stringify({ success: false, error: "El último monitoreo no tiene menciones para analizar." }), {
+        status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
