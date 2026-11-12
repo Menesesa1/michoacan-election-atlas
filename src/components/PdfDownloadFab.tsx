@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { FileDown, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 
 export function PdfDownloadFab() {
   const [loading, setLoading] = useState(false);
@@ -22,10 +23,11 @@ export function PdfDownloadFab() {
   };
 
   return (
-    <button
+    <Button
       onClick={handleDownload}
       disabled={loading}
-      className="print:hidden fixed bottom-6 right-6 z-40 flex items-center gap-2 px-5 py-3 rounded-full bg-primary text-primary-foreground font-semibold text-sm shadow-2xl shadow-primary/40 hover:bg-primary/90 hover:scale-105 transition-all disabled:opacity-70"
+      variant="outline"
+      className="print:hidden gap-2"
       aria-label="Descargar PDF Completo"
     >
       {loading ? (
@@ -34,6 +36,6 @@ export function PdfDownloadFab() {
         <FileDown className="w-4 h-4" />
       )}
       <span className="hidden sm:inline">PDF Completo</span>
-    </button>
+    </Button>
   );
 }

@@ -1,4 +1,5 @@
-import { useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
 import { ArrowRight, ShieldCheck, BarChart3, Map, AlertTriangle, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LandingNavbar } from "@/components/LandingNavbar";
@@ -10,6 +11,9 @@ import { EmeLogo } from "@/components/EmeLogo";
 
 export default function Landing() {
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
+
+  if (isAuthenticated) return <Navigate to="/mando" replace />;
 
   const scrollTo = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
@@ -18,28 +22,21 @@ export default function Landing() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <LandingNavbar />
-      <PdfDownloadFab />
 
       {/* HERO */}
       <section
         id="inicio"
-        className="relative min-h-screen flex items-center pt-16 overflow-hidden executive-gradient"
+        className="relative flex items-center pt-16 overflow-hidden executive-gradient"
       >
-        {/* Decorative background */}
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-1/4 -left-32 w-96 h-96 rounded-full bg-primary/10 blur-3xl" />
-          <div className="absolute bottom-1/4 -right-32 w-96 h-96 rounded-full bg-primary/15 blur-3xl" />
-        </div>
-
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-20 grid lg:grid-cols-2 gap-12 items-center">
+        <div className="relative w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-8 lg:py-12 grid lg:grid-cols-2 gap-8 items-center">
           {/* Left: copy */}
-          <div className="space-y-7">
+          <div className="space-y-5 min-w-0">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-primary/40 bg-primary/10 text-primary text-[11px] font-mono uppercase tracking-widest">
               <EmeLogo size={20} />
               EME Gabinete · Michoacán 2025-2027
             </div>
 
-            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold leading-[1.02] tracking-tight">
+            <h1 className="text-3xl sm:text-4xl xl:text-5xl font-extrabold leading-tight">
               Sistema de
               <br />
               <span className="text-gradient-gold">Mando Estratégico</span>
@@ -47,7 +44,7 @@ export default function Landing() {
               <span className="text-foreground">Michoacán 360</span>
             </h1>
 
-            <p className="text-lg text-muted-foreground max-w-xl leading-relaxed">
+            <p className="text-base text-muted-foreground max-w-xl leading-relaxed">
               Inteligencia política, electoral y demográfica en una sola plataforma.
               Monitor unificado de alertas, sentimiento, comportamiento coordinado y narrativas
               accionables para decisiones estratégicas del Gabinete.
@@ -223,6 +220,7 @@ export default function Landing() {
 
       {/* FOOTER */}
       <footer className="border-t border-primary/20 py-10 px-4 sm:px-6 lg:px-12">
+        <div className="max-w-7xl mx-auto mb-6"><PdfDownloadFab /></div>
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <EmeLogo size={32} />

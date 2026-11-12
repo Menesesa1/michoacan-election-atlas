@@ -9,7 +9,6 @@ const sections = [
   { id: "escenarios", label: "Escenarios" },
   { id: "demografia", label: "Demografía" },
   { id: "tendencias", label: "Tendencias" },
-  { id: "comparador", label: "Comparador" },
   { id: "metodologia", label: "Metodología" },
 ];
 

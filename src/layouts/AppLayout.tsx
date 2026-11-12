@@ -3,10 +3,12 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { EmeLogo } from "@/components/EmeLogo";
 import { NotificacionesBell } from "@/components/notificaciones/NotificacionesBell";
+import { useState } from "react";
 
 export function AppLayout() {
+  const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth >= 1024);
   return (
-    <SidebarProvider>
+    <SidebarProvider open={sidebarOpen} onOpenChange={setSidebarOpen}>
       <div className="min-h-screen flex w-full bg-background">
         <AppSidebar />
 
@@ -14,14 +16,14 @@ export function AppLayout() {
           <header className="h-14 flex items-center justify-between border-b border-border/60 bg-card/50 backdrop-blur-md sticky top-0 z-40 px-3">
             <div className="flex items-center gap-3">
               <SidebarTrigger className="text-foreground hover:text-primary" />
-              <div className="hidden md:flex items-center gap-2">
+              <div className="flex items-center gap-2 min-w-0">
                 <EmeLogo size={28} />
                 <div className="leading-tight">
-                  <div className="text-xs font-bold text-foreground">
+                  <div className="text-xs font-bold text-foreground hidden sm:block">
                     Sistema de Mando <span className="text-gradient-gold">Michoacán 360</span>
                   </div>
                   <div className="text-[9px] text-muted-foreground font-mono uppercase tracking-wider">
-                    EME Gabinete Estratégico
+                    EME · Michoacán 360
                   </div>
                 </div>
               </div>

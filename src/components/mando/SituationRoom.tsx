@@ -36,27 +36,38 @@ export function SituationRoom() {
   const [cib, setCib] = useState<CibRow[]>([]);
   const [sent, setSent] = useState<SentRow[]>([]);
   const [narr, setNarr] = useState<NarrRow[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [pending, setPending] = useState({ alertas: true, cib: true, sent: true, narr: true });
+  const [failed, setFailed] = useState({ alertas: false, cib: false, sent: false, narr: false });
+  const loading = pending.alertas || pending.cib;
 
   useEffect(() => {
-    void (async () => {
-      const [a, c, s, n] = await Promise.all([
-        supabase.from("alertas_crisis").select("id,titulo,prioridad,distrito,detectada_en")
-          .order("detectada_en", { ascending: false }).limit(3),
-        supabase.from("cib_alertas").select("id,titulo,severidad,detectada_en")
-          .order("detectada_en", { ascending: false }).limit(2),
-        supabase.from("social_resumen").select("sentimiento_promedio,pct_negativo,pct_positivo,total_menciones,entidad_nombre")
-          .order("generado_en", { ascending: false }).limit(5),
-        supabase.from("narrativas_sugeridas").select("id,mensaje,tono,urgencia,entidad_nombre")
-          .eq("usado", false).order("urgencia", { ascending: false })
-          .order("created_at", { ascending: false }).limit(3),
-      ]);
-      setAlertas((a.data ?? []) as AlertaRow[]);
-      setCib((c.data ?? []) as CibRow[]);
-      setSent((s.data ?? []) as SentRow[]);
-      setNarr((n.data ?? []) as NarrRow[]);
-      setLoading(false);
-    })();
+    let active = true;
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 12000);
+    const load = async <T,>(key: keyof typeof pending, request: PromiseLike<{ data: T[] | null; error: unknown }>, setter: (rows: T[]) => void) => {
+      try {
+        const result = await request;
+        if (!active) return;
+        setter(result.data ?? []);
+        setFailed((prev) => ({ ...prev, [key]: Boolean(result.error) }));
+      } catch {
+        if (active) setFailed((prev) => ({ ...prev, [key]: true }));
+      } finally {
+        if (active) setPending((prev) => ({ ...prev, [key]: false }));
+      }
+    };
+    void Promise.all([
+      load("alertas", supabase.from("alertas_crisis").select("id,titulo,prioridad,distrito,detectada_en")
+        .order("detectada_en", { ascending: false }).limit(3).abortSignal(controller.signal), setAlertas),
+      load("cib", supabase.from("cib_alertas").select("id,titulo,severidad,detectada_en")
+        .order("detectada_en", { ascending: false }).limit(2).abortSignal(controller.signal), setCib),
+      load("sent", supabase.from("social_resumen").select("sentimiento_promedio,pct_negativo,pct_positivo,total_menciones,entidad_nombre")
+        .order("generado_en", { ascending: false }).limit(5).abortSignal(controller.signal), setSent),
+      load("narr", supabase.from("narrativas_sugeridas").select("id,mensaje,tono,urgencia,entidad_nombre")
+        .eq("usado", false).order("urgencia", { ascending: false }).order("created_at", { ascending: false })
+        .limit(3).abortSignal(controller.signal), setNarr),
+    ]).finally(() => window.clearTimeout(timeout));
+    return () => { active = false; controller.abort(); window.clearTimeout(timeout); };
   }, []);
 
   // Líder de gobernatura: usar el cómputo más reciente disponible (federal o local).
@@ -90,7 +101,7 @@ export function SituationRoom() {
 
   return (
     <Card className="p-4 bg-gradient-to-br from-card via-card to-card/40 border-primary/20">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between flex-wrap gap-2 mb-4">
         <div className="flex items-center gap-2">
           <Activity className="w-4 h-4 text-primary animate-pulse" />
           <h2 className="text-xs font-semibold uppercase tracking-widest text-primary">
@@ -144,12 +155,12 @@ export function SituationRoom() {
               ver →
             </Link>
           </div>
-          {loading ? (
+          {pending.alertas && pending.cib ? (
             <Skeleton className="h-12" />
           ) : (
             <>
               <div className="flex items-baseline gap-2">
-                <span className="text-xl font-bold text-foreground">{totalAlertas}</span>
+                <span className="text-xl font-bold text-foreground">{failed.alertas && failed.cib ? "—" : totalAlertas}</span>
                 {urgentes > 0 && (
                   <Badge variant="destructive" className="text-[9px] py-0 h-4">
                     {urgentes} urgentes
@@ -157,7 +168,7 @@ export function SituationRoom() {
                 )}
               </div>
               <div className="text-[10px] text-muted-foreground mt-1 truncate">
-                {alertas[0]?.titulo ?? cib[0]?.titulo ?? "Sin alertas activas"}
+                {failed.alertas || failed.cib ? "Cobertura parcial · una fuente no está disponible" : alertas[0]?.titulo ?? cib[0]?.titulo ?? "Sin alertas activas"}
               </div>
             </>
           )}
@@ -173,7 +184,7 @@ export function SituationRoom() {
               ver →
             </Link>
           </div>
-          {loading ? (
+          {pending.sent ? (
             <Skeleton className="h-12" />
           ) : totalMenc > 0 ? (
             <>
@@ -185,7 +196,7 @@ export function SituationRoom() {
               </div>
             </>
           ) : (
-            <p className="text-xs text-muted-foreground">Sin monitoreo aún.</p>
+            <p className="text-xs text-muted-foreground">{failed.sent ? "Monitoreo temporalmente no disponible." : "Sin monitoreo aún."}</p>
           )}
         </div>
 
@@ -199,7 +210,7 @@ export function SituationRoom() {
               ver →
             </Link>
           </div>
-          {loading ? (
+          {pending.narr ? (
             <Skeleton className="h-12" />
           ) : narr.length > 0 ? (
             <>
@@ -211,7 +222,7 @@ export function SituationRoom() {
               </div>
             </>
           ) : (
-            <p className="text-xs text-muted-foreground">Sin narrativas pendientes.</p>
+            <p className="text-xs text-muted-foreground">{failed.narr ? "Narrativas temporalmente no disponibles." : "Sin narrativas pendientes."}</p>
           )}
         </div>
       </div>

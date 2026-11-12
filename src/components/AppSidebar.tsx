@@ -72,8 +72,8 @@ const tools = [
 ];
 
 export function AppSidebar() {
-  const { state } = useSidebar();
-  const collapsed = state === "collapsed";
+  const { state, isMobile, setOpenMobile } = useSidebar();
+  const collapsed = !isMobile && state === "collapsed";
   const location = useLocation();
   const { user, logout, isAdmin } = useAuth();
 
@@ -113,6 +113,7 @@ export function AppSidebar() {
                     <SidebarMenuButton asChild isActive={active}>
                       <NavLink
                         to={item.url}
+                        onClick={() => setOpenMobile(false)}
                         end={item.end}
                         className={`${active ? "bg-sidebar-accent text-primary font-semibold border-l-2 border-primary" : "hover:bg-sidebar-accent/60"}`}
                       >
@@ -142,6 +143,7 @@ export function AppSidebar() {
                     <SidebarMenuButton asChild isActive={active}>
                       <NavLink
                         to={item.url}
+                        onClick={() => setOpenMobile(false)}
                         className={`${active ? "bg-sidebar-accent text-primary font-semibold border-l-2 border-primary" : "hover:bg-sidebar-accent/60"}`}
                       >
                         <item.icon className="w-4 h-4" />
@@ -209,6 +211,7 @@ export function AppSidebar() {
                   <SidebarMenuButton asChild isActive={isActive("/administracion")}>
                     <NavLink
                       to="/administracion"
+                      onClick={() => setOpenMobile(false)}
                       className={`${isActive("/administracion") ? "bg-sidebar-accent text-primary font-semibold border-l-2 border-primary" : "hover:bg-sidebar-accent/60"}`}
                     >
                       <ShieldAdmin className="w-4 h-4" />

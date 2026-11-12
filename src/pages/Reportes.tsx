@@ -183,7 +183,7 @@ export default function Reportes() {
   };
 
   return (
-    <div className="space-y-6 p-6 max-w-5xl mx-auto">
+    <div className="space-y-6 sm:p-2 lg:p-6 max-w-5xl mx-auto">
       <div>
         <h1 className="text-3xl font-bold">Centro de reportes</h1>
         <p className="text-muted-foreground text-sm mt-1">
@@ -196,7 +196,7 @@ export default function Reportes() {
       <Card className="p-4 border-primary/30 bg-primary/5">
         <div className="flex items-start gap-3">
           <Cloud className="h-5 w-5 text-primary mt-0.5" />
-          <div className="flex-1 space-y-3">
+          <div className="flex-1 min-w-0 space-y-3">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <Label htmlFor="drive" className="font-semibold">
@@ -204,7 +204,7 @@ export default function Reportes() {
                 </Label>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   Cada PDF/Excel se sube a{" "}
-                  <code className="text-[11px]">
+                  <code className="text-[11px] break-words">
                     Analista Electoral Michoacán / {driveEleccion || "(elección)"} /{" "}
                     {drivePeriodo || "(periodo)"}
                   </code>
@@ -241,7 +241,7 @@ export default function Reportes() {
       </Card>
 
       <Tabs defaultValue="mensual" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid h-auto w-full grid-cols-2 gap-1 sm:grid-cols-4">
           <TabsTrigger value="mensual" className="gap-1.5">
             <Calendar className="h-3.5 w-3.5" /> Mensual
           </TabsTrigger>
