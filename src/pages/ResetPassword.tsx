@@ -17,6 +17,17 @@ export default function ResetPassword() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.hash.slice(1));
+    const invitationToken = params.get("invitation_token");
+    const invitationType = params.get("type");
+    if (invitationToken && (invitationType === "invite" || invitationType === "recovery")) {
+      // Keep the one-use invitation out of browser history and referrer URLs.
+      window.history.replaceState(null, "", window.location.pathname);
+      supabase.auth.verifyOtp({ token_hash: invitationToken, type: invitationType }).then(({ error }) => {
+        if (error) setError("La invitación venció o ya fue utilizada. Solicita una nueva liga.");
+        else setReady(true);
+      });
+    }
     // Supabase coloca el token en el hash; onAuthStateChange dispara PASSWORD_RECOVERY.
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
       if (event === "PASSWORD_RECOVERY" || event === "SIGNED_IN") {
@@ -70,7 +81,7 @@ export default function ResetPassword() {
 
         {!ready && !done && (
           <div className="executive-panel p-6 text-center text-sm text-muted-foreground">
-            Validando enlace de recuperación…
+            {error ?? "Validando enlace de acceso…"}
           </div>
         )}
 
